@@ -3,58 +3,45 @@ import cors from "cors";
 
 import loginRoutes from "./login.js";
 import studentRoutes from "./student.js";
-import assessmentRoutes from "./assessment.js";
 import sectionRoutes from "./section.js";
+import subjectRoutes from "./subject.js";
+import assessmentRoutes from "./assessment.js";
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-
-// Allow frontend requests
 app.use(cors());
-
-
-// Allow JSON request bodies
 app.use(express.json());
 
-
-// Authentication routes
-app.use(loginRoutes);
-
-
-// Student routes
-app.use(studentRoutes);
-
-
-// Assessment routes
-app.use(assessmentRoutes);
-
-
-// Section routes
-app.use(sectionRoutes);
-
-
-// Test route
 app.get("/", (req, res) => {
   res.json({
-    message:
-      "EduLITE backend is running."
+    message: "EduLITE API is running.",
   });
 });
 
+/*
+  Register all API routes before the
+  Route not found handler.
+*/
+app.use(loginRoutes);
+app.use(studentRoutes);
+app.use(sectionRoutes);
+app.use(subjectRoutes);
+app.use(assessmentRoutes);
 
-// Handle unknown routes
+/*
+  This must always remain after all
+  of the API route registrations.
+*/
 app.use((req, res) => {
   res.status(404).json({
-    message: "Route not found."
+    message: "Route not found.",
   });
 });
 
-
-// Start server
 app.listen(PORT, () => {
   console.log(
-    `EduLITE backend running at http://localhost:${PORT}`
+    `EduLITE API running at http://localhost:${PORT}`,
   );
 });
