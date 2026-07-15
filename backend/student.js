@@ -1,137 +1,292 @@
 import express from "express";
-import studentDB from "../database/db.js";
+import db from "./database/db.js";
 
 const router = express.Router();
 
 
-// =====================
-// VIEW ALL STUDENTS
-// =====================
+// ===========================
+// GET ALL STUDENTS
+// ===========================
 
 router.get("/students", (req, res) => {
-
-    const students = studentDB
-        .prepare("SELECT * FROM students")
-        .all();
+  try {
+    const students = db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          grade,
+          section
+        FROM students
+        ORDER BY
+          section ASC,
+          name ASC
+      `)
+      .all();
 
     res.json(students);
+  } catch (error) {
+    console.error(
+      "Error loading students:",
+      error
+    );
 
+    res.status(500).json({
+      message: "Unable to load students."
+    });
+  }
 });
 
 
-// =====================
-// VIEW ONE STUDENT
-// =====================
+// ===========================
+// GET ONE STUDENT
+// ===========================
 
 router.get("/students/:id", (req, res) => {
-
-    const student = studentDB
-        .prepare(
-            "SELECT * FROM students WHERE id = ?"
-        )
-        .get(req.params.id);
-
+  try {
+    const student = db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          grade,
+          section
+        FROM students
+        WHERE id = ?
+      `)
+      .get(req.params.id);
 
     if (!student) {
-        return res.status(404).json({
-            message: "Student not found"
-        });
+      return res.status(404).json({
+        message: "Student not found."
+      });
     }
 
-
     res.json(student);
+  } catch (error) {
+    console.error(
+      "Error loading student:",
+      error
+    );
 
+    res.status(500).json({
+      message:
+        "Unable to load the student."
+    });
+  }
 });
 
 
-// =====================
+// ===========================
 // ADD STUDENT
-// =====================
+// ===========================
 
 router.post("/students", (req, res) => {
+  const name =
+    typeof req.body.name === "string"
+      ? req.body.name.trim()
+      : "";
 
-    const {
+  const grade = req.body.grade;
+
+  const section =
+    typeof req.body.section === "string"
+      ? req.body.section.trim()
+      : "";
+
+  if (
+    !name ||
+    grade === "" ||
+    grade === null ||
+    grade === undefined ||
+    !section
+  ) {
+    return res.status(400).json({
+      message:
+        "Please complete all student information."
+    });
+  }
+
+  try {
+    const existingSection = db
+      .prepare(`
+        SELECT name
+        FROM sections
+        WHERE LOWER(TRIM(name)) =
+              LOWER(TRIM(?))
+      `)
+      .get(section);
+
+    if (!existingSection) {
+      return res.status(400).json({
+        message:
+          "Please select an existing section."
+      });
+    }
+
+    const result = db
+      .prepare(`
+        INSERT INTO students (
+          name,
+          grade,
+          section
+        )
+        VALUES (?, ?, ?)
+      `)
+      .run(
         name,
-        score,
         grade,
-        section
-    } = req.body;
+        existingSection.name
+      );
 
+    res.status(201).json({
+      message:
+        "Student added successfully.",
 
-    const result = studentDB.prepare(`
-        INSERT INTO students
-        (name, score, grade, section)
-        VALUES (?, ?, ?, ?)
-    `).run(
-        name,
-        score,
-        grade,
-        section
+      id: Number(result.lastInsertRowid)
+    });
+  } catch (error) {
+    console.error(
+      "Error adding student:",
+      error
     );
 
-
-    res.json({
-        message: "Student added",
-        id: result.lastInsertRowid
+    res.status(500).json({
+      message:
+        "Unable to add the student."
     });
-
+  }
 });
 
 
-// =====================
-// EDIT STUDENT
-// =====================
+// ===========================
+// UPDATE STUDENT
+// ===========================
 
 router.put("/students/:id", (req, res) => {
+  const name =
+    typeof req.body.name === "string"
+      ? req.body.name.trim()
+      : "";
 
-    const {
-        name,
-        score,
-        grade,
-        section
-    } = req.body;
+  const grade = req.body.grade;
 
+  const section =
+    typeof req.body.section === "string"
+      ? req.body.section.trim()
+      : "";
 
-    studentDB.prepare(`
+  if (
+    !name ||
+    grade === "" ||
+    grade === null ||
+    grade === undefined ||
+    !section
+  ) {
+    return res.status(400).json({
+      message:
+        "Please complete all student information."
+    });
+  }
+
+  try {
+    const existingSection = db
+      .prepare(`
+        SELECT name
+        FROM sections
+        WHERE LOWER(TRIM(name)) =
+              LOWER(TRIM(?))
+      `)
+      .get(section);
+
+    if (!existingSection) {
+      return res.status(400).json({
+        message:
+          "Please select an existing section."
+      });
+    }
+
+    const result = db
+      .prepare(`
         UPDATE students
-        SET name = ?,
-            score = ?,
-            grade = ?,
-            section = ?
+        SET
+          name = ?,
+          grade = ?,
+          section = ?
         WHERE id = ?
-    `).run(
+      `)
+      .run(
         name,
-        score,
         grade,
-        section,
+        existingSection.name,
         req.params.id
+      );
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        message: "Student not found."
+      });
+    }
+
+    res.json({
+      message:
+        "Student updated successfully."
+    });
+  } catch (error) {
+    console.error(
+      "Error updating student:",
+      error
     );
 
-
-    res.json({
-        message: "Student updated"
+    res.status(500).json({
+      message:
+        "Unable to update the student."
     });
-
+  }
 });
 
 
-// =====================
+// ===========================
 // DELETE STUDENT
-// =====================
+// ===========================
 
 router.delete("/students/:id", (req, res) => {
-
-    studentDB.prepare(`
+  try {
+    const result = db
+      .prepare(`
         DELETE FROM students
         WHERE id = ?
-    `).run(req.params.id);
+      `)
+      .run(req.params.id);
 
+    if (result.changes === 0) {
+      return res.status(404).json({
+        message: "Student not found."
+      });
+    }
 
     res.json({
-        message: "Student deleted"
+      message:
+        "Student deleted successfully."
     });
+  } catch (error) {
+    console.error(
+      "Error deleting student:",
+      error
+    );
 
+    res.status(500).json({
+      message:
+        "Unable to delete the student."
+    });
+  }
 });
 
 
+/*
+  This line is required.
+
+  app.use(studentRoutes) only works when
+  this file exports the Express router.
+*/
 export default router;
