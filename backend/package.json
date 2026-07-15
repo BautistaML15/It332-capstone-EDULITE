@@ -1,0 +1,17 @@
+{
+  "name": "edulite-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the EduLITE system",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}

@@ -1,0 +1,9 @@
+# Ignore Node Dependencies
+node_modules/
+**/node_modules/
+
+# Ignore Mac System Files
+.DS_Store
+
+# Ignore Environment Variables (if you use them later)
+.env
