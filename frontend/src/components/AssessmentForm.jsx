@@ -1,155 +1,411 @@
 import {
   useEffect,
-  useState
+  useMemo,
+  useState,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
 import axios from "axios";
 
-const API_URL = "http://localhost:3000";
+const API_URL =
+  "http://localhost:3000";
+
+const TYPES = [
+  "Major Exam",
+  "Activity",
+  "Quiz",
+];
+
+function todayAsInputValue() {
+  const now = new Date();
+
+  const timezoneOffset =
+    now.getTimezoneOffset() *
+    60_000;
+
+  return new Date(
+    now.getTime() -
+      timezoneOffset,
+  )
+    .toISOString()
+    .slice(0, 10);
+}
 
 export default function AssessmentForm() {
-  const [students, setStudents] = useState([]);
-  const [scores, setScores] = useState({});
-
-  const [formData, setFormData] = useState({
+  const [
+    formData,
+    setFormData,
+  ] = useState({
     name: "",
-    type: "Major Exam",
-    date: "",
-    total_items: ""
+    type: "Quiz",
+    date: todayAsInputValue(),
+    total_items: "",
+    subject_id: "",
   });
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [
+    subjects,
+    setSubjects,
+  ] = useState([]);
 
-  const navigate = useNavigate();
+  const [
+    students,
+    setStudents,
+  ] = useState([]);
+
+  const [
+    scores,
+    setScores,
+  ] = useState({});
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    loadingStudents,
+    setLoadingStudents,
+  ] = useState(false);
+
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const navigate =
+    useNavigate();
+
+  const { id } =
+    useParams();
+
+  const isEditing =
+    Boolean(id);
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-
-    if (!user) {
+    if (
+      !localStorage.getItem(
+        "user",
+      )
+    ) {
       navigate("/");
       return;
     }
 
-    fetchStudents();
-  }, [navigate]);
+    const loadPage = async () => {
+      setLoading(true);
+      setError("");
 
-  const fetchStudents = async () => {
-    setLoading(true);
-    setError("");
+      try {
+        const subjectResponse =
+          await axios.get(
+            `${API_URL}/subjects`,
+          );
 
-    try {
-      const response = await axios.get(
-        `${API_URL}/students`
+        setSubjects(
+          subjectResponse.data,
+        );
+
+        if (isEditing) {
+          const assessmentResponse =
+            await axios.get(
+              `${API_URL}/assessments/${id}`,
+            );
+
+          const assessment =
+            assessmentResponse.data;
+
+          setFormData({
+            name:
+              assessment.name,
+
+            type:
+              assessment.type,
+
+            date:
+              assessment.date,
+
+            total_items:
+              String(
+                assessment.total_items,
+              ),
+
+            subject_id:
+              String(
+                assessment.subject_id,
+              ),
+          });
+
+          setStudents(
+            assessment.students,
+          );
+
+          setScores(
+            Object.fromEntries(
+              assessment.students.map(
+                (student) => [
+                  student.id,
+                  student.score ??
+                    "",
+                ],
+              ),
+            ),
+          );
+        } else {
+          const firstSubjectId =
+            subjectResponse.data[0]
+              ?.id;
+
+          setFormData(
+            (current) => ({
+              ...current,
+
+              subject_id:
+                firstSubjectId
+                  ? String(
+                      firstSubjectId,
+                    )
+                  : "",
+            }),
+          );
+
+          if (firstSubjectId) {
+            await loadStudentsForSubject(
+              firstSubjectId,
+            );
+          }
+        }
+      } catch (err) {
+        setError(
+          err.response?.data
+            ?.message ||
+            "Unable to load the assessment form.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPage();
+  }, [
+    id,
+    isEditing,
+    navigate,
+  ]);
+
+  const loadStudentsForSubject =
+    async (subjectId) => {
+      if (!subjectId) {
+        setStudents([]);
+        setScores({});
+        return;
+      }
+
+      setLoadingStudents(true);
+
+      try {
+        const response =
+          await axios.get(
+            `${API_URL}/students`,
+            {
+              params: {
+                subject_id:
+                  subjectId,
+              },
+            },
+          );
+
+        setStudents(
+          response.data,
+        );
+
+        setScores(
+          Object.fromEntries(
+            response.data.map(
+              (student) => [
+                student.id,
+                "",
+              ],
+            ),
+          ),
+        );
+      } catch (err) {
+        setError(
+          err.response?.data
+            ?.message ||
+            "Unable to load students for the subject.",
+        );
+      } finally {
+        setLoadingStudents(
+          false,
+        );
+      }
+    };
+
+  const handleSubjectChange =
+    async (value) => {
+      setFormData(
+        (current) => ({
+          ...current,
+          subject_id: value,
+        }),
       );
 
-      setStudents(response.data);
-    } catch (error) {
-      console.error(
-        "Error fetching students:",
-        error
+      await loadStudentsForSubject(
+        value,
       );
+    };
 
-      setError(
-        error.response?.data?.message ||
-          "Unable to load students."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalItems = Number(
+    formData.total_items,
+  );
 
-  const handleInputChange = (event) => {
-    const {
-      name,
-      value
-    } = event.target;
+  const enteredCount = useMemo(
+    () =>
+      Object.values(scores).filter(
+        (score) => score !== "",
+      ).length,
 
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value
-    }));
-  };
+    [scores],
+  );
 
   const handleScoreChange = (
     studentId,
-    value
+    value,
   ) => {
-    setScores((currentScores) => ({
-      ...currentScores,
-      [studentId]: value
-    }));
+    if (
+      value !== "" &&
+      !/^\d+$/.test(value)
+    ) {
+      return;
+    }
+
+    setScores(
+      (current) => ({
+        ...current,
+        [studentId]: value,
+      }),
+    );
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event,
+  ) => {
     event.preventDefault();
-
     setError("");
 
-    const totalItems = Number(
-      formData.total_items
-    );
-
-    if (totalItems <= 0) {
+    if (!formData.subject_id) {
       setError(
-        "Total assessment items must be greater than zero."
+        "Select a subject for the assessment.",
       );
 
       return;
     }
 
-    for (const student of students) {
-      const currentScore =
-        scores[student.id];
+    if (
+      !Number.isInteger(
+        totalItems,
+      ) ||
+      totalItems <= 0
+    ) {
+      setError(
+        "Total assessment items must be a positive whole number.",
+      );
+
+      return;
+    }
+
+    for (
+      const [
+        studentId,
+        value,
+      ]
+      of Object.entries(scores)
+    ) {
+      if (value === "") {
+        continue;
+      }
+
+      const score = Number(value);
 
       if (
-        currentScore !== "" &&
-        currentScore !== undefined &&
-        Number(currentScore) > totalItems
+        !Number.isInteger(score) ||
+        score < 0 ||
+        score > totalItems
       ) {
+        const student =
+          students.find(
+            (item) =>
+              item.id ===
+              Number(studentId),
+          );
+
         setError(
-          `${student.name}'s score cannot be greater than ${totalItems}.`
+          `${student?.name || "A student"}'s score must be from 0 to ${totalItems}.`,
         );
 
         return;
       }
     }
 
-    const scoreList = students.map(
-      (student) => ({
-        student_id: student.id,
+    const payload = {
+      ...formData,
 
-        score:
-          scores[student.id] === undefined
-            ? ""
-            : scores[student.id]
-      })
-    );
+      subject_id: Number(
+        formData.subject_id,
+      ),
+
+      total_items:
+        totalItems,
+
+      scores: students.map(
+        (student) => ({
+          student_id:
+            student.id,
+
+          score:
+            scores[student.id] ===
+            ""
+              ? null
+              : Number(
+                  scores[
+                    student.id
+                  ],
+                ),
+        }),
+      ),
+    };
 
     setSaving(true);
 
     try {
-      await axios.post(
-        `${API_URL}/assessments`,
-        {
-          ...formData,
-          total_items: totalItems,
-          scores: scoreList
-        }
-      );
+      if (isEditing) {
+        await axios.put(
+          `${API_URL}/assessments/${id}`,
+          payload,
+        );
+      } else {
+        await axios.post(
+          `${API_URL}/assessments`,
+          payload,
+        );
+      }
 
       navigate("/dashboard");
-    } catch (error) {
-      console.error(
-        "Error adding assessment:",
-        error
-      );
-
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
-          "Unable to add the assessment."
+        err.response?.data
+          ?.message ||
+          "Unable to save the assessment.",
       );
     } finally {
       setSaving(false);
@@ -157,268 +413,418 @@ export default function AssessmentForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
+    <div className="relative min-h-screen overflow-hidden p-4 md:p-8">
+      <video className="fixed inset-0 h-full w-full object-cover" autoPlay loop muted playsInline aria-hidden="true">
+        <source
+          src="/background.mp4"
+          type="video/mp4"
+        />
+      </video>
+
+      <div className="fixed inset-0 bg-black/55" />
+
+      <div className="relative z-10 max-w-5xl mx-auto bg-slate-950/45 backdrop-blur-xl border border-white/20 p-6 md:p-8 rounded-2xl shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5 mb-6">
+          <div>
+            <p className="text-blue-300 text-sm uppercase tracking-widest font-semibold">
+              Assessment Management
+            </p>
+
+            <h1 className="text-2xl font-bold text-white tracking-wider mt-1">
+              {isEditing
+                ? "Edit Assessment"
+                : "Add New Assessment"}
+            </h1>
+          </div>
+
           <button
             type="button"
             onClick={() =>
-              navigate("/dashboard")
+              navigate(
+                "/dashboard",
+              )
             }
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2.5 rounded-lg transition tracking-wider"
           >
-            ← Back to Dashboard
+            Back to Dashboard
           </button>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
-          <div className="border-b border-slate-200 px-6 py-5 md:px-8">
-            <h1 className="text-2xl font-bold text-slate-900">
-              Add New Assessment
-            </h1>
-
-            <p className="text-slate-500 text-sm mt-1">
-              Add the assessment details and enter student scores.
-            </p>
+        {error && (
+          <div className="mb-6 bg-red-500/20 border border-red-400/60 text-red-100 p-4 rounded-lg">
+            {error}
           </div>
+        )}
 
-          <div className="p-6 md:p-8">
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-                {error}
-              </div>
-            )}
+        {loading ? (
+          <div className="py-16 text-center text-white/70">
+            Loading assessment
+            form...
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <section className="bg-white/5 border border-white/10 p-5 rounded-xl">
+              <h2 className="text-white/80 font-medium tracking-widest text-sm uppercase mb-5">
+                Assessment Details
+              </h2>
 
-            {loading ? (
-              <div className="py-12 text-center text-slate-500">
-                Loading students...
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="md:col-span-2">
+                  <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">
+                    Assessment Name{" "}
+                    <span className="text-red-400">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      formData.name
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setFormData({
+                        ...formData,
+
+                        name:
+                          event.target
+                            .value,
+                      })
+                    }
+                    placeholder="e.g. First Quarter Examination"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-blue-400 transition"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">
+                    Subject{" "}
+                    <span className="text-red-400">
+                      *
+                    </span>
+                  </label>
+
+                  <select
+                    value={
+                      formData.subject_id
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      handleSubjectChange(
+                        event.target
+                          .value,
+                      )
+                    }
+                    className="w-full bg-slate-900 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition"
+                    required
+                  >
+                    <option value="">
+                      Select a subject
+                    </option>
+
+                    {subjects.map(
+                      (subject) => (
+                        <option
+                          key={
+                            subject.id
+                          }
+                          value={
+                            subject.id
+                          }
+                        >
+                          {
+                            subject.name
+                          }
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">
+                    Classification{" "}
+                    <span className="text-red-400">
+                      *
+                    </span>
+                  </label>
+
+                  <select
+                    value={
+                      formData.type
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setFormData({
+                        ...formData,
+
+                        type:
+                          event.target
+                            .value,
+                      })
+                    }
+                    className="w-full bg-slate-900 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition"
+                    required
+                  >
+                    {TYPES.map(
+                      (type) => (
+                        <option
+                          key={type}
+                          value={type}
+                        >
+                          {type}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">
+                    Date{" "}
+                    <span className="text-red-400">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="date"
+                    value={
+                      formData.date
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setFormData({
+                        ...formData,
+
+                        date:
+                          event.target
+                            .value,
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition [color-scheme:dark]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">
+                    Total Assessment
+                    Items{" "}
+                    <span className="text-red-400">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={
+                      formData.total_items
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setFormData({
+                        ...formData,
+
+                        total_items:
+                          event.target
+                            .value,
+                      })
+                    }
+                    placeholder="e.g. 50"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-blue-400 transition"
+                    required
+                  />
+                </div>
               </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-8"
-              >
-                <section>
-                  <h2 className="text-lg font-semibold text-slate-900 mb-4">
-                    Assessment Details
+            </section>
+
+            <section className="bg-white/5 border border-white/10 p-5 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+                <div>
+                  <h2 className="text-white/80 font-medium tracking-widest text-sm uppercase">
+                    Student Scores
                   </h2>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="md:col-span-2">
-                      <label className="block text-slate-700 text-sm font-medium mb-2">
-                        Assessment Name
-                        <span className="text-red-500">
-                          {" "}*
-                        </span>
-                      </label>
+                  <p className="text-white/50 text-sm mt-1">
+                    Only students
+                    enrolled in the
+                    selected subject
+                    are shown.
+                  </p>
+                </div>
 
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        placeholder="e.g. First Quarter Examination"
-                        className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        required
-                      />
-                    </div>
+                <span className="text-blue-200 text-sm">
+                  {enteredCount} of{" "}
+                  {students.length}{" "}
+                  scores entered
+                </span>
+              </div>
 
-                    <div>
-                      <label className="block text-slate-700 text-sm font-medium mb-2">
-                        Classification
-                        <span className="text-red-500">
-                          {" "}*
-                        </span>
-                      </label>
+              {loadingStudents ? (
+                <div className="py-10 text-center text-white/60">
+                  Loading enrolled
+                  students...
+                </div>
+              ) : (
+                <div className="overflow-x-auto border border-white/10 rounded-xl">
+                  <table className="w-full text-left text-white/90 min-w-[650px]">
+                    <thead className="bg-black/20 text-white/60 uppercase text-xs tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3">
+                          Student
+                        </th>
 
-                      <select
-                        name="type"
-                        value={formData.type}
-                        onChange={handleInputChange}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        required
-                      >
-                        <option value="Major Exam">
-                          Major Exam
-                        </option>
+                        <th className="px-4 py-3">
+                          Grade
+                        </th>
 
-                        <option value="Activity">
-                          Activity
-                        </option>
+                        <th className="px-4 py-3">
+                          Section
+                        </th>
 
-                        <option value="Quiz">
-                          Quiz
-                        </option>
-                      </select>
-                    </div>
+                        <th className="px-4 py-3 w-48">
+                          Score
+                        </th>
+                      </tr>
+                    </thead>
 
-                    <div>
-                      <label className="block text-slate-700 text-sm font-medium mb-2">
-                        Date
-                        <span className="text-red-500">
-                          {" "}*
-                        </span>
-                      </label>
-
-                      <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleInputChange}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-slate-700 text-sm font-medium mb-2">
-                        Total Assessment Items
-                        <span className="text-red-500">
-                          {" "}*
-                        </span>
-                      </label>
-
-                      <input
-                        type="number"
-                        name="total_items"
-                        min="1"
-                        value={formData.total_items}
-                        onChange={handleInputChange}
-                        placeholder="e.g. 50"
-                        className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                <hr className="border-slate-200" />
-
-                <section>
-                  <div className="mb-5">
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      Student Scores
-                    </h2>
-
-                    <p className="text-slate-500 text-sm mt-1">
-                      Scores may be left blank and entered later.
-                    </p>
-                  </div>
-
-                  <div className="border border-slate-200 rounded-xl overflow-x-auto">
-                    <table className="w-full min-w-[650px]">
-                      <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                          <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-600 px-4 py-3">
-                            Student
-                          </th>
-
-                          <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-600 px-4 py-3">
-                            Grade
-                          </th>
-
-                          <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-600 px-4 py-3">
-                            Section
-                          </th>
-
-                          <th className="text-left text-xs font-semibold uppercase tracking-wide text-slate-600 px-4 py-3">
-                            Score
-                          </th>
-                        </tr>
-                      </thead>
-
-                      <tbody className="divide-y divide-slate-200">
-                        {students.map((student) => (
+                    <tbody>
+                      {students.map(
+                        (student) => (
                           <tr
-                            key={student.id}
-                            className="hover:bg-slate-50"
+                            key={
+                              student.id
+                            }
+                            className="border-t border-white/10"
                           >
-                            <td className="px-4 py-4 text-slate-900 font-medium">
-                              {student.name}
+                            <td className="px-4 py-3 font-medium">
+                              {
+                                student.name
+                              }
                             </td>
 
-                            <td className="px-4 py-4 text-slate-600">
-                              {student.grade}
+                            <td className="px-4 py-3">
+                              {
+                                student.grade
+                              }
                             </td>
 
-                            <td className="px-4 py-4 text-slate-600">
-                              {student.section}
+                            <td className="px-4 py-3">
+                              {
+                                student.section
+                              }
                             </td>
 
-                            <td className="px-4 py-4">
+                            <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <input
                                   type="number"
                                   min="0"
                                   max={
-                                    formData.total_items ||
-                                    undefined
+                                    totalItems >
+                                    0
+                                      ? totalItems
+                                      : undefined
                                   }
+                                  step="1"
                                   value={
-                                    scores[student.id] ??
-                                    ""
+                                    scores[
+                                      student
+                                        .id
+                                    ] ?? ""
                                   }
-                                  onChange={(event) =>
+                                  onChange={(
+                                    event,
+                                  ) =>
                                     handleScoreChange(
                                       student.id,
-                                      event.target.value
+                                      event
+                                        .target
+                                        .value,
                                     )
                                   }
-                                  placeholder="Score"
-                                  className="w-24 bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-24 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+                                  placeholder="—"
                                 />
 
-                                <span className="text-slate-500">
-                                  /
-                                  {" "}
-                                  {formData.total_items ||
-                                    "?"}
+                                <span className="text-white/50">
+                                  /{" "}
+                                  {totalItems >
+                                  0
+                                    ? totalItems
+                                    : "?"}
                                 </span>
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        ),
+                      )}
 
-                        {students.length === 0 && (
-                          <tr>
-                            <td
-                              colSpan="4"
-                              className="px-4 py-10 text-center text-slate-500"
-                            >
-                              No students are registered.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg shadow-sm transition"
-                  >
-                    {saving
-                      ? "Saving..."
-                      : "Save Assessment"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate("/dashboard")
-                    }
-                    className="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-3 rounded-lg shadow-sm transition"
-                  >
-                    Cancel
-                  </button>
+                      {students.length ===
+                        0 && (
+                        <tr>
+                          <td
+                            colSpan="4"
+                            className="px-4 py-10 text-center text-white/50"
+                          >
+                            No students
+                            are enrolled
+                            in this
+                            subject yet.
+                            The
+                            assessment
+                            can still be
+                            saved.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              </form>
-            )}
-          </div>
-        </div>
+              )}
+            </section>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button
+                type="submit"
+                disabled={
+                  saving ||
+                  subjects.length ===
+                    0
+                }
+                className="flex-1 bg-blue-600/90 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold py-4 rounded-lg shadow-lg transition tracking-widest"
+              >
+                {saving
+                  ? "Saving..."
+                  : isEditing
+                    ? "Update Assessment"
+                    : "Save Assessment"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/dashboard",
+                  )
+                }
+                className="flex-1 bg-slate-600/90 hover:bg-slate-500 text-white font-semibold py-4 rounded-lg shadow-lg transition tracking-widest"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
