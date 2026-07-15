@@ -1,8 +1,8 @@
 import {
   BrowserRouter as Router,
-  Routes,
+  Navigate,
   Route,
-  Navigate
+  Routes,
 } from "react-router-dom";
 
 import Login from "./components/Login";
@@ -40,12 +40,14 @@ function App() {
         />
 
         <Route
+          path="/assessment-form/:id"
+          element={<AssessmentForm />}
+        />
+
+        <Route
           path="*"
           element={
-            <Navigate
-              to="/"
-              replace
-            />
+            <Navigate to="/" />
           }
         />
       </Routes>
