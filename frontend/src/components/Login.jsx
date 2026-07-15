@@ -2,70 +2,65 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-// This points to your Node.js backend port
 const API_URL = "http://localhost:3000"; 
 
 export default function Login() {
-  // State variables to hold user input and UI status
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   
-  // React Router hook to redirect the user after a successful login
   const navigate = useNavigate();
 
-  // Core function to handle the form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevents the page from refreshing on submit
-    setError(""); // Clear any previous errors
+    e.preventDefault(); 
+    setError(""); 
 
-    // Dynamically choose the route based on which mode the user is in
     const endpoint = isLoginMode ? "/login" : "/register";
 
     try {
-      // Send a POST request to your Express backend with the username and password
       const response = await axios.post(`${API_URL}${endpoint}`, {
         name,
         password,
       });
 
       if (response.data) {
-        // If successful, save the user data to the browser's local storage
-        // This keeps them logged in even if they refresh the page
         localStorage.setItem("user", JSON.stringify(isLoginMode ? response.data.user : { name }));
-        
-        // Push the user to the student dashboard
         navigate("/dashboard");
       }
     } catch (err) {
-      // If the backend sends a 400 or 500 error, grab the message and display it
       setError(err.response?.data?.message || "An error occurred connecting to the server.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
-      {/* Glassmorphism Card UI */}
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-2xl">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/bg-image.png')" }}
+    >
+      <div className="w-full max-w-md bg-slate-950/40 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
         
-        <h2 className="text-3xl font-bold text-white text-center mb-8">
-          {isLoginMode ? "EDULite Login" : "Create EDULite Account"}
-        </h2>
+        <div className="flex justify-center mb-8">
+          <img 
+            src="/logo.png" 
+            alt="School Logo" 
+            className="h-20 object-contain drop-shadow-lg" 
+          />
+        </div>
 
-        {/* Error Message Display */}
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-100 p-3 rounded mb-4 text-sm text-center">
+          <div className="bg-red-500/20 border border-red-500 text-red-100 p-3 rounded mb-4 text-sm text-center font-medium tracking-wide">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-white/80 text-sm font-medium mb-2">Username</label>
+            {/* Added tracking-wider for the labels */}
+            <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">Username</label>
             <input
               type="text"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all tracking-wide"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -73,30 +68,32 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-white/80 text-sm font-medium mb-2">Password</label>
+            {/* Added tracking-wider for the labels */}
+            <label className="block text-white/90 text-sm font-medium mb-2 tracking-wider">Password</label>
             <input
               type="password"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all tracking-wide"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
+          {/* Added tracking-widest to the submit button to make it pop */}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition duration-200"
+            className="w-full bg-blue-600/90 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all duration-300 tracking-widest"
           >
             {isLoginMode ? "Sign In" : "Register"}
           </button>
         </form>
 
-        {/* Toggle between Login and Register modes */}
-        <p className="mt-6 text-center text-white/60 text-sm">
+        {/* Added tracking-wide to the footer text */}
+        <p className="mt-6 text-center text-white/70 text-sm tracking-wide">
           {isLoginMode ? "Don't have an account? " : "Already have an account? "}
           <button
             onClick={() => setIsLoginMode(!isLoginMode)}
-            className="text-blue-400 hover:text-blue-300 font-medium transition"
+            className="text-blue-400 hover:text-blue-300 font-semibold transition tracking-wider"
           >
             {isLoginMode ? "Sign Up" : "Log In"}
           </button>

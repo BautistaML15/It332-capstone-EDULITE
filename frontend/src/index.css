@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* 1. Define your custom local font */
+@font-face {
+  font-family: 'EduliteFont'; /* You can name this whatever you want */
+  src: url('/fonts/edulite-font.ttf') format('truetype');
+  font-weight: 400; /* Use 400 for normal, 700 for bold */
+  font-style: normal;
+}
+
+/* 2. Apply it globally to your dashboard and login */
 body {
-  background-color: #020617; 
+  font-family: 'EduliteFont', sans-serif;
 }
