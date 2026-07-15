@@ -11,15 +11,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 
-// Allow the React frontend to access the backend
+// Allow frontend requests
 app.use(cors());
 
 
-// Allow the backend to receive JSON data
+// Allow JSON request bodies
 app.use(express.json());
 
 
-// Login and registration routes
+// Authentication routes
 app.use(loginRoutes);
 
 
@@ -38,7 +38,8 @@ app.use(sectionRoutes);
 // Test route
 app.get("/", (req, res) => {
   res.json({
-    message: "EduLITE backend is running."
+    message:
+      "EduLITE backend is running."
   });
 });
 
@@ -51,7 +52,7 @@ app.use((req, res) => {
 });
 
 
-// Start the backend
+// Start server
 app.listen(PORT, () => {
   console.log(
     `EduLITE backend running at http://localhost:${PORT}`

@@ -1,65 +1,292 @@
-import Database from "better-sqlite3";
+import express from "express";
+import db from "./database/db.js";
 
-const db = new Database("./database/edulite.db");
+const router = express.Router();
 
-db.pragma("foreign_keys = ON");
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    password TEXT NOT NULL
-  );
+// ===========================
+// GET ALL STUDENTS
+// ===========================
 
-  CREATE TABLE IF NOT EXISTS students (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    score INTEGER,
-    grade INTEGER NOT NULL,
-    section TEXT NOT NULL
-  );
+router.get("/students", (req, res) => {
+  try {
+    const students = db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          grade,
+          section
+        FROM students
+        ORDER BY
+          section ASC,
+          name ASC
+      `)
+      .all();
 
-  CREATE TABLE IF NOT EXISTS sections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL COLLATE NOCASE UNIQUE
-  );
+    res.json(students);
+  } catch (error) {
+    console.error(
+      "Error loading students:",
+      error
+    );
 
-  CREATE TABLE IF NOT EXISTS assessments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    date TEXT NOT NULL,
-    total_items INTEGER NOT NULL
-  );
+    res.status(500).json({
+      message: "Unable to load students."
+    });
+  }
+});
 
-  CREATE TABLE IF NOT EXISTS assessment_scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    assessment_id INTEGER NOT NULL,
-    student_id INTEGER NOT NULL,
-    score INTEGER NOT NULL,
+// ===========================
+// GET ONE STUDENT
+// ===========================
 
-    FOREIGN KEY (assessment_id)
-      REFERENCES assessments(id)
-      ON DELETE CASCADE,
+router.get("/students/:id", (req, res) => {
+  try {
+    const student = db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          grade,
+          section
+        FROM students
+        WHERE id = ?
+      `)
+      .get(req.params.id);
 
-    FOREIGN KEY (student_id)
-      REFERENCES students(id)
-      ON DELETE CASCADE
-  );
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found."
+      });
+    }
 
-  CREATE UNIQUE INDEX IF NOT EXISTS
-    unique_student_assessment_score
-  ON assessment_scores (
-    assessment_id,
-    student_id
-  );
+    res.json(student);
+  } catch (error) {
+    console.error(
+      "Error loading student:",
+      error
+    );
 
-  INSERT OR IGNORE INTO sections (name)
-  SELECT DISTINCT TRIM(section)
-  FROM students
-  WHERE section IS NOT NULL
-    AND TRIM(section) <> '';
-`);
+    res.status(500).json({
+      message:
+        "Unable to load the student."
+    });
+  }
+});
 
-export default db;
+
+// ===========================
+// ADD STUDENT
+// ===========================
+
+router.post("/students", (req, res) => {
+  const name =
+    typeof req.body.name === "string"
+      ? req.body.name.trim()
+      : "";
+
+  const grade = req.body.grade;
+
+  const section =
+    typeof req.body.section === "string"
+      ? req.body.section.trim()
+      : "";
+
+  if (
+    !name ||
+    grade === "" ||
+    grade === null ||
+    grade === undefined ||
+    !section
+  ) {
+    return res.status(400).json({
+      message:
+        "Please complete all student information."
+    });
+  }
+
+  try {
+    const existingSection = db
+      .prepare(`
+        SELECT name
+        FROM sections
+        WHERE LOWER(TRIM(name)) =
+              LOWER(TRIM(?))
+      `)
+      .get(section);
+
+    if (!existingSection) {
+      return res.status(400).json({
+        message:
+          "Please select an existing section."
+      });
+    }
+
+    const result = db
+      .prepare(`
+        INSERT INTO students (
+          name,
+          grade,
+          section
+        )
+        VALUES (?, ?, ?)
+      `)
+      .run(
+        name,
+        grade,
+        existingSection.name
+      );
+
+    res.status(201).json({
+      message:
+        "Student added successfully.",
+
+      id: Number(result.lastInsertRowid)
+    });
+  } catch (error) {
+    console.error(
+      "Error adding student:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Unable to add the student."
+    });
+  }
+});
+
+
+// ===========================
+// UPDATE STUDENT
+// ===========================
+
+router.put("/students/:id", (req, res) => {
+  const name =
+    typeof req.body.name === "string"
+      ? req.body.name.trim()
+      : "";
+
+  const grade = req.body.grade;
+
+  const section =
+    typeof req.body.section === "string"
+      ? req.body.section.trim()
+      : "";
+
+  if (
+    !name ||
+    grade === "" ||
+    grade === null ||
+    grade === undefined ||
+    !section
+  ) {
+    return res.status(400).json({
+      message:
+        "Please complete all student information."
+    });
+  }
+
+  try {
+    const existingSection = db
+      .prepare(`
+        SELECT name
+        FROM sections
+        WHERE LOWER(TRIM(name)) =
+              LOWER(TRIM(?))
+      `)
+      .get(section);
+
+    if (!existingSection) {
+      return res.status(400).json({
+        message:
+          "Please select an existing section."
+      });
+    }
+
+    const result = db
+      .prepare(`
+        UPDATE students
+        SET
+          name = ?,
+          grade = ?,
+          section = ?
+        WHERE id = ?
+      `)
+      .run(
+        name,
+        grade,
+        existingSection.name,
+        req.params.id
+      );
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        message: "Student not found."
+      });
+    }
+
+    res.json({
+      message:
+        "Student updated successfully."
+    });
+  } catch (error) {
+    console.error(
+      "Error updating student:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Unable to update the student."
+    });
+  }
+});
+
+
+// ===========================
+// DELETE STUDENT
+// ===========================
+
+router.delete("/students/:id", (req, res) => {
+  try {
+    const result = db
+      .prepare(`
+        DELETE FROM students
+        WHERE id = ?
+      `)
+      .run(req.params.id);
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        message: "Student not found."
+      });
+    }
+
+    res.json({
+      message:
+        "Student deleted successfully."
+    });
+  } catch (error) {
+    console.error(
+      "Error deleting student:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Unable to delete the student."
+    });
+  }
+});
+
+
+/*
+  This line is required.
+
+  app.use(studentRoutes) only works when
+  this file exports the Express router.
+*/
+export default router;
