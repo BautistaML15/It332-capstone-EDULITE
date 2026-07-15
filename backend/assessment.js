@@ -10,29 +10,30 @@ const allowedAssessmentTypes = [
 ];
 
 
-// ===========================
+// ======================================
 // GET ALL ASSESSMENTS
-// ===========================
+// ======================================
 
 router.get("/assessments", (req, res) => {
   try {
-    const assessments = db.prepare(`
-      SELECT
-        id,
-        name,
-        type,
-        date,
-        total_items
+    const assessments = db
+      .prepare(`
+        SELECT
+          id,
+          name,
+          type,
+          date,
+          total_items
 
-      FROM assessments
+        FROM assessments
 
-      ORDER BY
-        date DESC,
-        id DESC
-    `).all();
+        ORDER BY
+          date DESC,
+          id DESC
+      `)
+      .all();
 
     res.json(assessments);
-
   } catch (error) {
     console.error(
       "Error loading assessments:",
@@ -47,15 +48,14 @@ router.get("/assessments", (req, res) => {
 });
 
 
-// ===========================
-// GET ALL ASSESSMENT SCORES
-// ===========================
+// ======================================
+// GET ALL ASSESSMENT SCORE RECORDS
+// ======================================
 
-router.get(
-  "/assessment-records",
-  (req, res) => {
-    try {
-      const records = db.prepare(`
+router.get("/assessment-records", (req, res) => {
+  try {
+    const records = db
+      .prepare(`
         SELECT
           assessment_scores.id,
           assessment_scores.score,
@@ -84,29 +84,29 @@ router.get(
         ORDER BY
           students.section,
           students.name,
-          assessments.date DESC
-      `).all();
+          assessments.date DESC,
+          assessments.id DESC
+      `)
+      .all();
 
-      res.json(records);
+    res.json(records);
+  } catch (error) {
+    console.error(
+      "Error loading assessment records:",
+      error
+    );
 
-    } catch (error) {
-      console.error(
-        "Error loading assessment records:",
-        error
-      );
-
-      res.status(500).json({
-        message:
-          "Unable to load assessment records."
-      });
-    }
+    res.status(500).json({
+      message:
+        "Unable to load assessment records."
+    });
   }
-);
+});
 
 
-// ===========================
-// CREATE ASSESSMENT AND SCORES
-// ===========================
+// ======================================
+// CREATE ASSESSMENT AND STUDENT SCORES
+// ======================================
 
 router.post("/assessments", (req, res) => {
   const name =
@@ -154,8 +154,6 @@ router.post("/assessments", (req, res) => {
     });
   }
 
-  const validScores = [];
-
   try {
     const findStudent = db.prepare(`
       SELECT id
@@ -163,11 +161,9 @@ router.post("/assessments", (req, res) => {
       WHERE id = ?
     `);
 
+    const validScores = [];
+
     for (const item of submittedScores) {
-      /*
-        Blank scores are allowed.
-        They are simply not recorded yet.
-      */
       if (
         item.score === "" ||
         item.score === null ||
@@ -209,28 +205,20 @@ router.post("/assessments", (req, res) => {
       if (!student) {
         return res.status(400).json({
           message:
-            "One of the selected students no longer exists."
+            "One of the selected students does not exist."
         });
       }
 
       validScores.push({
-        student_id: studentId,
+        studentId,
         score
       });
     }
 
-    /*
-      The transaction ensures that the
-      assessment and its student scores
-      are saved together.
-
-      If one insert fails, none of the
-      records are saved.
-    */
     const createAssessment =
       db.transaction(() => {
-        const assessmentResult =
-          db.prepare(`
+        const assessmentResult = db
+          .prepare(`
             INSERT INTO assessments (
               name,
               type,
@@ -238,7 +226,8 @@ router.post("/assessments", (req, res) => {
               total_items
             )
             VALUES (?, ?, ?, ?)
-          `).run(
+          `)
+          .run(
             name,
             type,
             date,
@@ -250,28 +239,19 @@ router.post("/assessments", (req, res) => {
             assessmentResult.lastInsertRowid
           );
 
-        const insertScore =
-          db.prepare(`
-            INSERT INTO assessment_scores (
-              assessment_id,
-              student_id,
-              score
-            )
-            VALUES (?, ?, ?)
-
-            ON CONFLICT (
-              assessment_id,
-              student_id
-            )
-
-            DO UPDATE SET
-              score = excluded.score
-          `);
+        const insertScore = db.prepare(`
+          INSERT INTO assessment_scores (
+            assessment_id,
+            student_id,
+            score
+          )
+          VALUES (?, ?, ?)
+        `);
 
         for (const item of validScores) {
           insertScore.run(
             assessmentId,
-            item.student_id,
+            item.studentId,
             item.score
           );
         }
@@ -284,11 +264,10 @@ router.post("/assessments", (req, res) => {
 
     res.status(201).json({
       message:
-        "Assessment and student scores saved successfully.",
+        "Assessment and scores saved successfully.",
 
       id: assessmentId
     });
-
   } catch (error) {
     console.error(
       "Error creating assessment:",
@@ -303,60 +282,261 @@ router.post("/assessments", (req, res) => {
 });
 
 
-// ===========================
-// DELETE ASSESSMENT
-// ===========================
+// ======================================
+// UPDATE ALL SCORES OF ONE STUDENT
+// ======================================
 
-router.delete(
-  "/assessments/:id",
+router.put(
+  "/students/:studentId/assessment-scores",
   (req, res) => {
+    const studentId =
+      Number(req.params.studentId);
+
+    const submittedScores =
+      Array.isArray(req.body.scores)
+        ? req.body.scores
+        : [];
+
+    if (
+      !Number.isInteger(studentId) ||
+      studentId <= 0
+    ) {
+      return res.status(400).json({
+        message:
+          "Invalid student ID."
+      });
+    }
+
+    if (!Array.isArray(req.body.scores)) {
+      return res.status(400).json({
+        message:
+          "Scores must be submitted as a list."
+      });
+    }
+
     try {
-      /*
-        Delete the scores first in case
-        the user's existing database did
-        not originally have cascade rules.
-      */
-      const removeAssessment =
-        db.transaction(() => {
-          db.prepare(`
-            DELETE FROM assessment_scores
-            WHERE assessment_id = ?
-          `).run(req.params.id);
+      const student = db
+        .prepare(`
+          SELECT id, name
+          FROM students
+          WHERE id = ?
+        `)
+        .get(studentId);
 
-          return db.prepare(`
-            DELETE FROM assessments
-            WHERE id = ?
-          `).run(req.params.id);
-        });
-
-      const result =
-        removeAssessment();
-
-      if (result.changes === 0) {
+      if (!student) {
         return res.status(404).json({
           message:
-            "Assessment not found."
+            "Student not found."
         });
       }
 
+      const findAssessment = db.prepare(`
+        SELECT
+          id,
+          name,
+          total_items
+
+        FROM assessments
+
+        WHERE id = ?
+      `);
+
+      const validatedScores = [];
+
+      for (const item of submittedScores) {
+        const assessmentId =
+          Number(item.assessment_id);
+
+        if (
+          !Number.isInteger(assessmentId) ||
+          assessmentId <= 0
+        ) {
+          return res.status(400).json({
+            message:
+              "A submitted score has an invalid assessment."
+          });
+        }
+
+        const assessment =
+          findAssessment.get(
+            assessmentId
+          );
+
+        if (!assessment) {
+          return res.status(404).json({
+            message:
+              "One of the assessments no longer exists."
+          });
+        }
+
+        const isBlank =
+          item.score === "" ||
+          item.score === null ||
+          item.score === undefined;
+
+        if (isBlank) {
+          validatedScores.push({
+            assessmentId,
+            score: null
+          });
+
+          continue;
+        }
+
+        const score =
+          Number(item.score);
+
+        if (
+          !Number.isInteger(score) ||
+          score < 0 ||
+          score >
+            Number(assessment.total_items)
+        ) {
+          return res.status(400).json({
+            message:
+              `${assessment.name}: score must be between 0 and ${assessment.total_items}.`
+          });
+        }
+
+        validatedScores.push({
+          assessmentId,
+          score
+        });
+      }
+
+      /*
+        All score updates are saved in
+        one transaction.
+
+        A blank score deletes the existing
+        record. A numeric score replaces
+        the existing record.
+      */
+      const saveScores =
+        db.transaction(() => {
+          const deleteScore = db.prepare(`
+            DELETE FROM assessment_scores
+
+            WHERE
+              assessment_id = ?
+              AND student_id = ?
+          `);
+
+          const insertScore = db.prepare(`
+            INSERT INTO assessment_scores (
+              assessment_id,
+              student_id,
+              score
+            )
+            VALUES (?, ?, ?)
+          `);
+
+          for (
+            const item
+            of validatedScores
+          ) {
+            /*
+              Delete the old score first.
+
+              This avoids depending on an
+              ON CONFLICT database index.
+            */
+            deleteScore.run(
+              item.assessmentId,
+              studentId
+            );
+
+            if (item.score !== null) {
+              insertScore.run(
+                item.assessmentId,
+                studentId,
+                item.score
+              );
+            }
+          }
+        });
+
+      saveScores();
+
       res.json({
         message:
-          "Assessment deleted successfully."
+          `${student.name}'s scores were updated successfully.`
       });
-
     } catch (error) {
       console.error(
-        "Error deleting assessment:",
+        "Error updating student scores:",
         error
       );
 
       res.status(500).json({
         message:
-          "Unable to delete the assessment."
+          "Unable to update the student's scores."
       });
     }
   }
 );
+
+
+// ======================================
+// DELETE ASSESSMENT
+// ======================================
+
+router.delete("/assessments/:id", (req, res) => {
+  const assessmentId =
+    Number(req.params.id);
+
+  if (
+    !Number.isInteger(assessmentId) ||
+    assessmentId <= 0
+  ) {
+    return res.status(400).json({
+      message:
+        "Invalid assessment ID."
+    });
+  }
+
+  try {
+    const removeAssessment =
+      db.transaction(() => {
+        db.prepare(`
+          DELETE FROM assessment_scores
+          WHERE assessment_id = ?
+        `).run(assessmentId);
+
+        return db
+          .prepare(`
+            DELETE FROM assessments
+            WHERE id = ?
+          `)
+          .run(assessmentId);
+      });
+
+    const result =
+      removeAssessment();
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        message:
+          "Assessment not found."
+      });
+    }
+
+    res.json({
+      message:
+        "Assessment deleted successfully."
+    });
+  } catch (error) {
+    console.error(
+      "Error deleting assessment:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Unable to delete the assessment."
+    });
+  }
+});
 
 
 export default router;

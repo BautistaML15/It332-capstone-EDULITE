@@ -23,8 +23,10 @@ export default function Dashboard() {
   const [assessments, setAssessments] =
     useState([]);
 
-  const [assessmentRecords, setAssessmentRecords] =
-    useState([]);
+  const [
+    assessmentRecords,
+    setAssessmentRecords
+  ] = useState([]);
 
   const [
     selectedSection,
@@ -37,11 +39,34 @@ export default function Dashboard() {
   const [loading, setLoading] =
     useState(true);
 
-  const [addingSection, setAddingSection] =
-    useState(false);
+  const [
+    addingSection,
+    setAddingSection
+  ] = useState(false);
 
   const [error, setError] =
     useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  /*
+    Score-editing states.
+  */
+  const [
+    editingStudentId,
+    setEditingStudentId
+  ] = useState(null);
+
+  const [
+    editedScores,
+    setEditedScores
+  ] = useState({});
+
+  const [
+    savingScores,
+    setSavingScores
+  ] = useState(false);
 
   const navigate = useNavigate();
 
@@ -56,7 +81,6 @@ export default function Dashboard() {
     }
 
     fetchDashboardData();
-
   }, [navigate]);
 
 
@@ -114,7 +138,6 @@ export default function Dashboard() {
       ) {
         setSelectedSection("ALL");
       }
-
     } catch (error) {
       console.error(
         "Error loading dashboard:",
@@ -123,9 +146,8 @@ export default function Dashboard() {
 
       setError(
         error.response?.data?.message ||
-        "Unable to load the dashboard."
+          "Unable to load the dashboard."
       );
-
     } finally {
       setLoading(false);
     }
@@ -146,6 +168,7 @@ export default function Dashboard() {
 
     setAddingSection(true);
     setError("");
+    setSuccess("");
 
     try {
       await axios.post(
@@ -158,13 +181,11 @@ export default function Dashboard() {
       setNewSection("");
 
       await fetchDashboardData();
-
     } catch (error) {
       setError(
         error.response?.data?.message ||
-        "Unable to add the section."
+          "Unable to add the section."
       );
-
     } finally {
       setAddingSection(false);
     }
@@ -183,6 +204,9 @@ export default function Dashboard() {
       return;
     }
 
+    setError("");
+    setSuccess("");
+
     try {
       await axios.delete(
         `${API_URL}/sections/${section.id}`
@@ -196,11 +220,10 @@ export default function Dashboard() {
       }
 
       await fetchDashboardData();
-
     } catch (error) {
       setError(
         error.response?.data?.message ||
-        "Unable to remove the section."
+          "Unable to remove the section."
       );
     }
   };
@@ -218,17 +241,19 @@ export default function Dashboard() {
       return;
     }
 
+    setError("");
+    setSuccess("");
+
     try {
       await axios.delete(
         `${API_URL}/students/${studentId}`
       );
 
       await fetchDashboardData();
-
     } catch (error) {
       setError(
         error.response?.data?.message ||
-        "Unable to delete the student."
+          "Unable to delete the student."
       );
     }
   };
@@ -246,17 +271,19 @@ export default function Dashboard() {
       return;
     }
 
+    setError("");
+    setSuccess("");
+
     try {
       await axios.delete(
         `${API_URL}/assessments/${assessmentId}`
       );
 
       await fetchDashboardData();
-
     } catch (error) {
       setError(
         error.response?.data?.message ||
-        "Unable to delete the assessment."
+          "Unable to delete the assessment."
       );
     }
   };
@@ -275,21 +302,20 @@ export default function Dashboard() {
   };
 
 
+  const handleAddAssessment = () => {
+    navigate("/assessment-form");
+  };
+
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/");
   };
 
 
-  /*
-    Filter students according to
-    the selected section.
-  */
   const displayedStudents =
     useMemo(() => {
-      if (
-        selectedSection === "ALL"
-      ) {
+      if (selectedSection === "ALL") {
         return students;
       }
 
@@ -298,7 +324,6 @@ export default function Dashboard() {
           student.section ===
           selectedSection
       );
-
     }, [
       students,
       selectedSection
@@ -306,8 +331,6 @@ export default function Dashboard() {
 
 
   /*
-    Create a lookup object:
-
     scoreMap[studentId][assessmentId]
   */
   const scoreMap =
@@ -329,14 +352,178 @@ export default function Dashboard() {
       }
 
       return map;
-
     }, [assessmentRecords]);
 
 
   /*
-    Calculate each student's average
-    percentage from their assessment
-    scores.
+    Open score editing for one student.
+  */
+  const startEditingScores = (
+    student
+  ) => {
+    const currentScores = {};
+
+    for (const assessment of assessments) {
+      const currentScore =
+        scoreMap[
+          student.id
+        ]?.[
+          assessment.id
+        ];
+
+      currentScores[assessment.id] =
+        currentScore === undefined ||
+        currentScore === null
+          ? ""
+          : String(currentScore);
+    }
+
+    setEditedScores(currentScores);
+    setEditingStudentId(student.id);
+    setError("");
+    setSuccess("");
+  };
+
+
+  const cancelEditingScores = () => {
+    if (savingScores) {
+      return;
+    }
+
+    setEditingStudentId(null);
+    setEditedScores({});
+    setError("");
+  };
+
+
+  const handleEditedScoreChange = (
+    assessmentId,
+    value
+  ) => {
+    /*
+      Allow a blank value or whole
+      non-negative numbers.
+    */
+    if (
+      value !== "" &&
+      !/^\d+$/.test(value)
+    ) {
+      return;
+    }
+
+    setEditedScores(
+      (currentScores) => ({
+        ...currentScores,
+        [assessmentId]: value
+      })
+    );
+  };
+
+
+  /*
+    Save every assessment score for
+    the selected student with one
+    backend request.
+  */
+  const saveStudentScores = async (
+    student
+  ) => {
+    if (savingScores) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    const scoreList = [];
+
+    for (const assessment of assessments) {
+      const enteredValue =
+        editedScores[
+          assessment.id
+        ];
+
+      const isBlank =
+        enteredValue === "" ||
+        enteredValue === null ||
+        enteredValue === undefined;
+
+      if (!isBlank) {
+        const numericScore =
+          Number(enteredValue);
+
+        if (
+          !Number.isInteger(numericScore) ||
+          numericScore < 0 ||
+          numericScore >
+            Number(assessment.total_items)
+        ) {
+          setError(
+            `${student.name}'s score for "${assessment.name}" must be between 0 and ${assessment.total_items}.`
+          );
+
+          return;
+        }
+      }
+
+      scoreList.push({
+        assessment_id:
+          assessment.id,
+
+        score: isBlank
+          ? null
+          : Number(enteredValue)
+      });
+    }
+
+    setSavingScores(true);
+
+    try {
+      const response = await axios.put(
+        `${API_URL}/students/${student.id}/assessment-scores`,
+        {
+          scores: scoreList
+        }
+      );
+
+      /*
+        Close editing before reloading
+        the records.
+      */
+      setEditingStudentId(null);
+      setEditedScores({});
+
+      /*
+        Reload updated records so the
+        table and analytics change
+        immediately.
+      */
+      await fetchDashboardData();
+
+      setSuccess(
+        response.data?.message ||
+          "Scores updated successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Error saving student scores:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "Unable to update the student scores."
+      );
+    } finally {
+      setSavingScores(false);
+    }
+  };
+
+
+  /*
+    Calculate every student's average
+    percentage from their recorded
+    assessments.
   */
   const studentAnalytics =
     useMemo(() => {
@@ -375,24 +562,18 @@ export default function Dashboard() {
                     percentage
                   ) =>
                     total + percentage,
-
                   0
-                ) /
-                percentages.length
-
+                ) / percentages.length
               : null;
 
           return {
             ...student,
-
             averagePercentage,
-
             assessmentCount:
               percentages.length
           };
         }
       );
-
     }, [
       displayedStudents,
       assessmentRecords
@@ -412,10 +593,8 @@ export default function Dashboard() {
           (total, student) =>
             total +
             student.averagePercentage,
-
           0
         ) / assessedStudents.length
-
       : 0;
 
 
@@ -484,7 +663,6 @@ export default function Dashboard() {
           passingStudents.length /
           assessedStudents.length
         ) * 100
-
       : 0;
 
 
@@ -494,12 +672,8 @@ export default function Dashboard() {
       : selectedSection;
 
 
-  const getPercentage = (
-    count
-  ) => {
-    if (
-      assessedStudents.length === 0
-    ) {
+  const getPercentage = (count) => {
+    if (assessedStudents.length === 0) {
       return 0;
     }
 
@@ -533,8 +707,7 @@ export default function Dashboard() {
 
     if (averagePercentage >= 85) {
       return {
-        label:
-          "Very Satisfactory",
+        label: "Very Satisfactory",
 
         className:
           "bg-blue-100 text-blue-700 border-blue-200"
@@ -613,13 +786,7 @@ export default function Dashboard() {
           </div>
 
 
-          <div
-            className="
-              flex
-              flex-wrap
-              gap-2
-            "
-          >
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={
@@ -642,10 +809,8 @@ export default function Dashboard() {
 
             <button
               type="button"
-              onClick={() =>
-                navigate(
-                  "/assessment-form"
-                )
+              onClick={
+                handleAddAssessment
               }
               className="
                 bg-green-600
@@ -710,6 +875,22 @@ export default function Dashboard() {
         )}
 
 
+        {success && (
+          <div
+            className="
+              bg-green-50
+              border
+              border-green-200
+              text-green-700
+              p-4
+              rounded-xl
+            "
+          >
+            {success}
+          </div>
+        )}
+
+
         {/* SECTION MANAGEMENT */}
 
         <section
@@ -751,7 +932,6 @@ export default function Dashboard() {
                 Create sections before
                 registering students.
               </p>
-
 
               <form
                 onSubmit={
@@ -962,7 +1142,6 @@ export default function Dashboard() {
           >
             Loading assessment records...
           </div>
-
         ) : (
           <>
 
@@ -1236,11 +1415,9 @@ export default function Dashboard() {
                 >
                   {assessments.length}
                   {" assessment"}
-                  {
-                    assessments.length === 1
-                      ? ""
-                      : "s"
-                  }
+                  {assessments.length === 1
+                    ? ""
+                    : "s"}
                 </p>
               </div>
 
@@ -1372,8 +1549,7 @@ export default function Dashboard() {
                     )}
 
 
-                    {assessments.length ===
-                      0 && (
+                    {assessments.length === 0 && (
                       <tr>
                         <td
                           colSpan="5"
@@ -1434,8 +1610,8 @@ export default function Dashboard() {
                     mt-1
                   "
                 >
-                  Scores entered from the
-                  assessment page appear here.
+                  Click Edit Scores to update
+                  or clear a student's scores.
                 </p>
               </div>
 
@@ -1480,7 +1656,7 @@ export default function Dashboard() {
                               uppercase
                               tracking-wide
                               text-slate-600
-                              min-w-[150px]
+                              min-w-[165px]
                             "
                           >
                             <div>
@@ -1534,12 +1710,18 @@ export default function Dashboard() {
                             student.averagePercentage
                           );
 
+                        const isEditing =
+                          editingStudentId ===
+                          student.id;
+
                         return (
                           <tr
                             key={student.id}
-                            className="
-                              hover:bg-slate-50
-                            "
+                            className={
+                              isEditing
+                                ? "bg-blue-50/50"
+                                : "hover:bg-slate-50"
+                            }
                           >
                             <td
                               className="
@@ -1610,7 +1792,73 @@ export default function Dashboard() {
                                       text-center
                                     "
                                   >
-                                    {hasScore ? (
+                                    {isEditing ? (
+                                      <div
+                                        className="
+                                          flex
+                                          items-center
+                                          justify-center
+                                          gap-2
+                                        "
+                                      >
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max={
+                                            assessment.total_items
+                                          }
+                                          step="1"
+                                          value={
+                                            editedScores[
+                                              assessment.id
+                                            ] ?? ""
+                                          }
+                                          onChange={(
+                                            event
+                                          ) =>
+                                            handleEditedScoreChange(
+                                              assessment.id,
+                                              event
+                                                .target
+                                                .value
+                                            )
+                                          }
+                                          placeholder="—"
+                                          disabled={
+                                            savingScores
+                                          }
+                                          className="
+                                            w-20
+                                            bg-white
+                                            border
+                                            border-blue-300
+                                            rounded-lg
+                                            px-2
+                                            py-2
+                                            text-center
+                                            text-slate-900
+                                            focus:outline-none
+                                            focus:ring-2
+                                            focus:ring-blue-500
+                                            focus:border-blue-500
+                                            disabled:bg-slate-100
+                                          "
+                                        />
+
+                                        <span
+                                          className="
+                                            text-slate-500
+                                            text-sm
+                                          "
+                                        >
+                                          /
+                                          {" "}
+                                          {
+                                            assessment.total_items
+                                          }
+                                        </span>
+                                      </div>
+                                    ) : hasScore ? (
                                       <>
                                         <div
                                           className="
@@ -1640,7 +1888,6 @@ export default function Dashboard() {
                                           %
                                         </div>
                                       </>
-
                                     ) : (
                                       <span
                                         className="
@@ -1704,46 +1951,130 @@ export default function Dashboard() {
                                 whitespace-nowrap
                               "
                             >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  navigate(
-                                    `/student-form/${student.id}`
-                                  )
-                                }
-                                className="
-                                  bg-blue-50
-                                  text-blue-700
-                                  hover:bg-blue-100
-                                  px-3
-                                  py-1.5
-                                  rounded-lg
-                                  font-medium
-                                  mr-2
-                                "
-                              >
-                                Edit
-                              </button>
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      saveStudentScores(
+                                        student
+                                      )
+                                    }
+                                    disabled={
+                                      savingScores
+                                    }
+                                    className="
+                                      bg-green-600
+                                      hover:bg-green-700
+                                      disabled:bg-green-300
+                                      disabled:cursor-not-allowed
+                                      text-white
+                                      px-3
+                                      py-1.5
+                                      rounded-lg
+                                      font-medium
+                                      mr-2
+                                    "
+                                  >
+                                    {savingScores
+                                      ? "Saving..."
+                                      : "Save Scores"}
+                                  </button>
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleDeleteStudent(
-                                    student.id
-                                  )
-                                }
-                                className="
-                                  bg-red-50
-                                  text-red-700
-                                  hover:bg-red-100
-                                  px-3
-                                  py-1.5
-                                  rounded-lg
-                                  font-medium
-                                "
-                              >
-                                Delete
-                              </button>
+                                  <button
+                                    type="button"
+                                    onClick={
+                                      cancelEditingScores
+                                    }
+                                    disabled={
+                                      savingScores
+                                    }
+                                    className="
+                                      bg-slate-100
+                                      text-slate-700
+                                      hover:bg-slate-200
+                                      disabled:opacity-50
+                                      px-3
+                                      py-1.5
+                                      rounded-lg
+                                      font-medium
+                                    "
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      navigate(
+                                        `/student-form/${student.id}`
+                                      )
+                                    }
+                                    className="
+                                      bg-blue-50
+                                      text-blue-700
+                                      hover:bg-blue-100
+                                      px-3
+                                      py-1.5
+                                      rounded-lg
+                                      font-medium
+                                      mr-2
+                                    "
+                                  >
+                                    Edit Info
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      startEditingScores(
+                                        student
+                                      )
+                                    }
+                                    disabled={
+                                      assessments.length ===
+                                      0
+                                    }
+                                    className="
+                                      bg-amber-50
+                                      text-amber-700
+                                      hover:bg-amber-100
+                                      disabled:bg-slate-100
+                                      disabled:text-slate-400
+                                      disabled:cursor-not-allowed
+                                      px-3
+                                      py-1.5
+                                      rounded-lg
+                                      font-medium
+                                      mr-2
+                                    "
+                                  >
+                                    Edit Scores
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDeleteStudent(
+                                        student.id
+                                      )
+                                    }
+                                    className="
+                                      bg-red-50
+                                      text-red-700
+                                      hover:bg-red-100
+                                      px-3
+                                      py-1.5
+                                      rounded-lg
+                                      font-medium
+                                    "
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                             </td>
                           </tr>
                         );
@@ -1751,13 +2082,12 @@ export default function Dashboard() {
                     )}
 
 
-                    {studentAnalytics.length ===
-                      0 && (
+                    {studentAnalytics.length === 0 && (
                       <tr>
                         <td
                           colSpan={
                             assessments.length +
-                            7
+                            6
                           }
                           className="
                             px-6
