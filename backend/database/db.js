@@ -90,6 +90,24 @@ db.exec(`
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS student_ai_insights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    support_type TEXT NOT NULL CHECK (
+      support_type IN ('intervention', 'enrichment')
+    ),
+    classification TEXT NOT NULL,
+    focus_subject_id INTEGER,
+    focus_label TEXT NOT NULL,
+    model TEXT NOT NULL,
+    title TEXT NOT NULL,
+    result_json TEXT NOT NULL,
+    pdf_data BLOB NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (focus_subject_id) REFERENCES subjects(id) ON DELETE SET NULL
+  );
 `);
 
 if (!columnExists("assessments", "subject_id")) {
@@ -271,6 +289,12 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_student_subjects_subject
     ON student_subjects(subject_id);
+
+  CREATE INDEX IF NOT EXISTS idx_student_ai_insights_student
+    ON student_ai_insights(student_id, created_at DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_student_ai_insights_focus_subject
+    ON student_ai_insights(focus_subject_id);
 `);
 
 export default db;
