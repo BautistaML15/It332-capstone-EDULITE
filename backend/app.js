@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 
@@ -6,6 +9,7 @@ import studentRoutes from "./student.js";
 import sectionRoutes from "./section.js";
 import subjectRoutes from "./subject.js";
 import assessmentRoutes from "./assessment.js";
+import geminiRoute from "./geminiRoute.js";
 
 const app = express();
 
@@ -29,6 +33,7 @@ app.use(studentRoutes);
 app.use(sectionRoutes);
 app.use(subjectRoutes);
 app.use(assessmentRoutes);
+app.use(geminiRoute);
 
 /*
   This must always remain after all
