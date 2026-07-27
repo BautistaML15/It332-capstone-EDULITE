@@ -20,23 +20,38 @@ const PAGE_DETAILS = {
       "Review, edit, and manage student scores for every enrolled subject.",
   },
   sections: {
-    title: "Add Section",
+    title: "Sections",
     description:
       "Create and manage the sections used when registering students.",
   },
   subjects: {
-    title: "Subject Management",
+    title: "Subjects",
     description:
       "Create subjects and select the students enrolled in each subject.",
   },
-  registerStudent: {
+  students: {
+    title: "Students",
+    description:
+      "Register students, manage enrollment, and open individual records.",
+  },
+  studentForm: {
     title: "Register Student",
     description: "Add or update a student without leaving the dashboard.",
   },
-  addAssessment: {
-    title: "Add Assessment",
+  assessments: {
+    title: "Assessments",
+    description:
+      "Create, review, edit, and manage subject assessments and scores.",
+  },
+  assessmentForm: {
+    title: "Create Assessment",
     description:
       "Create or update an assessment and record scores inside the dashboard.",
+  },
+  aiInsights: {
+    title: "AI Insights",
+    description:
+      "Generate evidence-based interventions and enrichment activities.",
   },
 };
 
@@ -65,7 +80,6 @@ export default function Dashboard() {
   const [editedScores, setEditedScores] = useState({});
   const [savingScores, setSavingScores] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
-  const [addMenuOpen, setAddMenuOpen] = useState(true);
   const [studentFormId, setStudentFormId] = useState(null);
   const [assessmentFormId, setAssessmentFormId] = useState(null);
 
@@ -86,13 +100,13 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const pageDetails =
-    activeView === "registerStudent" && studentFormId
+    activeView === "studentForm" && studentFormId
       ? {
           title: "Edit Student",
           description:
             "Update the student's information without leaving the dashboard.",
         }
-      : activeView === "addAssessment" && assessmentFormId
+      : activeView === "assessmentForm" && assessmentFormId
         ? {
             title: "Edit Assessment",
             description:
@@ -103,6 +117,27 @@ export default function Dashboard() {
   useEffect(() => {
     localStorage.setItem("eduliteSidebarCollapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    const stylesheets = [
+      {
+        id: "edulite-material-symbols",
+        href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL@0..1&icon_names=assignment,auto_awesome,category,dashboard,groups,logout,menu_book,table_view&display=block",
+      },
+    ];
+
+    stylesheets.forEach(({ id, href }) => {
+      if (document.getElementById(id)) {
+        return;
+      }
+
+      const stylesheet = document.createElement("link");
+      stylesheet.id = id;
+      stylesheet.rel = "stylesheet";
+      stylesheet.href = href;
+      document.head.appendChild(stylesheet);
+    });
+  }, []);
 
   useEffect(() => {
     if (!localStorage.getItem("user")) {
@@ -165,11 +200,11 @@ export default function Dashboard() {
   };
 
   const openView = (view) => {
-    if (view !== "registerStudent") {
+    if (view !== "studentForm") {
       setStudentFormId(null);
     }
 
-    if (view !== "addAssessment") {
+    if (view !== "assessmentForm") {
       setAssessmentFormId(null);
     }
 
@@ -409,19 +444,19 @@ export default function Dashboard() {
     }
 
     setStudentFormId(null);
-    openView("registerStudent");
+    openView("studentForm");
   };
 
   const handleEditStudent = (studentId) => {
     setStudentFormId(studentId);
-    setActiveView("registerStudent");
+    setActiveView("studentForm");
     setError("");
     setSuccess("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleStudentFormCancel = () => {
-    const returnView = studentFormId ? "records" : "dashboard";
+    const returnView = "students";
     setStudentFormId(null);
     openView(returnView);
   };
@@ -429,7 +464,7 @@ export default function Dashboard() {
   const handleStudentFormSaved = async (_result, details) => {
     await fetchDashboardData();
     setStudentFormId(null);
-    setActiveView("records");
+    setActiveView("students");
     setError("");
     setSuccess(
       details?.isEditing
@@ -447,12 +482,12 @@ export default function Dashboard() {
     }
 
     setAssessmentFormId(null);
-    openView("addAssessment");
+    openView("assessmentForm");
   };
 
   const handleEditAssessment = (assessmentId) => {
     setAssessmentFormId(assessmentId);
-    setActiveView("addAssessment");
+    setActiveView("assessmentForm");
     setError("");
     setSuccess("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -460,13 +495,13 @@ export default function Dashboard() {
 
   const handleAssessmentFormCancel = () => {
     setAssessmentFormId(null);
-    openView("dashboard");
+    openView("assessments");
   };
 
   const handleAssessmentFormSaved = async (_result, details) => {
     await fetchDashboardData();
     setAssessmentFormId(null);
-    setActiveView("dashboard");
+    setActiveView("assessments");
     setError("");
     setSuccess(
       details?.isEditing
@@ -899,47 +934,319 @@ export default function Dashboard() {
     if (averagePercentage === null) {
       return {
         label: "Not Assessed",
-        className: "border-[#80868b] bg-[#80868b] text-white",
+        className: "border-[#8E8E93] bg-[#8E8E93] text-white",
       };
     }
 
     if (averagePercentage >= 90) {
       return {
         label: "Excellent",
-        className: "border-[#34a853] bg-[#34a853] text-white",
+        className: "border-[#34C759] bg-[#34C759] text-white",
       };
     }
 
     if (averagePercentage >= 85) {
       return {
         label: "Very Satisfactory",
-        className: "border-[#4285f4] bg-[#4285f4] text-white",
+        className: "border-[#007AFF] bg-[#007AFF] text-white",
       };
     }
 
     if (averagePercentage >= 75) {
       return {
         label: "Satisfactory",
-        className: "border-[#fbbc04] bg-[#fbbc04] text-[#202124]",
+        className: "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
       };
     }
 
     return {
       label: "At Risk",
-      className: "border-[#ea4335] bg-[#ea4335] text-white",
+      className: "border-[#FF3B30] bg-[#FF3B30] text-white",
     };
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans text-[#202124]">
+    <div
+      className="edulite-ios-corners min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
+      style={{
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+      }}
+    >
+      <style>{`
+        .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
+        .edulite-ios-corners .rounded-lg {
+          corner-shape: squircle;
+        }
+
+        .edulite-ios-corners button,
+        .edulite-ios-corners [role="button"] {
+          transition:
+            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 220ms ease,
+            background-color 220ms ease,
+            color 220ms ease,
+            opacity 220ms ease,
+            filter 220ms ease;
+          will-change: transform;
+        }
+
+        .edulite-ios-corners button:not(.sidebar-nav-button):not(:disabled):hover,
+        .edulite-ios-corners [role="button"]:hover {
+          transform: translateY(-1px) scale(1.01);
+          filter: brightness(1.025);
+        }
+
+        .edulite-ios-corners button:not(.sidebar-nav-button):not(:disabled):active,
+        .edulite-ios-corners [role="button"]:active {
+          transform: translateY(0) scale(0.97);
+          transition-duration: 90ms;
+        }
+
+        .sidebar-nav-button {
+          transform: none !important;
+          transition:
+            background-color 180ms ease,
+            color 180ms ease,
+            box-shadow 180ms ease !important;
+        }
+
+        .sidebar-nav-button:active {
+          background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sidebar-nav-button .sidebar-nav-icon {
+          transition:
+            transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            color 180ms ease;
+        }
+
+        .sidebar-nav-button:hover .sidebar-nav-icon {
+          transform: scale(1.08);
+        }
+
+        .edulite-ios-corners input,
+        .edulite-ios-corners select,
+        .edulite-ios-corners textarea {
+          transition:
+            border-color 220ms ease,
+            box-shadow 220ms ease,
+            background-color 220ms ease,
+            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .edulite-ios-corners input:focus,
+        .edulite-ios-corners select:focus,
+        .edulite-ios-corners textarea:focus {
+          transform: translateY(-1px);
+        }
+
+        .edulite-ios-corners article {
+          transition:
+            transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 280ms ease,
+            filter 280ms ease;
+        }
+
+        .edulite-ios-corners article:hover {
+          transform: translateY(-2px);
+          filter: brightness(1.015);
+        }
+
+        .ui-panel-enter {
+          animation: ios-panel-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+
+        @keyframes ios-panel-in {
+          from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.99);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .edulite-ios-corners *,
+          .edulite-ios-corners *::before,
+          .edulite-ios-corners *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+
+        .liquid-glass-sidebar {
+          isolation: isolate;
+          background:
+            radial-gradient(
+              circle at 15% 8%,
+              rgba(0, 122, 255, 0.16),
+              transparent 34%
+            ),
+            radial-gradient(
+              circle at 92% 88%,
+              rgba(52, 199, 89, 0.12),
+              transparent 38%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.34),
+              rgba(255, 255, 255, 0.08)
+            );
+          -webkit-backdrop-filter: blur(32px) saturate(180%);
+          backdrop-filter: blur(32px) saturate(180%);
+          box-shadow:
+            12px 0 36px rgba(60, 60, 67, 0.12),
+            2px 0 8px rgba(60, 60, 67, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.38),
+            inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .liquid-glass-sidebar::before {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          border-radius: inherit;
+          background:
+            linear-gradient(
+              110deg,
+              rgba(255, 255, 255, 0.14),
+              transparent 34%,
+              rgba(255, 255, 255, 0.03) 66%,
+              rgba(255, 255, 255, 0.1)
+            );
+          content: "";
+          pointer-events: none;
+        }
+
+        .liquid-glass-sidebar::after {
+          position: absolute;
+          inset: 1px;
+          z-index: 0;
+          border-radius: inherit;
+          background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.05),
+            transparent 22%,
+            transparent 78%,
+            rgba(255, 255, 255, 0.03)
+          );
+          content: "";
+          pointer-events: none;
+        }
+
+        .liquid-glass-sidebar > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        @supports (corner-shape: squircle) {
+          .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
+          .edulite-ios-corners .rounded-lg {
+            corner-shape: squircle;
+          }
+        }
+
+        .bento-select option {
+          background: #ffffff;
+          color: #1C1C1E;
+        }
+
+        .edulite-dark {
+          color-scheme: dark;
+        }
+
+        .edulite-dark [class~="bg-white"] {
+          background-color: #171a17 !important;
+        }
+
+        .edulite-dark [class~="bg-[#F2F2F7]"] {
+          background-color: #0f120f !important;
+        }
+
+        .edulite-dark [class~="bg-[#E5E5EA]"],
+        .edulite-dark [class~="bg-[#E5E5EA]"],
+        .edulite-dark [class~="bg-[#D1D1D6]"] {
+          background-color: #232723 !important;
+        }
+
+        .edulite-dark [class~="bg-white/65"],
+        .edulite-dark [class~="bg-white/70"],
+        .edulite-dark [class~="bg-white/75"],
+        .edulite-dark [class~="bg-white/80"],
+        .edulite-dark [class~="bg-white/85"] {
+          background-color: rgba(30, 34, 30, 0.82) !important;
+        }
+
+        .edulite-dark [class~="text-[#1C1C1E]"],
+        .edulite-dark [class~="text-[#3A3A3C]"],
+        .edulite-dark [class~="text-[#1d1d1f]"] {
+          color: #f5f7f2 !important;
+        }
+
+        .edulite-dark [class~="text-[#636366]"],
+        .edulite-dark [class~="text-[#8E8E93]"] {
+          color: #aeb5ac !important;
+        }
+
+        .edulite-dark [class~="text-[#0051D5]"] {
+          color: #8ab4f8 !important;
+        }
+
+        .edulite-dark [class~="text-[#248A3D]"] {
+          color: #81c995 !important;
+        }
+
+        .edulite-dark [class~="text-[#D70015]"] {
+          color: #ff8a80 !important;
+        }
+
+        .edulite-dark [class~="text-[#8A5A00]"] {
+          color: #fdd663 !important;
+        }
+
+        .edulite-dark [class~="border-[#D1D1D6]"],
+        .edulite-dark [class~="border-[#E5E5EA]"] {
+          border-color: #343a34 !important;
+        }
+
+        .edulite-dark [class~="border-[#1A2CA3]"],
+        .edulite-dark [class~="border-[#007AFF]"],
+        .edulite-dark [class~="border-[#34C759]"],
+        .edulite-dark [class~="border-[#FF3B30]"],
+        .edulite-dark [class~="border-[#FFCC00]"] {
+          border-color: transparent !important;
+        }
+
+        .edulite-dark input,
+        .edulite-dark select,
+        .edulite-dark textarea {
+          caret-color: #f5f7f2;
+        }
+
+        .edulite-dark .dashboard-bento,
+        .edulite-dark .dashboard-bento [class~="text-[#1C1C1E]"] {
+          color: #f5f7f2 !important;
+        }
+
+        .edulite-dark .dashboard-bento [class~="text-[#636366]/75"],
+        .edulite-dark .dashboard-bento [class~="text-[#636366]/70"] {
+          color: rgba(245, 247, 242, 0.72) !important;
+        }
+      `}</style>
+
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#dadce0] bg-white transition-[width] duration-300 ${
-          sidebarCollapsed ? "w-16" : "w-64"
+        className={`liquid-glass-sidebar fixed inset-y-0 left-0 z-50 flex flex-col overflow-visible transition-[width] duration-300 ${
+          sidebarCollapsed ? "w-14" : "w-52"
         }`}
       >
         <div
-          className={`relative flex h-20 items-center border-b border-[#e3e3e3] ${
-            sidebarCollapsed ? "justify-center px-2" : "px-4"
+          className={`relative flex h-16 items-center ${
+            sidebarCollapsed ? "justify-center px-1.5" : "px-3"
           }`}
         >
           <button
@@ -947,189 +1254,230 @@ export default function Dashboard() {
             onClick={() => setSidebarCollapsed((current) => !current)}
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={`flex min-w-0 items-center ${
-              sidebarCollapsed ? "justify-center" : "gap-3"
+              sidebarCollapsed ? "justify-center" : "gap-2.5"
             }`}
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-[#dadce0] bg-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden">
               <img
                 src="/logo.png"
                 alt="EduLITE logo"
-                className="h-9 w-9 object-contain"
+                className="h-7 w-7 object-contain"
               />
             </div>
 
             {!sidebarCollapsed && (
               <div className="min-w-0">
-                <p className="truncate text-lg font-bold tracking-tight text-[#202124]">
+                <p className="truncate text-[15px] font-bold tracking-tight text-[#1C1C1E]">
                   EduLITE
                 </p>
 
-                <p className="truncate text-xs text-[#5f6368]">
+                <p className="truncate text-[10px] text-[#6e6e73]">
                   Teacher Workspace
                 </p>
               </div>
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={() => setSidebarCollapsed((current) => !current)}
-            aria-label={
-              sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="absolute -right-3 top-7 flex h-7 w-7 items-center justify-center rounded-full border border-[#dadce0] bg-white text-sm font-bold text-[#5f6368] transition hover:border-[#4285f4] hover:bg-[#4285f4] hover:text-white"
-          >
-            {sidebarCollapsed ? "›" : "‹"}
-          </button>
+          {!sidebarCollapsed && (
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(true)}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="absolute right-2 top-5 flex h-6 w-6 items-center justify-center rounded-full bg-white/70 text-xs font-bold text-[#6e6e73] shadow-sm backdrop-blur-xl transition hover:bg-white hover:text-[#007AFF]"
+            >
+              ‹
+            </button>
+          )}
         </div>
 
-        {sidebarCollapsed ? (
-          <div className="flex-1" />
-        ) : (
-          <nav className="flex-1 overflow-y-auto px-3 py-5">
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#80868b]">
+        <nav
+          aria-label="Main navigation"
+          className={`flex-1 overflow-x-hidden overflow-y-auto py-3 ${
+            sidebarCollapsed ? "px-1.5" : "px-2.5"
+          }`}
+        >
+          {!sidebarCollapsed && (
+            <p className="px-2.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8e8e93]">
               Menu
             </p>
+          )}
 
-            <div className="mt-3 space-y-1.5">
+            <div className={`${sidebarCollapsed ? "" : "mt-2"} space-y-1`}>
               <SidebarButton
                 active={activeView === "dashboard"}
                 label="Dashboard"
-                badge="D"
+                icon="dashboard"
                 tone="yellow"
+                collapsed={sidebarCollapsed}
                 onClick={() => openView("dashboard")}
+              />
+
+              <SidebarButton
+                active={
+                  activeView === "students" || activeView === "studentForm"
+                }
+                label="Students"
+                icon="groups"
+                tone="blue"
+                collapsed={sidebarCollapsed}
+                onClick={() => openView("students")}
+              />
+
+              <SidebarButton
+                active={activeView === "sections"}
+                label="Sections"
+                icon="category"
+                tone="red"
+                collapsed={sidebarCollapsed}
+                onClick={() => openView("sections")}
+              />
+
+              <SidebarButton
+                active={activeView === "subjects"}
+                label="Subjects"
+                icon="menu_book"
+                tone="yellow"
+                collapsed={sidebarCollapsed}
+                onClick={() => openView("subjects")}
+              />
+
+              <SidebarButton
+                active={
+                  activeView === "assessments" ||
+                  activeView === "assessmentForm"
+                }
+                label="Assessments"
+                icon="assignment"
+                tone="green"
+                collapsed={sidebarCollapsed}
+                onClick={() => openView("assessments")}
               />
 
               <SidebarButton
                 active={activeView === "records"}
                 label="Records"
-                badge="R"
-                tone="green"
+                icon="table_view"
+                tone="red"
+                collapsed={sidebarCollapsed}
                 onClick={() => openView("records")}
               />
 
-              <button
-                type="button"
-                onClick={() => setAddMenuOpen((current) => !current)}
-                className={`flex w-full items-center gap-3 rounded-[18px] px-3 py-2.5 text-left text-sm font-semibold transition ${
-                  activeView === "sections" ||
-                  activeView === "subjects" ||
-                  activeView === "registerStudent" ||
-                  activeView === "addAssessment"
-                    ? "bg-[#ea4335] text-white"
-                    : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
-                }`}
-              >
-                <span
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base font-bold ${
-                    activeView === "sections" ||
-                    activeView === "subjects" ||
-                    activeView === "registerStudent" ||
-                    activeView === "addAssessment"
-                      ? "bg-white/15 text-white"
-                      : "bg-[#ea4335] text-white"
-                  }`}
-                >
-                  +
-                </span>
-
-                <span className="flex-1">Add and Manage</span>
-
-                <span
-                  className={`text-xs transition-transform ${
-                    addMenuOpen ? "rotate-180" : ""
-                  }`}
-                >
-                  ⌄
-                </span>
-              </button>
-
-              {addMenuOpen && (
-                <div className="ml-5 space-y-1 border-l border-[#dadce0] pl-4 pt-1">
-                  <SubmenuButton
-                    label="Add Section"
-                    active={activeView === "sections"}
-                    onClick={() => openView("sections")}
-                  />
-
-                  <SubmenuButton
-                    label="Register Student"
-                    active={activeView === "registerStudent"}
-                    onClick={handleRegisterStudent}
-                  />
-
-                  <SubmenuButton
-                    label="Subject Management"
-                    active={activeView === "subjects"}
-                    onClick={() => openView("subjects")}
-                  />
-
-                  <SubmenuButton
-                    label="Add Assessment"
-                    active={activeView === "addAssessment"}
-                    onClick={handleAddAssessment}
-                  />
-                </div>
-              )}
+              <SidebarButton
+                active={activeView === "aiInsights"}
+                label="AI Insights"
+                icon="auto_awesome"
+                tone="blue"
+                collapsed={sidebarCollapsed}
+                onClick={() => openView("aiInsights")}
+              />
             </div>
           </nav>
-        )}
 
-        {!sidebarCollapsed && (
-          <div className="border-t border-[#e3e3e3] px-3 py-4">
+          <div
+            className={`py-3 ${
+              sidebarCollapsed ? "px-1.5" : "px-2.5"
+            }`}
+          >
             <SidebarButton
               label="Logout"
-              badge="↪"
+              icon="logout"
               tone="red"
+              collapsed={sidebarCollapsed}
               onClick={handleLogout}
             />
           </div>
-        )}
       </aside>
 
       <div
-        className={`min-h-screen transition-[padding] duration-300 ${
-          sidebarCollapsed ? "pl-16" : "pl-64"
-        }`}
+        className="min-h-screen pl-14"
       >
-        <header className="sticky top-0 z-30 bg-[#f8f9fa] px-4 pt-4 sm:px-6 lg:px-8">
-          <div className="flex min-h-20 items-center justify-between gap-4 rounded-[28px] border border-[#dadce0] bg-white px-5 py-4 sm:px-6">
-            <div className="min-w-0">
-              <h1 className="truncate text-2xl font-bold tracking-tight text-[#202124]">
-                {pageDetails.title}
-              </h1>
+        <header
+          className={`z-30 px-4 pt-4 sm:px-6 lg:px-8 ${
+            activeView === "dashboard"
+              ? "relative"
+              : "sticky top-0 bg-[#F2F2F7]"
+          }`}
+        >
+          {activeView === "dashboard" ? (
+            <div className="ui-panel-enter relative h-56 overflow-hidden rounded-[28px] bg-[#1C1C1E] shadow-[0_16px_40px_rgba(60,60,67,0.16)] sm:h-64 lg:h-72">
+              <img
+                src="/hero.jpg"
+                alt="Dashboard header"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                draggable="false"
+              />
 
-              <p className="mt-1 truncate text-sm text-[#5f6368]">
-                {pageDetails.description}
-              </p>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/18 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+
+              <div className="absolute bottom-0 left-0 max-w-2xl p-6 text-white sm:p-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                  EduLITE Teacher Workspace
+                </p>
+
+                <h1 className="mt-2 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                  Dashboard
+                </h1>
+
+                <p className="mt-2 text-sm leading-6 text-white/80 sm:text-base">
+                  Student performance analytics, learning insights, and subject
+                  assessments.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed((current) => !current)}
+                className="absolute right-5 top-5 hidden rounded-full bg-white/24 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-xl transition hover:bg-white/34 sm:inline-flex"
+              >
+                {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              </button>
             </div>
+          ) : (
+            <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px] border border-[#D1D1D6] bg-white px-5 py-4 sm:px-6">
+              <div className="min-w-0">
+                <h1 className="truncate text-2xl font-bold tracking-tight text-[#1C1C1E]">
+                  {pageDetails.title}
+                </h1>
 
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed((current) => !current)}
-              className="hidden rounded-full border border-[#dadce0] bg-[#f8f9fa] px-4 py-2 text-sm font-medium text-[#3c4043] transition hover:bg-[#4285f4] hover:text-white sm:inline-flex"
-            >
-              {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            </button>
-          </div>
+                <p className="mt-1 truncate text-sm text-[#636366]">
+                  {pageDetails.description}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed((current) => !current)}
+                className="hidden rounded-full border border-[#D1D1D6] bg-[#F2F2F7] px-4 py-2 text-sm font-medium text-[#3A3A3C] transition hover:bg-[#007AFF] hover:text-white sm:inline-flex"
+              >
+                {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              </button>
+            </div>
+          )}
         </header>
 
-        <main className="w-full space-y-6 p-4 sm:p-6 lg:p-8">
+        <main
+          className={`w-full p-4 sm:p-6 lg:p-8 ${
+            activeView === "dashboard"
+              ? "min-h-0 overflow-visible"
+              : "space-y-6"
+          }`}
+        >
           {error && (
-            <div className="rounded-[20px] border border-l-8 border-[#ea4335] bg-white p-4 text-[#c5221f]">
+            <div className="rounded-[20px] bg-[#FF3B30]/10 p-4 text-[#D70015] shadow-sm">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-[20px] border border-l-8 border-[#34a853] bg-white p-4 text-[#137333]">
+            <div className="rounded-[20px] bg-[#34C759]/12 p-4 text-[#248A3D] shadow-sm">
               {success}
             </div>
           )}
 
           {loading ? (
-            <div className="rounded-[28px] border border-[#dadce0] bg-white p-12 text-center text-[#5f6368]">
+            <div className="rounded-[28px] border border-[#D1D1D6] bg-white p-12 text-center text-[#636366]">
               Loading EduLITE data...
             </div>
           ) : (
@@ -1162,6 +1510,25 @@ export default function Dashboard() {
                   handleDeleteAssessment={handleDeleteAssessment}
                   generateStudentRecommendation={generateStudentRecommendation}
                   generatingRecommendationKey={generatingRecommendationKey}
+                  openView={openView}
+                  handleRegisterStudent={handleRegisterStudent}
+                  handleAddAssessment={handleAddAssessment}
+                />
+              )}
+
+              {activeView === "students" && (
+                <StudentsView
+                  students={students}
+                  sections={sections}
+                  subjects={subjects}
+                  onAddStudent={handleRegisterStudent}
+                  onEditStudent={handleEditStudent}
+                  onDeleteStudent={handleDeleteStudent}
+                  onOpenRecords={(student) => {
+                    setSelectedSection(student.section);
+                    setSelectedSubject("ALL");
+                    openView("records");
+                  }}
                 />
               )}
 
@@ -1233,7 +1600,44 @@ export default function Dashboard() {
                 />
               )}
 
-              {activeView === "registerStudent" && (
+              {activeView === "assessments" && (
+                <AssessmentsView
+                  students={students}
+                  sections={sections}
+                  subjects={subjects}
+                  assessments={assessments}
+                  displayedAssessments={displayedAssessments}
+                  selectedSection={selectedSection}
+                  selectedSubject={selectedSubject}
+                  setSelectedSection={setSelectedSection}
+                  setSelectedSubject={setSelectedSubject}
+                  currentSubjectLabel={currentSubjectLabel}
+                  onAddAssessment={handleAddAssessment}
+                  onEditAssessment={handleEditAssessment}
+                  onDeleteAssessment={handleDeleteAssessment}
+                />
+              )}
+
+              {activeView === "aiInsights" && (
+                <AiInsightsView
+                  students={students}
+                  sections={sections}
+                  subjects={subjects}
+                  assessments={assessments}
+                  selectedSection={selectedSection}
+                  selectedSubject={selectedSubject}
+                  setSelectedSection={setSelectedSection}
+                  setSelectedSubject={setSelectedSubject}
+                  currentSectionLabel={currentSectionLabel}
+                  currentSubjectLabel={currentSubjectLabel}
+                  atRiskStudents={atRiskStudents}
+                  highPotentialStudents={highPotentialStudents}
+                  generateStudentRecommendation={generateStudentRecommendation}
+                  generatingRecommendationKey={generatingRecommendationKey}
+                />
+              )}
+
+              {activeView === "studentForm" && (
                 <StudentForm
                   embedded
                   studentId={studentFormId}
@@ -1242,7 +1646,7 @@ export default function Dashboard() {
                 />
               )}
 
-              {activeView === "addAssessment" && (
+              {activeView === "assessmentForm" && (
                 <AssessmentForm
                   embedded
                   assessmentId={assessmentFormId}
@@ -1309,12 +1713,632 @@ function DashboardView({
   handleDeleteAssessment,
   generateStudentRecommendation,
   generatingRecommendationKey,
+  openView,
+  handleRegisterStudent,
+  handleAddAssessment,
+}) {
+  const nextStep =
+    sections.length === 0
+      ? {
+          title: "Create your first section",
+          description: "Sections are required before students can be registered.",
+          action: () => openView("sections"),
+          label: "Open Sections",
+        }
+      : subjects.length === 0
+        ? {
+            title: "Create your first subject",
+            description: "Subjects are required when registering students.",
+            action: () => openView("subjects"),
+            label: "Open Subjects",
+          }
+        : students.length === 0
+          ? {
+              title: "Register your first student",
+              description: "Add learners and assign their section and subjects.",
+              action: handleRegisterStudent,
+              label: "Register Student",
+            }
+          : assessments.length === 0
+            ? {
+                title: "Create your first assessment",
+                description: "Record scores to unlock performance analytics.",
+                action: handleAddAssessment,
+                label: "Create Assessment",
+              }
+            : {
+                title: "Review student performance",
+                description: "Your workspace is ready. Review scores and learning needs.",
+                action: () => openView("records"),
+                label: "Open Records",
+              };
+
+  const distribution = [
+    {
+      label: "Excellent",
+      count: excellentStudents.length,
+      percentage: getPercentage(excellentStudents.length),
+      color: "bg-[#34C759]",
+    },
+    {
+      label: "Very Satisfactory",
+      count: verySatisfactoryStudents.length,
+      percentage: getPercentage(verySatisfactoryStudents.length),
+      color: "bg-[#007AFF]",
+    },
+    {
+      label: "Satisfactory",
+      count: satisfactoryStudents.length,
+      percentage: getPercentage(satisfactoryStudents.length),
+      color: "bg-[#FFCC00]",
+    },
+    {
+      label: "Needs Support",
+      count: atRiskStudents.length,
+      percentage: getPercentage(atRiskStudents.length),
+      color: "bg-[#FF3B30]",
+    },
+  ];
+
+  const recentAssessments = [...displayedAssessments]
+    .sort((first, second) =>
+      String(second.date).localeCompare(String(first.date)),
+    )
+    .slice(0, 3);
+
+  return (
+    <div className="dashboard-bento grid auto-rows-auto gap-3 lg:grid-flow-dense lg:grid-cols-12">
+      <section className="rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-7">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#007AFF]">
+              Recommended next step
+            </p>
+            <h2 className="mt-1 truncate text-lg font-bold text-[#1C1C1E]">
+              {nextStep.title}
+            </h2>
+            <p className="truncate text-xs text-[#636366]">
+              {nextStep.description}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={nextStep.action}
+            className="shrink-0 rounded-full bg-[#007AFF] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0066D6]"
+          >
+            {nextStep.label}
+          </button>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-white/90 p-3 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.08)] backdrop-blur-xl lg:col-span-5">
+        <label className="min-w-0">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]/75">
+            Section
+          </span>
+          <select
+            value={selectedSection}
+            onChange={(event) => setSelectedSection(event.target.value)}
+            className="bento-select w-full truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+          >
+            <option value="ALL">All Sections</option>
+            {sections.map((section) => (
+              <option key={section.id} value={section.name}>
+                {section.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="min-w-0">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]/75">
+            Subject
+          </span>
+          <select
+            value={selectedSubject}
+            onChange={(event) => setSelectedSubject(event.target.value)}
+            className="bento-select w-full truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+          >
+            <option value="ALL">All Subjects</option>
+            {subjects.map((subject) => (
+              <option key={subject.id} value={String(subject.id)}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section className="grid grid-cols-2 place-items-stretch gap-3 lg:col-span-5">
+        <BentoMetric
+          label="Class Average"
+          value={`${classAverage.toFixed(1)}%`}
+          detail={`${currentSectionLabel} · ${currentSubjectLabel}`}
+          tone="yellow"
+        />
+        <BentoMetric
+          label="Passing Rate"
+          value={`${passingRate.toFixed(1)}%`}
+          detail={`${passingStudents.length} passing`}
+          tone="green"
+        />
+        <BentoMetric
+          label="Assessed"
+          value={assessedStudents.length}
+          detail={`${displayedStudents.length} matching students`}
+          tone="blue"
+        />
+        <BentoMetric
+          label="At Risk"
+          value={atRiskStudents.length}
+          detail="Below 75% average"
+          tone="red"
+        />
+      </section>
+
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-4">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+              Performance
+            </p>
+            <h3 className="text-base font-bold text-[#1C1C1E]">Distribution</h3>
+          </div>
+          <span className="text-xs text-[#636366]/70">
+            {assessedStudents.length} assessed
+          </span>
+        </div>
+        <div className="mt-3 flex flex-1 flex-col justify-around gap-2">
+          {distribution.map((item) => (
+            <div key={item.label}>
+              <div className="mb-1 flex items-center justify-between text-[11px]">
+                <span className="font-medium text-[#1C1C1E]">{item.label}</span>
+                <span className="text-[#636366]/70">
+                  {item.count} · {item.percentage.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-black/10">
+                <div
+                  className={`h-full rounded-full ${item.color}`}
+                  style={{ width: `${item.percentage}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+              Setup
+            </p>
+            <h3 className="text-base font-bold text-[#1C1C1E]">Workspace</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => openView("records")}
+            className="text-xs font-semibold text-[#1C1C1E] hover:underline"
+          >
+            Records
+          </button>
+        </div>
+        <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
+          <WorkflowStep label="Sections" value={sections.length} onClick={() => openView("sections")} compact />
+          <WorkflowStep label="Subjects" value={subjects.length} onClick={() => openView("subjects")} compact />
+          <WorkflowStep label="Students" value={students.length} onClick={() => openView("students")} compact />
+          <WorkflowStep label="Assessments" value={assessments.length} onClick={() => openView("assessments")} compact />
+        </div>
+      </section>
+
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-7">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+              Learning support
+            </p>
+            <h3 className="text-base font-bold text-[#1C1C1E]">Priority Insights</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => openView("aiInsights")}
+            className="rounded-full bg-black/5 px-3 py-1.5 text-xs font-semibold text-[#1C1C1E] hover:bg-black/10"
+          >
+            Open AI Insights
+          </button>
+        </div>
+        <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
+          <BentoInsight
+            title="Needs Intervention"
+            student={atRiskStudents[0]}
+            type="risk"
+            onGenerate={generateStudentRecommendation}
+            generatingKey={generatingRecommendationKey}
+          />
+          <BentoInsight
+            title="Ready for Enrichment"
+            student={highPotentialStudents[0]}
+            type="potential"
+            onGenerate={generateStudentRecommendation}
+            generatingKey={generatingRecommendationKey}
+          />
+        </div>
+      </section>
+
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-5">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+              Latest activity
+            </p>
+            <h3 className="text-base font-bold text-[#1C1C1E]">Assessments</h3>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddAssessment}
+            className="text-xs font-semibold text-[#1C1C1E] hover:underline"
+          >
+            + Create
+          </button>
+        </div>
+        <div className="mt-2 min-h-0 flex-1 space-y-1.5">
+          {recentAssessments.map((assessment) => (
+            <div
+              key={assessment.id}
+              className="flex items-center gap-2 rounded-[13px] bg-[#F2F2F7] px-3 py-2"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-[#1C1C1E]">
+                  {assessment.name}
+                </p>
+                <p className="truncate text-[10px] text-[#636366]/70">
+                  {assessment.subject_name} · {assessment.date}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onEditAssessment(assessment.id)}
+                className="text-[11px] font-semibold text-[#1C1C1E] hover:underline"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteAssessment(assessment.id)}
+                className="text-[11px] font-semibold text-[#636366]/75 hover:text-[#1C1C1E] hover:underline"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+          {recentAssessments.length === 0 && (
+            <div className="flex h-full items-center justify-center rounded-[14px] bg-[#F2F2F7] text-center text-xs text-[#636366]/70">
+              No assessments yet.
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function WorkflowStep({ label, value, onClick, compact = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-[14px] border-0 bg-[#F2F2F7] text-left text-[#1C1C1E] transition hover:bg-[#E5E5EA] ${
+        compact ? "p-2.5" : "p-4"
+      }`}
+    >
+      <span className={`block font-medium text-[#636366]/75 ${compact ? "text-[11px]" : "mt-1 text-sm"}`}>
+        {label}
+      </span>
+      <span className={`block shrink-0 font-bold text-[#1C1C1E] ${compact ? "text-lg" : "text-2xl"}`}>{value}</span>
+    </button>
+  );
+}
+
+function BentoMetric({ label, value, detail, tone = "blue" }) {
+  const tones = {
+    blue: "bg-[#007AFF]/10 text-[#007AFF]",
+    red: "bg-[#FF3B30]/10 text-[#D70015]",
+    green: "bg-[#34C759]/12 text-[#248A3D]",
+    yellow: "bg-[#FF9500]/12 text-[#8A5A00]",
+  };
+
+  return (
+    <div
+      className={`relative flex min-h-[108px] w-full flex-col justify-between overflow-hidden rounded-[20px] p-4 shadow-sm ${
+        tones[tone] ?? tones.blue
+      }`}
+    >
+      <p className="text-[11px] font-semibold text-[#636366]/75">{label}</p>
+      <p className="my-1 text-2xl font-bold tracking-tight">{value}</p>
+      <p className="truncate text-[10px] text-[#636366]/70">{detail}</p>
+    </div>
+  );
+}
+
+function BentoInsight({
+  title,
+  student,
+  type,
+  onGenerate,
+  generatingKey,
+}) {
+  const isRisk = type === "risk";
+  const supportType = isRisk ? "intervention" : "enrichment";
+  const requestKey = student ? `${supportType}-${student.id}` : "";
+  const isGenerating = generatingKey === requestKey;
+
+  return (
+    <div
+      className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-[#1C1C1E] shadow-sm ${
+        isRisk ? "bg-[#FF3B30]/10" : "bg-[#34C759]/12"
+      }`}
+    >
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#636366]/75">
+          {title}
+        </p>
+        {student ? (
+          <>
+            <p className="mt-1 truncate text-sm font-bold text-[#1C1C1E]">
+              {student.name}
+            </p>
+            <p className="text-[10px] text-[#636366]/70">
+              {student.section} · {student.averagePercentage.toFixed(1)}%
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-xs text-[#636366]/70">
+            No student identified.
+          </p>
+        )}
+      </div>
+      {student && (
+        <button
+          type="button"
+          onClick={() => onGenerate(student, supportType)}
+          disabled={Boolean(generatingKey)}
+          className={`mt-2 rounded-full px-3 py-1.5 text-[10px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
+            isRisk
+              ? "bg-[#FF3B30] hover:bg-[#D70015]"
+              : "bg-[#34C759] hover:bg-[#248A3D]"
+          }`}
+        >
+          {isGenerating
+            ? "Generating..."
+            : isRisk
+              ? "Generate Intervention"
+              : "Generate Enrichment"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function StudentsView({
+  students,
+  sections,
+  subjects,
+  onAddStudent,
+  onEditStudent,
+  onDeleteStudent,
+  onOpenRecords,
+}) {
+  const [search, setSearch] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("ALL");
+
+  const filteredStudents = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return students.filter((student) => {
+      const matchesSection =
+        sectionFilter === "ALL" || student.section === sectionFilter;
+      const matchesSearch =
+        !query ||
+        `${student.name} ${student.grade} ${student.section} ${
+          student.subjects?.map((subject) => subject.name).join(" ") || ""
+        }`
+          .toLowerCase()
+          .includes(query);
+
+      return matchesSection && matchesSearch;
+    });
+  }, [students, search, sectionFilter]);
+
+  return (
+    <>
+      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
+              Student Directory
+            </p>
+            <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
+              {students.length} registered student
+              {students.length === 1 ? "" : "s"}
+            </h2>
+            <p className="mt-1 text-sm text-[#636366]">
+              Search, register, edit, and open student assessment records.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onAddStudent}
+            className="rounded-full bg-[#007AFF] px-5 py-3 font-semibold text-white hover:bg-[#0066D6]"
+          >
+            + Register Student
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-[1fr_240px]">
+          <label>
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#636366]">
+              Search students
+            </span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Name, grade, section, or subject"
+              className="w-full rounded-[16px] border border-[#D1D1D6] px-4 py-3 focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/15"
+            />
+          </label>
+
+          <label>
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#636366]">
+              Section
+            </span>
+            <select
+              value={sectionFilter}
+              onChange={(event) => setSectionFilter(event.target.value)}
+              className="w-full rounded-[16px] border border-[#D1D1D6] bg-white px-4 py-3 focus:border-[#007AFF] focus:outline-none"
+            >
+              <option value="ALL">All Sections</option>
+              {sections.map((section) => (
+                <option key={section.id} value={section.name}>
+                  {section.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[850px]">
+            <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7]">
+              <tr>
+                <TableHeading>Student</TableHeading>
+                <TableHeading>Grade</TableHeading>
+                <TableHeading>Section</TableHeading>
+                <TableHeading>Subjects</TableHeading>
+                <TableHeading align="right">Actions</TableHeading>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E5E5EA]">
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="hover:bg-[#F2F2F7]">
+                  <td className="px-6 py-4 font-semibold text-[#1C1C1E]">
+                    {student.name}
+                  </td>
+                  <td className="px-6 py-4 text-[#636366]">{student.grade}</td>
+                  <td className="px-6 py-4 text-[#636366]">
+                    {student.section}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex max-w-md flex-wrap gap-1.5">
+                      {student.subjects?.map((subject) => (
+                        <span
+                          key={subject.id}
+                          className="rounded-full border border-[#007AFF] px-2.5 py-1 text-xs font-medium text-[#0051D5]"
+                        >
+                          {subject.name}
+                        </span>
+                      ))}
+                      {!student.subjects?.length && (
+                        <span className="text-sm text-[#8E8E93]">
+                          No subjects assigned
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-right">
+                    <button
+                      type="button"
+                      onClick={() => onOpenRecords(student)}
+                      className="mr-2 rounded-full px-3.5 py-2 font-medium text-[#248A3D] hover:bg-[#34C759] hover:text-white"
+                    >
+                      Records
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onEditStudent(student.id)}
+                      className="mr-2 rounded-full px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteStudent(student.id)}
+                      className="rounded-full px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredStudents.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center text-[#636366]">
+                    {students.length === 0
+                      ? "No students registered yet."
+                      : "No students match the current search and section filter."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {subjects.length === 0 && students.length > 0 && (
+        <p className="rounded-[18px] border border-[#FFCC00] bg-white p-4 text-sm text-[#8A5A00]">
+          Create at least one subject to complete student enrollment.
+        </p>
+      )}
+    </>
+  );
+}
+
+function AssessmentsView({
+  students,
+  sections,
+  subjects,
+  assessments,
+  displayedAssessments,
+  selectedSection,
+  selectedSubject,
+  setSelectedSection,
+  setSelectedSubject,
+  currentSubjectLabel,
+  onAddAssessment,
+  onEditAssessment,
+  onDeleteAssessment,
 }) {
   return (
     <>
+      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#248A3D]">
+              Assessment Workflow
+            </p>
+            <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
+              Assessment Library
+            </h2>
+            <p className="mt-1 text-sm text-[#636366]">
+              Create an assessment, enter scores, then review results in Records.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onAddAssessment}
+            className="rounded-full bg-[#34C759] px-5 py-3 font-semibold text-white hover:bg-[#248A3D]"
+          >
+            + Create Assessment
+          </button>
+        </div>
+      </section>
+
       <DashboardFilters
-        title="Dashboard Filters"
-        description="All analytics and assessments update using the selected section and subject."
+        title="Assessment Filters"
+        description="Filter the assessment library by subject."
         students={students}
         sections={sections}
         subjects={subjects}
@@ -1325,131 +2349,76 @@ function DashboardView({
         setSelectedSubject={setSelectedSubject}
       />
 
-      <section>
-        <div className="mb-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#5f6368]">
-            Performance Analytics
-          </p>
-
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#202124]">
-            {currentSubjectLabel} · {currentSectionLabel}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <AnalyticsCard
-            title="Class Average"
-            value={`${classAverage.toFixed(1)}%`}
-            description="Average from relevant recorded assessments"
-            tone="yellow"
-          />
-
-          <AnalyticsCard
-            title="Students Assessed"
-            value={assessedStudents.length}
-            description={`${displayedStudents.length} students match the filters`}
-            tone="blue"
-          />
-
-          <AnalyticsCard
-            title="Passing Rate"
-            value={`${passingRate.toFixed(1)}%`}
-            description={`${passingStudents.length} students have passing averages`}
-            tone="green"
-          />
-
-          <AnalyticsCard
-            title="Students at Risk"
-            value={atRiskStudents.length}
-            description="Average percentage below 75"
-            tone="red"
-          />
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
-        <div className="mb-6">
-          <h3 className="text-xl font-bold text-[#202124]">
-            Class Performance Summary
-          </h3>
-
-          <p className="mt-1 text-sm text-[#5f6368]">
-            Distribution of assessed students across performance levels.
-          </p>
-        </div>
-
-        <div className="space-y-5">
-          <PerformanceBar
-            label="Excellent"
-            range="90–100%"
-            count={excellentStudents.length}
-            percentage={getPercentage(excellentStudents.length)}
-            barClass="bg-[#34a853]"
-          />
-
-          <PerformanceBar
-            label="Very Satisfactory"
-            range="85–89%"
-            count={verySatisfactoryStudents.length}
-            percentage={getPercentage(verySatisfactoryStudents.length)}
-            barClass="bg-[#4285f4]"
-          />
-
-          <PerformanceBar
-            label="Satisfactory"
-            range="75–84%"
-            count={satisfactoryStudents.length}
-            percentage={getPercentage(satisfactoryStudents.length)}
-            barClass="bg-[#fbbc04]"
-          />
-
-          <PerformanceBar
-            label="Needs Support"
-            range="Below 75%"
-            count={atRiskStudents.length}
-            percentage={getPercentage(atRiskStudents.length)}
-            barClass="bg-[#ea4335]"
-          />
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
-        <div className="mb-5">
-          <h3 className="text-xl font-bold text-[#202124]">
-            Learning Insights
-          </h3>
-
-          <p className="mt-1 text-sm text-[#5f6368]">
-            Students who may need support and students demonstrating high
-            potential.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <InsightList
-            title="Students at Risk"
-            students={atRiskStudents}
-            type="risk"
-            onGenerateRecommendation={generateStudentRecommendation}
-            generatingRecommendationKey={generatingRecommendationKey}
-          />
-
-          <InsightList
-            title="High Potential"
-            students={highPotentialStudents}
-            type="potential"
-            onGenerateRecommendation={generateStudentRecommendation}
-            generatingRecommendationKey={generatingRecommendationKey}
-          />
-        </div>
-      </section>
-
       <AssessmentList
         displayedAssessments={displayedAssessments}
         currentSubjectLabel={currentSubjectLabel}
         onEditAssessment={onEditAssessment}
-        handleDeleteAssessment={handleDeleteAssessment}
+        handleDeleteAssessment={onDeleteAssessment}
       />
+    </>
+  );
+}
+
+function AiInsightsView({
+  students,
+  sections,
+  subjects,
+  assessments,
+  selectedSection,
+  selectedSubject,
+  setSelectedSection,
+  setSelectedSubject,
+  currentSectionLabel,
+  currentSubjectLabel,
+  atRiskStudents,
+  highPotentialStudents,
+  generateStudentRecommendation,
+  generatingRecommendationKey,
+}) {
+  return (
+    <>
+      <DashboardFilters
+        title="Insight Filters"
+        description="Select the evidence set used for learning-support recommendations."
+        students={students}
+        sections={sections}
+        subjects={subjects}
+        assessments={assessments}
+        selectedSection={selectedSection}
+        selectedSubject={selectedSubject}
+        setSelectedSection={setSelectedSection}
+        setSelectedSubject={setSelectedSubject}
+      />
+
+      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
+          Evidence scope
+        </p>
+        <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
+          {currentSubjectLabel} · {currentSectionLabel}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-[#636366]">
+          Recommendations use the selected subject, the student's recorded
+          assessments, and their calculated performance classification.
+        </p>
+      </section>
+
+      <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+        <InsightList
+          title="Students Needing Intervention"
+          students={atRiskStudents}
+          type="risk"
+          onGenerateRecommendation={generateStudentRecommendation}
+          generatingRecommendationKey={generatingRecommendationKey}
+        />
+        <InsightList
+          title="Students Ready for Enrichment"
+          students={highPotentialStudents}
+          type="potential"
+          onGenerateRecommendation={generateStudentRecommendation}
+          generatingRecommendationKey={generatingRecommendationKey}
+        />
+      </section>
     </>
   );
 }
@@ -1506,13 +2475,13 @@ function RecordsView({
       />
 
       <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-        <div className="border-b border-[#e3e3e3] px-6 py-5">
-          <h2 className="text-xl font-bold text-[#202124]">
+        <div className="border-b border-[#E5E5EA] px-6 py-5">
+          <h2 className="text-xl font-bold text-[#1C1C1E]">
             Student Assessment Records - {currentSubjectLabel} -{" "}
             {currentSectionLabel}
           </h2>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             Click a student's name to expand their complete profile, assessment
             history, and saved Gemini learning insights.
           </p>
@@ -1520,7 +2489,7 @@ function RecordsView({
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-max">
-            <thead className="border-b border-[#e3e3e3] bg-[#f8f9fa]">
+            <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7]">
               <tr>
                 <TableHeading>Student</TableHeading>
                 <TableHeading>Grade</TableHeading>
@@ -1530,11 +2499,11 @@ function RecordsView({
                 {displayedAssessments.map((assessment) => (
                   <th
                     key={assessment.id}
-                    className="min-w-[175px] px-5 py-4 text-center text-xs font-semibold uppercase tracking-wide text-[#5f6368]"
+                    className="min-w-[175px] px-5 py-4 text-center text-xs font-semibold uppercase tracking-wide text-[#636366]"
                   >
                     <div>{assessment.name}</div>
 
-                    <div className="mt-1 font-normal normal-case text-[#80868b]">
+                    <div className="mt-1 font-normal normal-case text-[#8E8E93]">
                       {assessment.subject_name} - {assessment.type} -{" "}
                       {assessment.total_items} items
                     </div>
@@ -1547,7 +2516,7 @@ function RecordsView({
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-[#e3e3e3]">
+            <tbody className="divide-y divide-[#E5E5EA]">
               {studentAnalytics.map((student) => {
                 const status = getPerformanceStatus(student.averagePercentage);
                 const isEditing = editingStudentId === student.id;
@@ -1601,24 +2570,24 @@ function RecordsView({
                     <tr
                       className={
                         isEditing
-                          ? "bg-[#f8f9fa]"
+                          ? "bg-[#F2F2F7]"
                           : isExpanded
-                            ? "bg-[#f8f9fa]"
-                            : "hover:bg-[#f8f9fa]"
+                            ? "bg-[#F2F2F7]"
+                            : "hover:bg-[#F2F2F7]"
                       }
                     >
-                      <td className="px-5 py-4 font-medium text-[#202124]">
+                      <td className="px-5 py-4 font-medium text-[#1C1C1E]">
                         <button
                           type="button"
                           onClick={() => toggleStudentProfile(student)}
                           className="group text-left"
                           aria-expanded={isExpanded}
                         >
-                          <span className="block font-semibold text-[#174ea6] group-hover:text-[#1a73e8] group-hover:underline">
+                          <span className="block font-semibold text-[#0051D5] group-hover:text-[#007AFF] group-hover:underline">
                             {student.name}
                           </span>
 
-                          <span className="mt-1 block text-xs font-normal text-[#5f6368]">
+                          <span className="mt-1 block text-xs font-normal text-[#636366]">
                             {isExpanded
                               ? "Hide profile"
                               : "View profile and saved insights"}
@@ -1626,11 +2595,11 @@ function RecordsView({
                         </button>
                       </td>
 
-                      <td className="px-5 py-4 text-[#5f6368]">
+                      <td className="px-5 py-4 text-[#636366]">
                         {student.grade}
                       </td>
 
-                      <td className="px-5 py-4 text-[#5f6368]">
+                      <td className="px-5 py-4 text-[#636366]">
                         {student.section}
                       </td>
 
@@ -1639,7 +2608,7 @@ function RecordsView({
                           {student.subjects?.map((subject) => (
                             <span
                               key={subject.id}
-                              className="rounded-full border border-[#4285f4] bg-white px-2.5 py-1 text-xs font-medium text-[#174ea6]"
+                              className="rounded-full border border-[#007AFF] bg-white px-2.5 py-1 text-xs font-medium text-[#0051D5]"
                             >
                               {subject.name}
                             </span>
@@ -1667,7 +2636,7 @@ function RecordsView({
                             className="px-5 py-4 text-center"
                           >
                             {!isEnrolled ? (
-                              <span className="text-xs text-[#80868b]">
+                              <span className="text-xs text-[#8E8E93]">
                                 Not enrolled
                               </span>
                             ) : isEditing ? (
@@ -1686,31 +2655,31 @@ function RecordsView({
                                   }
                                   placeholder="-"
                                   disabled={savingScores}
-                                  className="w-20 rounded-[12px] border border-[#dadce0] bg-white px-2 py-2 text-center text-[#202124] focus:border-[#1a73e8] focus:outline-none focus:ring-2 focus:ring-[#4285f4]/20 disabled:bg-[#f1f3f4]"
+                                  className="w-20 rounded-[12px] border border-[#D1D1D6] bg-white px-2 py-2 text-center text-[#1C1C1E] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:bg-[#E5E5EA]"
                                 />
 
-                                <span className="text-sm text-[#5f6368]">
+                                <span className="text-sm text-[#636366]">
                                   / {assessment.total_items}
                                 </span>
                               </div>
                             ) : hasScore ? (
                               <>
-                                <div className="font-semibold text-[#202124]">
+                                <div className="font-semibold text-[#1C1C1E]">
                                   {score} / {assessment.total_items}
                                 </div>
 
-                                <div className="mt-1 text-xs text-[#5f6368]">
+                                <div className="mt-1 text-xs text-[#636366]">
                                   {percentage.toFixed(1)}%
                                 </div>
                               </>
                             ) : (
-                              <span className="text-[#80868b]">-</span>
+                              <span className="text-[#8E8E93]">-</span>
                             )}
                           </td>
                         );
                       })}
 
-                      <td className="px-5 py-4 font-bold text-[#202124]">
+                      <td className="px-5 py-4 font-bold text-[#1C1C1E]">
                         {student.averagePercentage === null
                           ? "-"
                           : `${student.averagePercentage.toFixed(1)}%`}
@@ -1731,7 +2700,7 @@ function RecordsView({
                               type="button"
                               onClick={() => saveStudentScores(student)}
                               disabled={savingScores}
-                              className="mr-2 rounded-full bg-[#1a73e8] px-3.5 py-2 font-medium text-white hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#dadce0] disabled:text-[#80868b]"
+                              className="mr-2 rounded-full bg-[#007AFF] px-3.5 py-2 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
                             >
                               {savingScores ? "Saving..." : "Save Scores"}
                             </button>
@@ -1740,7 +2709,7 @@ function RecordsView({
                               type="button"
                               onClick={cancelEditingScores}
                               disabled={savingScores}
-                              className="rounded-full bg-[#f1f3f4] px-3.5 py-2 font-medium text-[#3c4043] hover:bg-[#e8eaed] disabled:opacity-50"
+                              className="rounded-full bg-[#E5E5EA] px-3.5 py-2 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
                             >
                               Cancel
                             </button>
@@ -1750,7 +2719,7 @@ function RecordsView({
                             <button
                               type="button"
                               onClick={() => onEditStudent(student.id)}
-                              className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#174ea6] hover:bg-[#4285f4] hover:text-white"
+                              className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
                             >
                               Edit Info
                             </button>
@@ -1761,7 +2730,7 @@ function RecordsView({
                               disabled={
                                 getStudentAssessments(student).length === 0
                               }
-                              className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#7a5b00] hover:bg-[#fbbc04] hover:text-[#202124] disabled:cursor-not-allowed disabled:bg-[#f1f3f4] disabled:text-[#80868b]"
+                              className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#8A5A00] hover:bg-[#FFCC00] hover:text-[#1C1C1E] disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93]"
                             >
                               Edit Scores
                             </button>
@@ -1769,7 +2738,7 @@ function RecordsView({
                             <button
                               type="button"
                               onClick={() => handleDeleteStudent(student.id)}
-                              className="rounded-full bg-white px-3.5 py-2 font-medium text-[#c5221f] hover:bg-[#ea4335] hover:text-white"
+                              className="rounded-full bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
                             >
                               Delete
                             </button>
@@ -1782,7 +2751,7 @@ function RecordsView({
                       <tr>
                         <td
                           colSpan={totalColumns}
-                          className="bg-[#f1f3f4]/70 px-4 py-5 sm:px-6"
+                          className="bg-[#E5E5EA]/70 px-4 py-5 sm:px-6"
                         >
                           <StudentExpandedProfile
                             student={student}
@@ -1807,7 +2776,7 @@ function RecordsView({
                 <tr>
                   <td
                     colSpan={totalColumns}
-                    className="px-6 py-12 text-center text-[#5f6368]"
+                    className="px-6 py-12 text-center text-[#636366]"
                   >
                     No students found for {currentSubjectLabel} and{" "}
                     {currentSectionLabel}.
@@ -1849,18 +2818,18 @@ function StudentExpandedProfile({
       : null;
 
   return (
-    <div className="rounded-[28px] border border-[#dadce0] bg-white p-5 sm:p-6">
+    <div className="rounded-[28px] border border-[#D1D1D6] bg-white p-5 sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#3c4043]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#3A3A3C]">
             Student Profile
           </p>
 
-          <h3 className="mt-1 text-2xl font-bold tracking-tight text-[#202124]">
+          <h3 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
             {student.name}
           </h3>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             Grade {student.grade} - {student.section}
           </p>
         </div>
@@ -1903,7 +2872,7 @@ function StudentExpandedProfile({
       </div>
 
       <div className="mt-6">
-        <h4 className="text-base font-bold text-[#202124]">
+        <h4 className="text-base font-bold text-[#1C1C1E]">
           Enrolled Subjects
         </h4>
 
@@ -1911,14 +2880,14 @@ function StudentExpandedProfile({
           {student.subject_names?.map((subjectName) => (
             <span
               key={subjectName}
-              className="rounded-full border border-[#4285f4] bg-white px-3 py-1 text-sm font-medium text-[#174ea6]"
+              className="rounded-full border border-[#007AFF] bg-white px-3 py-1 text-sm font-medium text-[#0051D5]"
             >
               {subjectName}
             </span>
           ))}
 
           {!student.subject_names?.length && (
-            <span className="text-sm text-[#5f6368]">
+            <span className="text-sm text-[#636366]">
               No enrolled subjects found.
             </span>
           )}
@@ -1927,19 +2896,19 @@ function StudentExpandedProfile({
 
       <div className="mt-7">
         <div className="mb-3">
-          <h4 className="text-base font-bold text-[#202124]">
+          <h4 className="text-base font-bold text-[#1C1C1E]">
             Complete Assessment History
           </h4>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             All saved scores for this student, regardless of the current record
             filters.
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-[#e3e3e3]">
+        <div className="overflow-x-auto rounded-xl border border-[#E5E5EA]">
           <table className="w-full min-w-[760px]">
-            <thead className="bg-[#f8f9fa]">
+            <thead className="bg-[#F2F2F7]">
               <tr>
                 <TableHeading>Assessment</TableHeading>
                 <TableHeading>Subject</TableHeading>
@@ -1950,7 +2919,7 @@ function StudentExpandedProfile({
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-[#e3e3e3]">
+            <tbody className="divide-y divide-[#E5E5EA]">
               {assessmentRecords.map((record) => {
                 const hasScore =
                   record.score !== null && record.score !== undefined;
@@ -1962,29 +2931,29 @@ function StudentExpandedProfile({
 
                 return (
                   <tr key={`${record.assessment_id}-${record.id}`}>
-                    <td className="px-6 py-4 font-medium text-[#202124]">
+                    <td className="px-6 py-4 font-medium text-[#1C1C1E]">
                       {record.assessment_name}
                     </td>
 
-                    <td className="px-6 py-4 text-[#5f6368]">
+                    <td className="px-6 py-4 text-[#636366]">
                       {record.subject_name}
                     </td>
 
-                    <td className="px-6 py-4 text-[#5f6368]">
+                    <td className="px-6 py-4 text-[#636366]">
                       {record.type}
                     </td>
 
-                    <td className="px-6 py-4 text-[#5f6368]">
+                    <td className="px-6 py-4 text-[#636366]">
                       {record.date}
                     </td>
 
-                    <td className="px-6 py-4 text-[#3c4043]">
+                    <td className="px-6 py-4 text-[#3A3A3C]">
                       {hasScore
                         ? `${record.score} / ${record.total_items}`
                         : "Missing"}
                     </td>
 
-                    <td className="px-6 py-4 font-semibold text-[#202124]">
+                    <td className="px-6 py-4 font-semibold text-[#1C1C1E]">
                       {percentage === null ? "-" : `${percentage.toFixed(1)}%`}
                     </td>
                   </tr>
@@ -1995,7 +2964,7 @@ function StudentExpandedProfile({
                 <tr>
                   <td
                     colSpan="6"
-                    className="px-6 py-10 text-center text-[#5f6368]"
+                    className="px-6 py-10 text-center text-[#636366]"
                   >
                     No assessment records have been saved for this student.
                   </td>
@@ -2009,11 +2978,11 @@ function StudentExpandedProfile({
       <div className="mt-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h4 className="text-base font-bold text-[#202124]">
+            <h4 className="text-base font-bold text-[#1C1C1E]">
               Saved Gemini Learning Insights
             </h4>
 
-            <p className="mt-1 text-sm text-[#5f6368]">
+            <p className="mt-1 text-sm text-[#636366]">
               Every generated intervention or enrichment plan is stored in the
               database with a downloadable PDF.
             </p>
@@ -2023,20 +2992,20 @@ function StudentExpandedProfile({
             type="button"
             onClick={reloadInsights}
             disabled={loadingInsights}
-            className="rounded-full border border-[#dadce0] bg-white px-4 py-2 text-sm font-medium text-[#3c4043] hover:bg-[#4285f4] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full border border-[#D1D1D6] bg-white px-4 py-2 text-sm font-medium text-[#3A3A3C] hover:bg-[#007AFF] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingInsights ? "Refreshing..." : "Refresh insights"}
           </button>
         </div>
 
         {insightError && (
-          <div className="mt-4 rounded-[18px] border border-[#ea4335] bg-white p-4 text-sm text-[#c5221f]">
+          <div className="mt-4 rounded-[18px] border border-[#FF3B30] bg-white p-4 text-sm text-[#D70015]">
             {insightError}
           </div>
         )}
 
         {loadingInsights && savedInsights.length === 0 ? (
-          <div className="mt-4 rounded-[18px] border border-[#e3e3e3] bg-white p-6 text-center text-[#5f6368]">
+          <div className="mt-4 rounded-[18px] border border-[#E5E5EA] bg-white p-6 text-center text-[#636366]">
             Loading saved insights...
           </div>
         ) : (
@@ -2044,15 +3013,15 @@ function StudentExpandedProfile({
             {savedInsights.map((insight) => (
               <article
                 key={insight.id}
-                className="rounded-[20px] border border-[#e3e3e3] bg-white p-4"
+                className="rounded-[20px] border border-[#E5E5EA] bg-white p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
                         insight.supportType === "intervention"
-                          ? "bg-[#ea4335] text-white"
-                          : "bg-[#34a853] text-white"
+                          ? "bg-[#FF3B30] text-white"
+                          : "bg-[#34C759] text-white"
                       }`}
                     >
                       {insight.supportType === "intervention"
@@ -2060,31 +3029,31 @@ function StudentExpandedProfile({
                         : "Enrichment"}
                     </span>
 
-                    <h5 className="mt-2 font-bold text-[#202124]">
+                    <h5 className="mt-2 font-bold text-[#1C1C1E]">
                       {insight.title}
                     </h5>
                   </div>
 
-                  <span className="text-xs text-[#80868b]">#{insight.id}</span>
+                  <span className="text-xs text-[#8E8E93]">#{insight.id}</span>
                 </div>
 
-                <dl className="mt-3 space-y-1 text-sm text-[#5f6368]">
+                <dl className="mt-3 space-y-1 text-sm text-[#636366]">
                   <div>
-                    <dt className="inline font-semibold text-[#3c4043]">
+                    <dt className="inline font-semibold text-[#3A3A3C]">
                       Focus:{" "}
                     </dt>
                     <dd className="inline">{insight.focusLabel}</dd>
                   </div>
 
                   <div>
-                    <dt className="inline font-semibold text-[#3c4043]">
+                    <dt className="inline font-semibold text-[#3A3A3C]">
                       Classification:{" "}
                     </dt>
                     <dd className="inline">{insight.classification}</dd>
                   </div>
 
                   <div>
-                    <dt className="inline font-semibold text-[#3c4043]">
+                    <dt className="inline font-semibold text-[#3A3A3C]">
                       Saved:{" "}
                     </dt>
                     <dd className="inline">
@@ -2097,14 +3066,14 @@ function StudentExpandedProfile({
                   <button
                     type="button"
                     onClick={() => openSavedInsight(insight)}
-                    className="rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1765cc]"
+                    className="rounded-full bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066D6]"
                   >
                     View insight
                   </button>
 
                   <a
                     href={`${API_URL}${insight.pdfUrl}`}
-                    className="rounded-full border border-[#dadce0] bg-white px-4 py-2 text-sm font-semibold text-[#3c4043] hover:bg-[#f8f9fa]"
+                    className="rounded-full border border-[#D1D1D6] bg-white px-4 py-2 text-sm font-semibold text-[#3A3A3C] hover:bg-[#F2F2F7]"
                   >
                     Download PDF
                   </a>
@@ -2113,7 +3082,7 @@ function StudentExpandedProfile({
             ))}
 
             {savedInsights.length === 0 && !insightError && (
-              <div className="rounded-[20px] border border-dashed border-[#dadce0] bg-[#f8f9fa] p-8 text-center text-[#5f6368] xl:col-span-2">
+              <div className="rounded-[20px] border border-dashed border-[#D1D1D6] bg-[#F2F2F7] p-8 text-center text-[#636366] xl:col-span-2">
                 No Gemini insights have been generated for this student yet.
               </div>
             )}
@@ -2126,10 +3095,10 @@ function StudentExpandedProfile({
 
 function ProfileMetric({ label, value, tone = "blue" }) {
   const tones = {
-    blue: "border-[#4285f4] bg-[#4285f4] text-white",
-    red: "border-[#ea4335] bg-[#ea4335] text-white",
-    green: "border-[#34a853] bg-[#34a853] text-white",
-    yellow: "border-[#fbbc04] bg-[#fbbc04] text-[#202124]",
+    blue: "border-[#007AFF] bg-[#007AFF] text-white",
+    red: "border-[#FF3B30] bg-[#FF3B30] text-white",
+    green: "border-[#34C759] bg-[#34C759] text-white",
+    yellow: "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
   };
 
   const selectedTone = tones[tone] ?? tones.blue;
@@ -2157,21 +3126,21 @@ function SectionManagementView({
     <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
       <div className="flex flex-col gap-4 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a5b00]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8A5A00]">
             Classroom Setup
           </p>
 
-          <h2 className="mt-1 text-xl font-bold text-[#202124]">
+          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
             Section Management
           </h2>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             Add sections before registering students, then manage existing
             section records below.
           </p>
         </div>
 
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#fbbc04] text-xl font-bold text-[#202124]">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFCC00] text-xl font-bold text-[#1C1C1E]">
           S
         </span>
       </div>
@@ -2179,54 +3148,54 @@ function SectionManagementView({
       <div className="p-6">
         <form
           onSubmit={handleAddSection}
-          className="flex flex-col gap-3 rounded-[40px] border border-[#dadce0] bg-[#f8f9fa] p-4 sm:flex-row"
+          className="flex flex-col gap-3 rounded-[40px] border border-[#D1D1D6] bg-[#F2F2F7] p-4 sm:flex-row"
         >
           <input
             type="text"
             value={newSection}
             onChange={(event) => setNewSection(event.target.value)}
             placeholder="Enter section name"
-            className="flex-1 rounded-full border border-[#dadce0] bg-white px-5 py-3 text-[#202124] placeholder-[#80868b] focus:border-[#34a853] focus:outline-none focus:ring-4 focus:ring-[#34a853]/20"
+            className="flex-1 rounded-full border border-[#D1D1D6] bg-white px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
           />
 
           <button
             type="submit"
             disabled={addingSection || !newSection.trim()}
-            className="rounded-full bg-[#34a853] px-6 py-3 font-medium text-white transition hover:bg-[#188038] disabled:cursor-not-allowed disabled:bg-[#dadce0] disabled:text-[#80868b]"
+            className="rounded-full bg-[#34C759] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
           >
             {addingSection ? "Adding..." : "+ Add Section"}
           </button>
         </form>
 
-        <div className="mt-6 overflow-hidden rounded-[22px] border border-[#e3e3e3]">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-[#e3e3e3] bg-[#f8f9fa] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
+        <div className="mt-6 overflow-hidden rounded-[22px] border border-[#E5E5EA]">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-[#E5E5EA] bg-[#F2F2F7] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
             <span>Section</span>
             <span>Students</span>
             <span>Action</span>
           </div>
 
-          <div className="divide-y divide-[#e3e3e3]">
+          <div className="divide-y divide-[#E5E5EA]">
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-4 py-4 transition hover:bg-[#f8f9fa]"
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-4 py-4 transition hover:bg-[#F2F2F7]"
               >
                 <button
                   type="button"
                   onClick={() => openDashboardForSection(section.name)}
-                  className="text-left font-semibold text-[#202124] hover:text-[#7a5b00]"
+                  className="text-left font-semibold text-[#1C1C1E] hover:text-[#8A5A00]"
                 >
                   {section.name}
                 </button>
 
-                <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-[#7a5b00]">
+                <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-[#8A5A00]">
                   {section.student_count}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => handleRemoveSection(section)}
-                  className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#c5221f] hover:bg-[#ea4335] hover:text-white"
+                  className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
                 >
                   Remove
                 </button>
@@ -2234,7 +3203,7 @@ function SectionManagementView({
             ))}
 
             {sections.length === 0 && (
-              <div className="px-6 py-12 text-center text-[#5f6368]">
+              <div className="px-6 py-12 text-center text-[#636366]">
                 No sections have been added.
               </div>
             )}
@@ -2259,21 +3228,21 @@ function SubjectManagementView({
     <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
       <div className="flex flex-col gap-4 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#137333]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#248A3D]">
             Learning Areas
           </p>
 
-          <h2 className="mt-1 text-xl font-bold text-[#202124]">
+          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
             Subject Management
           </h2>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             Create a subject, choose its enrolled students, and manage existing
             subjects.
           </p>
         </div>
 
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#34a853] text-xl font-bold text-white">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#34C759] text-xl font-bold text-white">
           B
         </span>
       </div>
@@ -2281,20 +3250,20 @@ function SubjectManagementView({
       <div className="p-6">
         <form
           onSubmit={openSubjectStudentPrompt}
-          className="flex flex-col gap-3 rounded-[40px] border border-[#dadce0] bg-[#f8f9fa] p-4 sm:flex-row"
+          className="flex flex-col gap-3 rounded-[40px] border border-[#D1D1D6] bg-[#F2F2F7] p-4 sm:flex-row"
         >
           <input
             type="text"
             value={newSubject}
             onChange={(event) => setNewSubject(event.target.value)}
             placeholder="Enter subject name"
-            className="flex-1 rounded-full border border-[#dadce0] bg-white px-5 py-3 text-[#202124] placeholder-[#80868b] focus:border-[#1a73e8] focus:outline-none focus:ring-4 focus:ring-[#4285f4]/20"
+            className="flex-1 rounded-full border border-[#D1D1D6] bg-white px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20"
           />
 
           <button
             type="submit"
             disabled={addingSubject || !newSubject.trim()}
-            className="rounded-full bg-[#1a73e8] px-6 py-3 font-medium text-white transition hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#dadce0] disabled:text-[#80868b]"
+            className="rounded-full bg-[#007AFF] px-6 py-3 font-medium text-white transition hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
           >
             Choose Students
           </button>
@@ -2304,10 +3273,10 @@ function SubjectManagementView({
           {subjects.map((subject, index) => {
             const tone =
               index % 3 === 0
-                ? "border-[#fbbc04] bg-white"
+                ? "border-[#FFCC00] bg-white"
                 : index % 3 === 1
-                  ? "border-[#34a853] bg-white"
-                  : "border-[#ea4335] bg-white";
+                  ? "border-[#34C759] bg-white"
+                  : "border-[#FF3B30] bg-white";
 
             return (
               <div
@@ -2319,11 +3288,11 @@ function SubjectManagementView({
                   onClick={() => openDashboardForSubject(subject.id)}
                   className="text-left"
                 >
-                  <span className="block font-semibold text-[#202124] hover:underline">
+                  <span className="block font-semibold text-[#1C1C1E] hover:underline">
                     {subject.name}
                   </span>
 
-                  <span className="mt-1 block text-sm text-[#5f6368]">
+                  <span className="mt-1 block text-sm text-[#636366]">
                     {subject.student_count} students ·{" "}
                     {subject.assessment_count} assessments
                   </span>
@@ -2333,7 +3302,7 @@ function SubjectManagementView({
                   <button
                     type="button"
                     onClick={() => handleRenameSubject(subject)}
-                    className="rounded-full border border-[#4285f4] bg-white px-3.5 py-2 font-medium text-[#174ea6] hover:bg-[#4285f4] hover:text-white"
+                    className="rounded-full border border-[#007AFF] bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
                   >
                     Edit
                   </button>
@@ -2341,7 +3310,7 @@ function SubjectManagementView({
                   <button
                     type="button"
                     onClick={() => handleRemoveSubject(subject)}
-                    className="rounded-full bg-[#ea4335] px-3.5 py-2 font-medium text-white hover:bg-[#d93025]"
+                    className="rounded-full bg-[#FF3B30] px-3.5 py-2 font-medium text-white hover:bg-[#D70015]"
                   >
                     Delete
                   </button>
@@ -2351,7 +3320,7 @@ function SubjectManagementView({
           })}
 
           {subjects.length === 0 && (
-            <div className="rounded-[22px] border border-dashed border-[#dadce0] bg-[#f8f9fa] px-6 py-12 text-center text-[#5f6368] lg:col-span-2">
+            <div className="rounded-[22px] border border-dashed border-[#D1D1D6] bg-[#F2F2F7] px-6 py-12 text-center text-[#636366] lg:col-span-2">
               No subjects have been added.
             </div>
           )}
@@ -2376,14 +3345,14 @@ function DashboardFilters({
   return (
     <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-[#4285f4] font-bold text-white">
+        <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-[#007AFF] font-bold text-white">
           F
         </span>
 
         <div>
-          <h2 className="text-sm font-semibold text-[#202124]">{title}</h2>
+          <h2 className="text-sm font-semibold text-[#1C1C1E]">{title}</h2>
 
-          <p className="text-xs text-[#5f6368]">
+          <p className="text-xs text-[#636366]">
             Choose a section and subject to update the view.
           </p>
 
@@ -2392,8 +3361,8 @@ function DashboardFilters({
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0 rounded-[20px] border border-[#dadce0] bg-[#f1f3f4] p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a5b00]">
+        <div className="min-w-0 rounded-[20px] border border-[#D1D1D6] bg-[#E5E5EA] p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8A5A00]">
             Section
           </p>
 
@@ -2419,8 +3388,8 @@ function DashboardFilters({
           </div>
         </div>
 
-        <div className="min-w-0 rounded-[20px] border border-[#dadce0] bg-[#f1f3f4] p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#137333]">
+        <div className="min-w-0 rounded-[20px] border border-[#D1D1D6] bg-[#E5E5EA] p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#248A3D]">
             Subject
           </p>
 
@@ -2453,22 +3422,22 @@ function DashboardFilters({
 function FilterPill({ active, label, title, tone = "blue", onClick }) {
   const tones = {
     blue: {
-      active: "border-[#4285f4] bg-[#1a73e8] text-white",
+      active: "border-[#007AFF] bg-[#007AFF] text-white",
       inactive:
-        "border-[#dadce0] bg-white text-[#174ea6] hover:border-[#4285f4]",
-      check: "bg-[#4285f4] text-white",
+        "border-[#D1D1D6] bg-white text-[#0051D5] hover:border-[#007AFF]",
+      check: "bg-[#007AFF] text-white",
     },
     green: {
-      active: "border-[#34a853] bg-[#34a853] text-white",
+      active: "border-[#34C759] bg-[#34C759] text-white",
       inactive:
-        "border-[#dadce0] bg-white text-[#137333] hover:border-[#34a853]",
-      check: "bg-[#34a853] text-white",
+        "border-[#D1D1D6] bg-white text-[#248A3D] hover:border-[#34C759]",
+      check: "bg-[#34C759] text-white",
     },
     yellow: {
-      active: "border-[#f9ab00] bg-[#fbbc04] text-[#3c4043]",
+      active: "border-[#FF9500] bg-[#FFCC00] text-[#3A3A3C]",
       inactive:
-        "border-[#dadce0] bg-white text-[#7a5b00] hover:border-[#fbbc04]",
-      check: "bg-[#fbbc04] text-[#202124]",
+        "border-[#D1D1D6] bg-white text-[#8A5A00] hover:border-[#FFCC00]",
+      check: "bg-[#FFCC00] text-[#1C1C1E]",
     },
   };
 
@@ -2480,7 +3449,7 @@ function FilterPill({ active, label, title, tone = "blue", onClick }) {
       aria-pressed={active}
       title={title}
       onClick={onClick}
-      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-4 focus:ring-[#4285f4]/20 ${
+      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20 ${
         active ? selectedTone.active : selectedTone.inactive
       }`}
     >
@@ -2507,28 +3476,28 @@ function AssessmentList({
     <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
       <div className="flex flex-col gap-3 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#174ea6]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
             Assessment Library
           </p>
 
-          <h2 className="mt-1 text-xl font-bold text-[#202124]">
+          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
             Assessments — {currentSubjectLabel}
           </h2>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             {displayedAssessments.length} assessment
             {displayedAssessments.length === 1 ? "" : "s"}
           </p>
         </div>
 
-        <span className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#4285f4] text-xl font-bold text-white">
+        <span className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#007AFF] text-xl font-bold text-white">
           A
         </span>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[850px]">
-          <thead className="border-b border-[#e3e3e3] bg-[#f8f9fa]">
+          <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7]">
             <tr>
               <TableHeading>Assessment</TableHeading>
               <TableHeading>Subject</TableHeading>
@@ -2539,28 +3508,28 @@ function AssessmentList({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-[#e3e3e3]">
+          <tbody className="divide-y divide-[#E5E5EA]">
             {displayedAssessments.map((assessment) => (
-              <tr key={assessment.id} className="transition hover:bg-[#f8f9fa]">
-                <td className="px-6 py-4 font-medium text-[#202124]">
+              <tr key={assessment.id} className="transition hover:bg-[#F2F2F7]">
+                <td className="px-6 py-4 font-medium text-[#1C1C1E]">
                   {assessment.name}
                 </td>
 
-                <td className="px-6 py-4 text-[#5f6368]">
-                  <span className="rounded-full border border-[#34a853] bg-white px-3 py-1 text-sm font-medium text-[#137333]">
+                <td className="px-6 py-4 text-[#636366]">
+                  <span className="rounded-full border border-[#34C759] bg-white px-3 py-1 text-sm font-medium text-[#248A3D]">
                     {assessment.subject_name}
                   </span>
                 </td>
 
-                <td className="px-6 py-4 text-[#5f6368]">
+                <td className="px-6 py-4 text-[#636366]">
                   {assessment.type}
                 </td>
 
-                <td className="px-6 py-4 text-[#5f6368]">
+                <td className="px-6 py-4 text-[#636366]">
                   {assessment.date}
                 </td>
 
-                <td className="px-6 py-4 text-[#5f6368]">
+                <td className="px-6 py-4 text-[#636366]">
                   {assessment.total_items}
                 </td>
 
@@ -2568,7 +3537,7 @@ function AssessmentList({
                   <button
                     type="button"
                     onClick={() => onEditAssessment(assessment.id)}
-                    className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#174ea6] hover:bg-[#4285f4] hover:text-white"
+                    className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
                   >
                     Edit
                   </button>
@@ -2576,7 +3545,7 @@ function AssessmentList({
                   <button
                     type="button"
                     onClick={() => handleDeleteAssessment(assessment.id)}
-                    className="rounded-full bg-white px-3.5 py-2 font-medium text-[#c5221f] hover:bg-[#ea4335] hover:text-white"
+                    className="rounded-full bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
                   >
                     Delete
                   </button>
@@ -2588,7 +3557,7 @@ function AssessmentList({
               <tr>
                 <td
                   colSpan="6"
-                  className="px-6 py-12 text-center text-[#5f6368]"
+                  className="px-6 py-12 text-center text-[#636366]"
                 >
                   No assessments have been added for this subject.
                 </td>
@@ -2615,19 +3584,19 @@ function SubjectEnrollmentModal({
   createSubject,
 }) {
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#202124]/55 p-4">
-      <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] border border-[#e3e3e3] bg-white">
-        <div className="flex items-start justify-between gap-4 border-b border-t-8 border-[#dadce0] border-t-[#fbbc04] bg-white px-6 py-5">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1C1C1E]/55 p-4">
+      <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] border border-[#E5E5EA] bg-white">
+        <div className="flex items-start justify-between gap-4 bg-[#FF9500]/12 px-6 py-5">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7a5b00]">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#8A5A00]">
               New Subject Enrollment
             </p>
 
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#202124]">
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
               {subjectName}
             </h2>
 
-            <p className="mt-1 text-sm text-[#5f6368]">
+            <p className="mt-1 text-sm text-[#636366]">
               Select every student who is enrolled in this subject.
             </p>
           </div>
@@ -2636,23 +3605,23 @@ function SubjectEnrollmentModal({
             type="button"
             onClick={closeModal}
             disabled={addingSubject}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#5f6368] hover:bg-[#f8f9fa] hover:text-[#202124] disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#636366] hover:bg-[#F2F2F7] hover:text-[#1C1C1E] disabled:opacity-50"
           >
             ×
           </button>
         </div>
 
-        <div className="space-y-3 border-b border-[#e3e3e3] px-6 py-4">
+        <div className="space-y-3 border-b border-[#E5E5EA] px-6 py-4">
           <input
             type="text"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
             placeholder="Search students by name, grade, or section"
-            className="w-full rounded-full border border-[#dadce0] bg-[#f8f9fa] px-5 py-3 text-[#202124] placeholder-[#80868b] focus:border-[#1a73e8] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#4285f4]/20"
+            className="w-full rounded-full border border-[#D1D1D6] bg-[#F2F2F7] px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20"
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-[#5f6368]">
+            <p className="text-sm text-[#636366]">
               {selectedIds.length} of {students.length} students selected
             </p>
 
@@ -2663,7 +3632,7 @@ function SubjectEnrollmentModal({
                   setSelectedIds(students.map((student) => student.id))
                 }
                 disabled={students.length === 0 || addingSubject}
-                className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#137333] hover:bg-[#34a853] hover:text-white disabled:opacity-50"
+                className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#248A3D] hover:bg-[#34C759] hover:text-white disabled:opacity-50"
               >
                 Select All
               </button>
@@ -2672,7 +3641,7 @@ function SubjectEnrollmentModal({
                 type="button"
                 onClick={() => setSelectedIds([])}
                 disabled={selectedIds.length === 0 || addingSubject}
-                className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#c5221f] hover:bg-[#ea4335] hover:text-white disabled:opacity-50"
+                className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white disabled:opacity-50"
               >
                 Clear
               </button>
@@ -2687,8 +3656,8 @@ function SubjectEnrollmentModal({
                 key={student.id}
                 className={`flex cursor-pointer items-start gap-3 rounded-[20px] border px-4 py-3 transition ${
                   selectedIds.includes(student.id)
-                    ? "border-2 border-[#4285f4] bg-white"
-                    : "border-[#e3e3e3] bg-white hover:bg-[#f8f9fa]"
+                    ? "border-2 border-[#007AFF] bg-white"
+                    : "border-[#E5E5EA] bg-white hover:bg-[#F2F2F7]"
                 }`}
               >
                 <input
@@ -2696,20 +3665,20 @@ function SubjectEnrollmentModal({
                   checked={selectedIds.includes(student.id)}
                   onChange={() => toggleStudent(student.id)}
                   disabled={addingSubject}
-                  className="mt-1 h-4 w-4 accent-[#4285f4]"
+                  className="mt-1 h-4 w-4 accent-[#007AFF]"
                 />
 
                 <span className="min-w-0">
-                  <span className="block font-semibold text-[#202124]">
+                  <span className="block font-semibold text-[#1C1C1E]">
                     {student.name}
                   </span>
 
-                  <span className="mt-0.5 block text-sm text-[#5f6368]">
+                  <span className="mt-0.5 block text-sm text-[#636366]">
                     Grade {student.grade} · {student.section}
                   </span>
 
                   {student.subject_names?.length > 0 && (
-                    <span className="mt-1 block text-xs text-[#80868b]">
+                    <span className="mt-1 block text-xs text-[#8E8E93]">
                       Current subjects: {student.subject_names.join(", ")}
                     </span>
                   )}
@@ -2718,7 +3687,7 @@ function SubjectEnrollmentModal({
             ))}
 
             {filteredStudents.length === 0 && (
-              <div className="rounded-[20px] border border-dashed border-[#dadce0] bg-[#f8f9fa] px-4 py-10 text-center text-[#5f6368] sm:col-span-2">
+              <div className="rounded-[20px] border border-dashed border-[#D1D1D6] bg-[#F2F2F7] px-4 py-10 text-center text-[#636366] sm:col-span-2">
                 {students.length === 0
                   ? "No students are registered yet. You can still create the subject with no enrolled students."
                   : "No students match the search."}
@@ -2727,12 +3696,12 @@ function SubjectEnrollmentModal({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-[#e3e3e3] bg-[#f8f9fa] px-6 py-5 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 border-t border-[#E5E5EA] bg-[#F2F2F7] px-6 py-5 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={closeModal}
             disabled={addingSubject}
-            className="rounded-full border border-[#dadce0] bg-white px-5 py-2.5 font-medium text-[#3c4043] hover:bg-[#f1f3f4] disabled:opacity-50"
+            className="rounded-full border border-[#D1D1D6] bg-white px-5 py-2.5 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -2741,7 +3710,7 @@ function SubjectEnrollmentModal({
             type="button"
             onClick={createSubject}
             disabled={addingSubject}
-            className="rounded-full bg-[#1a73e8] px-5 py-2.5 font-medium text-white hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#dadce0] disabled:text-[#80868b]"
+            className="rounded-full bg-[#007AFF] px-5 py-2.5 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
           >
             {addingSubject
               ? "Creating Subject..."
@@ -2756,31 +3725,35 @@ function SubjectEnrollmentModal({
 function SidebarButton({
   active = false,
   label,
-  badge,
+  icon,
   collapsed = false,
   tone = "blue",
   onClick,
 }) {
   const tones = {
     blue: {
-      active: "bg-[#4285f4] text-white",
-      icon: "bg-[#4285f4] text-white",
-      hover: "hover:bg-[#4285f4] hover:text-white",
+      active:
+        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      icon: "text-[#007AFF]",
+      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
     },
     red: {
-      active: "bg-[#ea4335] text-white",
-      icon: "bg-[#ea4335] text-white",
-      hover: "hover:bg-[#f1f3f4] hover:text-[#c5221f]",
+      active:
+        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      icon: "text-[#D70015]",
+      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
     },
     green: {
-      active: "bg-[#34a853] text-white",
-      icon: "bg-[#34a853] text-white",
-      hover: "hover:bg-[#f1f3f4] hover:text-[#137333]",
+      active:
+        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      icon: "text-[#248A3D]",
+      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
     },
     yellow: {
-      active: "bg-[#fbbc04] text-[#202124]",
-      icon: "bg-[#fbbc04] text-[#202124]",
-      hover: "hover:bg-[#f1f3f4] hover:text-[#7a5b00]",
+      active:
+        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      icon: "text-[#9A6700]",
+      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
     },
   };
 
@@ -2789,25 +3762,40 @@ function SidebarButton({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.();
+      }}
       title={collapsed ? label : undefined}
       aria-label={label}
-      className={`group flex w-full items-center rounded-[18px] py-2.5 text-sm font-semibold transition ${
-        collapsed ? "justify-center px-2" : "gap-3 px-3 text-left"
+      aria-current={active ? "page" : undefined}
+      className={`sidebar-nav-button group flex w-full touch-manipulation items-center rounded-[13px] py-1.5 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/45 ${
+        collapsed ? "justify-center px-1" : "gap-2.5 px-2 text-left"
       } ${
         active
           ? selectedTone.active
-          : `text-[#5f6368] hover:bg-[#f1f3f4] ${selectedTone.hover}`
+          : `text-[#636366] ${selectedTone.hover}`
       }`}
     >
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[13px] text-sm font-bold transition ${
+        className={`sidebar-nav-icon flex h-7 w-7 shrink-0 items-center justify-center ${
           active
             ? selectedTone.icon
             : `${selectedTone.icon} group-hover:scale-105`
         }`}
       >
-        {badge}
+        <span
+          className="material-symbols-rounded text-[18px] leading-none"
+          style={{
+            fontVariationSettings: active
+              ? "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24"
+              : "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
+          }}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
       </span>
 
       {!collapsed && <span className="truncate">{label}</span>}
@@ -2815,52 +3803,30 @@ function SidebarButton({
   );
 }
 
-function SubmenuButton({ label, active = false, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded-[14px] px-3 py-2.5 text-left text-sm transition ${
-        active
-          ? "bg-[#fbbc04] font-semibold text-[#202124]"
-          : "text-[#5f6368] hover:bg-white hover:text-[#202124]"
-      }`}
-    >
-      <span
-        className={`h-2 w-2 rounded-full border ${
-          active ? "bg-[#fbbc04]" : "bg-[#dadce0]"
-        }`}
-      />
-
-      {label}
-    </button>
-  );
-}
-
 function AnalyticsCard({ title, value, description, tone = "blue" }) {
   const tones = {
     blue: {
-      surface: "border-[#4285f4] border-2 bg-white",
-      icon: "bg-[#4285f4] text-white",
-      text: "text-[#174ea6]",
+      surface: "border-[#007AFF] border-2 bg-white",
+      icon: "bg-[#007AFF] text-white",
+      text: "text-[#0051D5]",
       symbol: "●",
     },
     red: {
-      surface: "border-[#ea4335] border-2 bg-white",
-      icon: "bg-[#ea4335] text-white",
-      text: "text-[#c5221f]",
+      surface: "border-[#FF3B30] border-2 bg-white",
+      icon: "bg-[#FF3B30] text-white",
+      text: "text-[#D70015]",
       symbol: "◆",
     },
     green: {
-      surface: "border-[#34a853] border-2 bg-white",
-      icon: "bg-[#34a853] text-white",
-      text: "text-[#137333]",
+      surface: "border-[#34C759] border-2 bg-white",
+      icon: "bg-[#34C759] text-white",
+      text: "text-[#248A3D]",
       symbol: "▲",
     },
     yellow: {
-      surface: "border-[#fbbc04] border-2 bg-white",
-      icon: "bg-[#fbbc04] text-[#202124]",
-      text: "text-[#7a5b00]",
+      surface: "border-[#FFCC00] border-2 bg-white",
+      icon: "bg-[#FFCC00] text-[#1C1C1E]",
+      text: "text-[#8A5A00]",
       symbol: "■",
     },
   };
@@ -2871,11 +3837,11 @@ function AnalyticsCard({ title, value, description, tone = "blue" }) {
     <div
       className={`relative overflow-hidden rounded-[28px] border p-5 ${selectedTone.surface}`}
     >
-      <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-[#f1f3f4]" />
+      <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-[#E5E5EA]" />
 
       <div className="relative flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-[#5f6368]">{title}</p>
+          <p className="text-sm font-medium text-[#636366]">{title}</p>
 
           <p
             className={`mt-3 text-3xl font-bold tracking-tight ${selectedTone.text}`}
@@ -2892,7 +3858,7 @@ function AnalyticsCard({ title, value, description, tone = "blue" }) {
         </span>
       </div>
 
-      <p className="relative mt-3 text-sm leading-6 text-[#5f6368]">
+      <p className="relative mt-3 text-sm leading-6 text-[#636366]">
         {description}
       </p>
     </div>
@@ -2901,20 +3867,20 @@ function AnalyticsCard({ title, value, description, tone = "blue" }) {
 
 function PerformanceBar({ label, range, count, percentage, barClass }) {
   return (
-    <div className="rounded-[18px] border border-[#dadce0] bg-white p-4">
+    <div className="rounded-[18px] border border-[#D1D1D6] bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <span className="font-medium text-[#3c4043]">{label}</span>
-          <span className="ml-2 text-sm text-[#80868b]">{range}</span>
+          <span className="font-medium text-[#3A3A3C]">{label}</span>
+          <span className="ml-2 text-sm text-[#8E8E93]">{range}</span>
         </div>
 
-        <span className="rounded-full bg-white px-3 py-1 text-sm text-[#5f6368]">
+        <span className="rounded-full bg-white px-3 py-1 text-sm text-[#636366]">
           {count} student
           {count === 1 ? "" : "s"} · {percentage.toFixed(1)}%
         </span>
       </div>
 
-      <div className="h-3.5 w-full overflow-hidden rounded-full bg-[#f1f3f4]">
+      <div className="h-3.5 w-full overflow-hidden rounded-full bg-[#E5E5EA]">
         <div
           className={`h-full rounded-full transition-[width] duration-500 ${barClass}`}
           style={{
@@ -2939,14 +3905,14 @@ function InsightList({
   return (
     <div
       className={`rounded-[24px] border-2 bg-white p-4 ${
-        isRisk ? "border-[#ea4335]" : "border-[#34a853]"
+        isRisk ? "border-[#FF3B30]" : "border-[#34C759]"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="font-bold text-[#202124]">{title}</h4>
+          <h4 className="font-bold text-[#1C1C1E]">{title}</h4>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             {students.length} student
             {students.length === 1 ? "" : "s"}
           </p>
@@ -2954,7 +3920,7 @@ function InsightList({
 
         <span
           className={`flex h-10 w-10 items-center justify-center rounded-[15px] text-lg text-white ${
-            isRisk ? "bg-[#ea4335]" : "bg-[#34a853]"
+            isRisk ? "bg-[#FF3B30]" : "bg-[#34C759]"
           }`}
           aria-hidden="true"
         >
@@ -2972,25 +3938,25 @@ function InsightList({
           return (
             <div
               key={student.id}
-              className="rounded-[18px] border border-[#dadce0] bg-white p-4"
+              className="rounded-[18px] border border-[#D1D1D6] bg-white p-4"
             >
               <div className="flex justify-between gap-3">
-                <span className="font-medium text-[#202124]">
+                <span className="font-medium text-[#1C1C1E]">
                   {student.name}
                 </span>
 
                 <span
                   className={
                     isRisk
-                      ? "font-bold text-[#c5221f]"
-                      : "font-bold text-[#137333]"
+                      ? "font-bold text-[#D70015]"
+                      : "font-bold text-[#248A3D]"
                   }
                 >
                   {student.averagePercentage.toFixed(1)}%
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-[#5f6368]">
+              <p className="mt-1 text-xs text-[#636366]">
                 {student.section} · {student.assessmentCount} assessment
                 {student.assessmentCount === 1 ? "" : "s"}
               </p>
@@ -3001,8 +3967,8 @@ function InsightList({
                 disabled={Boolean(generatingRecommendationKey)}
                 className={`mt-3 w-full rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   isRisk
-                    ? "bg-[#ea4335] text-white hover:bg-[#d93025]"
-                    : "bg-[#34a853] text-white hover:bg-[#188038]"
+                    ? "bg-[#FF3B30] text-white hover:bg-[#D70015]"
+                    : "bg-[#34C759] text-white hover:bg-[#248A3D]"
                 }`}
               >
                 {isGenerating
@@ -3018,7 +3984,7 @@ function InsightList({
         })}
 
         {students.length === 0 && (
-          <div className="rounded-[18px] border border-dashed border-[#dadce0] bg-white p-5 text-center text-sm text-[#5f6368]">
+          <div className="rounded-[18px] border border-dashed border-[#D1D1D6] bg-white p-5 text-center text-sm text-[#636366]">
             No students identified.
           </div>
         )}
@@ -3032,18 +3998,20 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
   const isIntervention = recommendation?.supportType === "intervention";
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#202124]/55 p-4">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-[#e3e3e3] bg-white">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1C1C1E]/55 p-4">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-[#E5E5EA] bg-white">
         <div
-          className={`flex items-start justify-between gap-4 border-b border-t-8 border-[#dadce0] bg-white px-6 py-5 ${
-            isIntervention ? "border-t-[#ea4335]" : "border-t-[#34a853]"
+          className={`flex items-start justify-between gap-4 px-6 py-5 ${
+            isIntervention
+              ? "bg-[#FF3B30]/10"
+              : "bg-[#34C759]/12"
           }`}
         >
           <div>
             <div className="flex items-center gap-3">
               <span
                 className={`flex h-11 w-11 items-center justify-center rounded-[16px] text-xl font-bold text-white ${
-                  isIntervention ? "bg-[#ea4335]" : "bg-[#34a853]"
+                  isIntervention ? "bg-[#FF3B30]" : "bg-[#34C759]"
                 }`}
                 aria-hidden="true"
               >
@@ -3053,20 +4021,20 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
               <div>
                 <p
                   className={`text-sm font-semibold uppercase tracking-[0.16em] ${
-                    isIntervention ? "text-[#c5221f]" : "text-[#137333]"
+                    isIntervention ? "text-[#D70015]" : "text-[#248A3D]"
                   }`}
                 >
                   Gemini Learning Support
                 </p>
 
-                <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#202124]">
+                <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
                   {plan?.title || "Learning-Support Recommendation"}
                 </h2>
               </div>
             </div>
 
             {recommendation?.student && (
-              <p className="mt-3 text-sm text-[#5f6368]">
+              <p className="mt-3 text-sm text-[#636366]">
                 {recommendation.student.name} · Grade{" "}
                 {recommendation.student.grade} ·{" "}
                 {recommendation.student.section} · {recommendation.focusLabel}
@@ -3078,7 +4046,7 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
             {recommendation?.savedInsight?.pdfUrl && (
               <a
                 href={`${API_URL}${recommendation.savedInsight.pdfUrl}`}
-                className="rounded-full bg-[#1a73e8] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1765cc]"
+                className="rounded-full bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066D6]"
               >
                 Download PDF
               </a>
@@ -3087,7 +4055,7 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
             <button
               type="button"
               onClick={closeModal}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#5f6368] transition hover:bg-[#f8f9fa] hover:text-[#202124]"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#636366] transition hover:bg-[#F2F2F7] hover:text-[#1C1C1E]"
               aria-label="Close recommendation"
             >
               ×
@@ -3097,7 +4065,7 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
         <div className="max-h-[calc(92vh-112px)] overflow-y-auto px-6 py-6">
           {error ? (
-            <div className="rounded-[22px] border border-[#ea4335] bg-white p-5 text-[#c5221f]">
+            <div className="rounded-[22px] border border-[#FF3B30] bg-white p-5 text-[#D70015]">
               <h3 className="font-bold">
                 Recommendation could not be generated
               </h3>
@@ -3107,7 +4075,7 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
           ) : (
             <div className="space-y-6">
               {recommendation?.savedInsight && (
-                <div className="rounded-[20px] border border-l-8 border-[#fbbc04] bg-white p-4 text-sm text-[#7a5b00]">
+                <div className="rounded-[20px] bg-[#FF9500]/12 p-4 text-sm text-[#8A5A00]">
                   This insight was saved automatically on{" "}
                   {formatSavedDate(recommendation.savedInsight.createdAt)}. Use
                   the Download PDF button to save a copy outside EduLITE.
@@ -3147,8 +4115,8 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
               {plan?.overview && (
                 <RecommendationSection title="Overview">
-                  <div className="rounded-[22px] border border-[#e3e3e3] bg-[#f8f9fa] p-5">
-                    <p className="leading-7 text-[#3c4043]">{plan.overview}</p>
+                  <div className="rounded-[22px] border border-[#E5E5EA] bg-[#F2F2F7] p-5">
+                    <p className="leading-7 text-[#3A3A3C]">{plan.overview}</p>
                   </div>
                 </RecommendationSection>
               )}
@@ -3159,13 +4127,13 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                     {plan.evidence.map((item, index) => (
                       <div
                         key={`${item.observation}-${index}`}
-                        className="rounded-[22px] border border-l-4 border-[#4285f4] bg-white p-4"
+                        className="rounded-[22px] bg-[#007AFF]/10 p-4"
                       >
-                        <p className="font-semibold text-[#174ea6]">
+                        <p className="font-semibold text-[#0051D5]">
                           {item.observation}
                         </p>
 
-                        <p className="mt-2 text-sm text-[#5f6368]">
+                        <p className="mt-2 text-sm text-[#636366]">
                           {item.dataPoint}
                         </p>
                       </div>
@@ -3180,26 +4148,26 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                     {plan.targetedInterventions.map((intervention, index) => (
                       <div
                         key={`${intervention.title}-${index}`}
-                        className="rounded-[24px] border border-l-4 border-[#ea4335] bg-white p-5"
+                        className="rounded-[24px] bg-[#FF3B30]/10 p-5"
                       >
                         <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#ea4335] font-bold text-white">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF3B30] font-bold text-white">
                             {index + 1}
                           </span>
 
                           <div>
-                            <h4 className="text-lg font-bold text-[#202124]">
+                            <h4 className="text-lg font-bold text-[#1C1C1E]">
                               {intervention.title}
                             </h4>
 
-                            <p className="mt-2 text-sm leading-6 text-[#3c4043]">
+                            <p className="mt-2 text-sm leading-6 text-[#3A3A3C]">
                               {intervention.rationale}
                             </p>
                           </div>
                         </div>
 
                         {intervention.actions?.length > 0 && (
-                          <ul className="mt-4 list-disc space-y-1 pl-7 text-sm text-[#3c4043]">
+                          <ul className="mt-4 list-disc space-y-1 pl-7 text-sm text-[#3A3A3C]">
                             {intervention.actions.map((action, actionIndex) => (
                               <li key={`${action}-${actionIndex}`}>{action}</li>
                             ))}
@@ -3229,19 +4197,19 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                     {plan.enrichmentActivities.map((activity, index) => (
                       <div
                         key={`${activity.title}-${index}`}
-                        className="rounded-[24px] border border-l-4 border-[#34a853] bg-white p-5"
+                        className="rounded-[24px] bg-[#34C759]/12 p-5"
                       >
                         <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#34a853] font-bold text-white">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#34C759] font-bold text-white">
                             {index + 1}
                           </span>
 
                           <div>
-                            <h4 className="text-lg font-bold text-[#202124]">
+                            <h4 className="text-lg font-bold text-[#1C1C1E]">
                               {activity.title}
                             </h4>
 
-                            <p className="mt-2 text-sm leading-6 text-[#3c4043]">
+                            <p className="mt-2 text-sm leading-6 text-[#3A3A3C]">
                               {activity.description}
                             </p>
                           </div>
@@ -3266,9 +4234,9 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
               {plan?.monitoringPlan?.length > 0 && (
                 <RecommendationSection title="Progress Monitoring">
-                  <div className="overflow-x-auto rounded-[22px] border border-l-4 border-[#fbbc04] bg-white">
+                  <div className="overflow-x-auto rounded-[22px] bg-[#FF9500]/12">
                     <table className="w-full min-w-[700px]">
-                      <thead className="border-b border-[#fbbc04] bg-white/55">
+                      <thead className="border-b border-[#FFCC00] bg-white/55">
                         <tr>
                           <TableHeading>Metric</TableHeading>
                           <TableHeading>Frequency</TableHeading>
@@ -3276,18 +4244,18 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                         </tr>
                       </thead>
 
-                      <tbody className="divide-y divide-[#fbbc04]">
+                      <tbody className="divide-y divide-[#FFCC00]">
                         {plan.monitoringPlan.map((item, index) => (
                           <tr key={`${item.metric}-${index}`}>
-                            <td className="px-6 py-4 text-[#3c4043]">
+                            <td className="px-6 py-4 text-[#3A3A3C]">
                               {item.metric}
                             </td>
 
-                            <td className="px-6 py-4 text-[#3c4043]">
+                            <td className="px-6 py-4 text-[#3A3A3C]">
                               {item.frequency}
                             </td>
 
-                            <td className="px-6 py-4 text-[#3c4043]">
+                            <td className="px-6 py-4 text-[#3A3A3C]">
                               {item.target}
                             </td>
                           </tr>
@@ -3300,8 +4268,8 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
               {plan?.teacherNotes?.length > 0 && (
                 <RecommendationSection title="Teacher Notes">
-                  <div className="rounded-[22px] border border-l-4 border-[#4285f4] bg-white p-5">
-                    <ul className="list-disc space-y-2 pl-5 text-[#3c4043]">
+                  <div className="rounded-[22px] bg-[#007AFF]/10 p-5">
+                    <ul className="list-disc space-y-2 pl-5 text-[#3A3A3C]">
                       {plan.teacherNotes.map((note, index) => (
                         <li key={`${note}-${index}`}>{note}</li>
                       ))}
@@ -3310,7 +4278,7 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                 </RecommendationSection>
               )}
 
-              <div className="rounded-[22px] border border-[#dadce0] bg-[#f1f3f4] p-4 text-sm leading-6 text-[#3c4043]">
+              <div className="rounded-[22px] border border-[#D1D1D6] bg-[#E5E5EA] p-4 text-sm leading-6 text-[#3A3A3C]">
                 Gemini recommendations are generated from recorded academic data
                 only. Review them using your professional judgment and knowledge
                 of the learner before applying them.
@@ -3325,10 +4293,10 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
 function RecommendationMetric({ label, value, tone = "blue" }) {
   const tones = {
-    blue: "border-[#4285f4] bg-[#4285f4] text-white",
-    red: "border-[#ea4335] bg-[#ea4335] text-white",
-    green: "border-[#34a853] bg-[#34a853] text-white",
-    yellow: "border-[#fbbc04] bg-[#fbbc04] text-[#202124]",
+    blue: "border-[#007AFF] bg-[#007AFF] text-white",
+    red: "border-[#FF3B30] bg-[#FF3B30] text-white",
+    green: "border-[#34C759] bg-[#34C759] text-white",
+    yellow: "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
   };
 
   const selectedTone = tones[tone] ?? tones.blue;
@@ -3347,7 +4315,7 @@ function RecommendationMetric({ label, value, tone = "blue" }) {
 function RecommendationSection({ title, children }) {
   return (
     <section>
-      <h3 className="mb-3 text-xl font-bold text-[#202124]">{title}</h3>
+      <h3 className="mb-3 text-xl font-bold text-[#1C1C1E]">{title}</h3>
       {children}
     </section>
   );
@@ -3355,12 +4323,12 @@ function RecommendationSection({ title, children }) {
 
 function PlanDetail({ label, value }) {
   return (
-    <div className="rounded-[16px] border border-[#dadce0] bg-white p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
+    <div className="rounded-[16px] border border-[#D1D1D6] bg-white p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#636366]">
         {label}
       </p>
 
-      <p className="mt-1 text-sm leading-6 text-[#3c4043]">{value || "—"}</p>
+      <p className="mt-1 text-sm leading-6 text-[#3A3A3C]">{value || "—"}</p>
     </div>
   );
 }
@@ -3390,7 +4358,7 @@ function formatSavedDate(value) {
 function TableHeading({ children, align = "left" }) {
   return (
     <th
-      className={`px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#5f6368] ${
+      className={`px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#636366] ${
         align === "right" ? "text-right" : "text-left"
       }`}
     >

@@ -4,6 +4,8 @@ import axios from "axios";
 
 const API_URL = "http://localhost:3000";
 const TYPES = ["Major Exam", "Activity", "Quiz"];
+const APPLE_FONT =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif';
 
 function todayAsInputValue() {
   const now = new Date();
@@ -286,18 +288,18 @@ export default function AssessmentForm({
   };
 
   const formCard = (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-4 border-b border-[#dadce0] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="ui-panel-enter overflow-hidden rounded-[28px] bg-white shadow-[0_18px_48px_rgba(60,60,67,0.12)]">
+      <div className="flex flex-col gap-4 border-b border-[#E5E5EA] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#174ea6]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
             Assessment Management
           </p>
 
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#202124]">
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
             {isEditing ? "Edit Assessment" : "Add Assessment"}
           </h2>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             {isEditing
               ? "Update the assessment information and recorded student scores."
               : "Create an assessment and record scores without leaving the dashboard."}
@@ -308,7 +310,7 @@ export default function AssessmentForm({
           type="button"
           onClick={closeForm}
           disabled={saving}
-          className="rounded-full border border-[#dadce0] bg-white px-5 py-2.5 text-sm font-semibold text-[#3c4043] transition hover:border-[#4285f4] hover:bg-[#4285f4] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full border border-[#E5E5EA] bg-white px-5 py-2.5 text-sm font-semibold text-[#3A3A3C] transition hover:border-[#007AFF] hover:bg-[#007AFF] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           Back to Dashboard
         </button>
@@ -316,29 +318,29 @@ export default function AssessmentForm({
 
       <div className="p-5 sm:p-6">
         {error && (
-          <div className="mb-6 rounded-[18px] border border-l-8 border-[#ea4335] bg-white p-4 text-[#c5221f]">
+          <div className="mb-6 rounded-[18px] bg-[#FF3B30]/10 p-4 text-[#D70015]">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="rounded-[22px] border border-[#dadce0] bg-[#f8f9fa] py-16 text-center text-[#5f6368]">
+          <div className="rounded-[22px] border border-[#E5E5EA] bg-[#F2F2F7] py-16 text-center text-[#636366]">
             Loading assessment form...
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <section className="rounded-[22px] border border-[#dadce0] bg-white p-5">
+            <section className="rounded-[22px] bg-[#F2F2F7] p-5">
               <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fbbc04] font-bold text-[#202124]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFCC00] font-bold text-[#1C1C1E]">
                   1
                 </span>
 
                 <div>
-                  <h3 className="font-bold text-[#202124]">
+                  <h3 className="font-bold text-[#1C1C1E]">
                     Assessment Details
                   </h3>
 
-                  <p className="text-sm text-[#5f6368]">
+                  <p className="text-sm text-[#636366]">
                     Define the subject, type, date, and total items.
                   </p>
                 </div>
@@ -358,7 +360,7 @@ export default function AssessmentForm({
                       }))
                     }
                     placeholder="e.g. First Quarter Examination"
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] placeholder-[#80868b] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] placeholder-[#8E8E93] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   />
                 </div>
@@ -371,7 +373,7 @@ export default function AssessmentForm({
                     onChange={(event) =>
                       handleSubjectChange(event.target.value)
                     }
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   >
                     <option value="">Select a subject</option>
@@ -395,7 +397,7 @@ export default function AssessmentForm({
                         type: event.target.value,
                       }))
                     }
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   >
                     {TYPES.map((type) => (
@@ -418,7 +420,7 @@ export default function AssessmentForm({
                         date: event.target.value,
                       }))
                     }
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   />
                 </div>
@@ -438,44 +440,44 @@ export default function AssessmentForm({
                       }))
                     }
                     placeholder="e.g. 50"
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] placeholder-[#80868b] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] placeholder-[#8E8E93] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   />
                 </div>
               </div>
             </section>
 
-            <section className="rounded-[22px] border border-[#dadce0] bg-white p-5">
+            <section className="rounded-[22px] bg-[#F2F2F7] p-5">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#34a853] font-bold text-white">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#34C759] font-bold text-white">
                     2
                   </span>
 
                   <div>
-                    <h3 className="font-bold text-[#202124]">
+                    <h3 className="font-bold text-[#1C1C1E]">
                       Student Scores
                     </h3>
 
-                    <p className="text-sm text-[#5f6368]">
+                    <p className="text-sm text-[#636366]">
                       Only students enrolled in the selected subject are shown.
                     </p>
                   </div>
                 </div>
 
-                <span className="w-fit rounded-full bg-[#1a73e8] px-3 py-1.5 text-sm font-semibold text-white">
+                <span className="w-fit rounded-full bg-[#007AFF] px-3 py-1.5 text-sm font-semibold text-white">
                   {enteredCount} of {students.length} scores entered
                 </span>
               </div>
 
               {loadingStudents ? (
-                <div className="rounded-[18px] border border-[#dadce0] bg-[#f8f9fa] py-10 text-center text-[#5f6368]">
+                <div className="rounded-[18px] border border-[#E5E5EA] bg-[#F2F2F7] py-10 text-center text-[#636366]">
                   Loading enrolled students...
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-[18px] border border-[#dadce0]">
+                <div className="overflow-x-auto rounded-[18px] bg-white shadow-sm">
                   <table className="w-full min-w-[650px] text-left">
-                    <thead className="border-b border-[#dadce0] bg-[#f8f9fa] text-xs uppercase tracking-wide text-[#5f6368]">
+                    <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7] text-xs uppercase tracking-wide text-[#636366]">
                       <tr>
                         <th className="px-4 py-3">Student</th>
                         <th className="px-4 py-3">Grade</th>
@@ -484,18 +486,18 @@ export default function AssessmentForm({
                       </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-[#e3e3e3]">
+                    <tbody className="divide-y divide-[#E5E5EA]">
                       {students.map((student) => (
-                        <tr key={student.id} className="hover:bg-[#f8f9fa]">
-                          <td className="px-4 py-3 font-semibold text-[#202124]">
+                        <tr key={student.id} className="hover:bg-[#F2F2F7]">
+                          <td className="px-4 py-3 font-semibold text-[#1C1C1E]">
                             {student.name}
                           </td>
 
-                          <td className="px-4 py-3 text-[#5f6368]">
+                          <td className="px-4 py-3 text-[#636366]">
                             {student.grade}
                           </td>
 
-                          <td className="px-4 py-3 text-[#5f6368]">
+                          <td className="px-4 py-3 text-[#636366]">
                             {student.section}
                           </td>
 
@@ -513,11 +515,11 @@ export default function AssessmentForm({
                                     event.target.value,
                                   )
                                 }
-                                className="w-24 rounded-[12px] border border-[#dadce0] bg-white px-3 py-2 text-[#202124] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                                className="w-24 rounded-[12px] border border-[#E5E5EA] bg-white px-3 py-2 text-[#1C1C1E] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                                 placeholder="—"
                               />
 
-                              <span className="text-[#5f6368]">
+                              <span className="text-[#636366]">
                                 / {totalItems > 0 ? totalItems : "?"}
                               </span>
                             </div>
@@ -529,7 +531,7 @@ export default function AssessmentForm({
                         <tr>
                           <td
                             colSpan="4"
-                            className="px-4 py-10 text-center text-[#5f6368]"
+                            className="px-4 py-10 text-center text-[#636366]"
                           >
                             No students are enrolled in this subject yet. The
                             assessment can still be saved.
@@ -542,12 +544,12 @@ export default function AssessmentForm({
               )}
             </section>
 
-            <div className="flex flex-col gap-3 border-t border-[#dadce0] pt-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 border-t border-[#E5E5EA] pt-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeForm}
                 disabled={saving}
-                className="rounded-full border border-[#dadce0] bg-white px-6 py-3 font-semibold text-[#3c4043] transition hover:bg-[#f1f3f4] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-[#E5E5EA] bg-white px-6 py-3 font-semibold text-[#3A3A3C] transition hover:bg-[#f1f3f4] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -555,7 +557,7 @@ export default function AssessmentForm({
               <button
                 type="submit"
                 disabled={saving || subjects.length === 0}
-                className="rounded-full bg-[#1a73e8] px-7 py-3 font-semibold text-white transition hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#dadce0] disabled:text-[#80868b]"
+                className="rounded-full bg-[#007AFF] px-7 py-3 font-semibold text-white transition hover:bg-[#0051D5] disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93]"
               >
                 {saving
                   ? "Saving..."
@@ -575,7 +577,75 @@ export default function AssessmentForm({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] p-4 sm:p-6 lg:p-8">
+    <div
+      className="edulite-ios-corners min-h-screen bg-[#F2F2F7] p-4 text-[#1C1C1E] sm:p-6 lg:p-8"
+      style={{ fontFamily: APPLE_FONT }}
+    >
+      <style>{`
+        .edulite-ios-corners [class*="rounded-["]:not(.rounded-full) {
+          corner-shape: squircle;
+        }
+
+        .edulite-ios-corners button {
+          transition:
+            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 220ms ease,
+            background-color 220ms ease,
+            color 220ms ease,
+            opacity 220ms ease,
+            filter 220ms ease;
+          will-change: transform;
+        }
+
+        .edulite-ios-corners button:not(:disabled):hover {
+          transform: translateY(-1px) scale(1.01);
+          filter: brightness(1.025);
+        }
+
+        .edulite-ios-corners button:not(:disabled):active {
+          transform: translateY(0) scale(0.97);
+          transition-duration: 90ms;
+        }
+
+        .edulite-ios-corners input,
+        .edulite-ios-corners select {
+          transition:
+            border-color 220ms ease,
+            box-shadow 220ms ease,
+            background-color 220ms ease,
+            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .edulite-ios-corners input:focus,
+        .edulite-ios-corners select:focus {
+          transform: translateY(-1px);
+        }
+
+        .ui-panel-enter {
+          animation: ios-panel-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+
+        @keyframes ios-panel-in {
+          from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.99);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .edulite-ios-corners *,
+          .edulite-ios-corners *::before,
+          .edulite-ios-corners *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
       <div className="mx-auto max-w-6xl">{formCard}</div>
     </div>
   );
@@ -583,8 +653,8 @@ export default function AssessmentForm({
 
 function FormLabel({ label, required = false }) {
   return (
-    <label className="mb-2 block text-sm font-semibold text-[#3c4043]">
-      {label} {required && <span className="text-[#ea4335]">*</span>}
+    <label className="mb-2 block text-sm font-semibold text-[#3A3A3C]">
+      {label} {required && <span className="text-[#FF3B30]">*</span>}
     </label>
   );
 }

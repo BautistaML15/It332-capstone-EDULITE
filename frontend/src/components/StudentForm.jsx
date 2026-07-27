@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 const API_URL = "http://localhost:3000";
+const APPLE_FONT =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif';
 
 const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV", "V"]);
 
@@ -220,18 +222,18 @@ export default function StudentForm({
   };
 
   const formCard = (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-4 border-b border-[#dadce0] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="ui-panel-enter overflow-hidden rounded-[28px] bg-white shadow-[0_18px_48px_rgba(60,60,67,0.12)]">
+      <div className="flex flex-col gap-4 border-b border-[#E5E5EA] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#137333]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#248A3D]">
             Student Management
           </p>
 
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#202124]">
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
             {isEditing ? "Edit Student Details" : "Register Student"}
           </h2>
 
-          <p className="mt-1 text-sm text-[#5f6368]">
+          <p className="mt-1 text-sm text-[#636366]">
             {isEditing
               ? "Update the student's identity, grade, section, and enrolled subjects."
               : "Add a student without leaving the dashboard."}
@@ -242,7 +244,7 @@ export default function StudentForm({
           type="button"
           onClick={closeForm}
           disabled={saving}
-          className="rounded-full border border-[#dadce0] bg-white px-5 py-2.5 text-sm font-semibold text-[#3c4043] transition hover:border-[#4285f4] hover:bg-[#4285f4] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full border border-[#E5E5EA] bg-white px-5 py-2.5 text-sm font-semibold text-[#3A3A3C] transition hover:border-[#007AFF] hover:bg-[#007AFF] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           Back to Dashboard
         </button>
@@ -250,29 +252,29 @@ export default function StudentForm({
 
       <div className="p-5 sm:p-6">
         {error && (
-          <div className="mb-6 rounded-[18px] border border-l-8 border-[#ea4335] bg-white p-4 text-[#c5221f]">
+          <div className="mb-6 rounded-[18px] bg-[#FF3B30]/10 p-4 text-[#D70015]">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="rounded-[22px] border border-[#dadce0] bg-[#f8f9fa] py-16 text-center text-[#5f6368]">
+          <div className="rounded-[22px] border border-[#E5E5EA] bg-[#F2F2F7] py-16 text-center text-[#636366]">
             Loading student form...
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <section className="rounded-[22px] border border-[#dadce0] bg-white p-5">
+            <section className="rounded-[22px] bg-[#F2F2F7] p-5">
               <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4285f4] font-bold text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#007AFF] font-bold text-white">
                   1
                 </span>
 
                 <div>
-                  <h3 className="font-bold text-[#202124]">
+                  <h3 className="font-bold text-[#1C1C1E]">
                     Student Identity
                   </h3>
 
-                  <p className="text-sm text-[#5f6368]">
+                  <p className="text-sm text-[#636366]">
                     Enter the student's complete name.
                   </p>
                 </div>
@@ -311,18 +313,18 @@ export default function StudentForm({
               </div>
             </section>
 
-            <section className="rounded-[22px] border border-[#dadce0] bg-white p-5">
+            <section className="rounded-[22px] bg-[#F2F2F7] p-5">
               <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#34a853] font-bold text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#34C759] font-bold text-white">
                   2
                 </span>
 
                 <div>
-                  <h3 className="font-bold text-[#202124]">
+                  <h3 className="font-bold text-[#1C1C1E]">
                     Academic Information
                   </h3>
 
-                  <p className="text-sm text-[#5f6368]">
+                  <p className="text-sm text-[#636366]">
                     Choose the grade, section, and enrolled subjects.
                   </p>
                 </div>
@@ -330,8 +332,8 @@ export default function StudentForm({
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#3c4043]">
-                    Grade <span className="text-[#ea4335]">*</span>
+                  <label className="mb-2 block text-sm font-semibold text-[#3A3A3C]">
+                    Grade <span className="text-[#FF3B30]">*</span>
                   </label>
 
                   <input
@@ -342,14 +344,14 @@ export default function StudentForm({
                     onChange={(event) =>
                       updateField("grade", event.target.value)
                     }
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#3c4043]">
-                    Section <span className="text-[#ea4335]">*</span>
+                  <label className="mb-2 block text-sm font-semibold text-[#3A3A3C]">
+                    Section <span className="text-[#FF3B30]">*</span>
                   </label>
 
                   <select
@@ -357,7 +359,7 @@ export default function StudentForm({
                     onChange={(event) =>
                       updateField("section", event.target.value)
                     }
-                    className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+                    className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
                     required
                   >
                     <option value="">Select a section</option>
@@ -372,8 +374,8 @@ export default function StudentForm({
               </div>
 
               <div className="mt-5">
-                <label className="mb-3 block text-sm font-semibold text-[#3c4043]">
-                  Subjects <span className="text-[#ea4335]">*</span>
+                <label className="mb-3 block text-sm font-semibold text-[#3A3A3C]">
+                  Subjects <span className="text-[#FF3B30]">*</span>
                 </label>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -385,15 +387,15 @@ export default function StudentForm({
                         key={subject.id}
                         className={`flex cursor-pointer items-center gap-3 rounded-[16px] border-2 px-4 py-3 transition ${
                           selected
-                            ? "border-[#34a853] bg-white text-[#137333]"
-                            : "border-[#dadce0] bg-white text-[#3c4043] hover:border-[#34a853]"
+                            ? "border-transparent bg-[#34C759]/15 text-[#248A3D] shadow-sm"
+                            : "border-transparent bg-white text-[#3A3A3C] hover:bg-[#34C759]/10"
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={selected}
                           onChange={() => toggleSubject(subject.id)}
-                          className="h-4 w-4 accent-[#34a853]"
+                          className="h-4 w-4 accent-[#34C759]"
                         />
 
                         <span className="font-medium">{subject.name}</span>
@@ -403,7 +405,7 @@ export default function StudentForm({
                 </div>
 
                 {subjects.length === 0 && (
-                  <p className="rounded-[16px] border border-[#fbbc04] bg-white p-4 text-sm text-[#7a5b00]">
+                  <p className="rounded-[16px] bg-[#FFCC00]/15 p-4 text-sm text-[#8A5A00]">
                     No subjects exist yet. Add a subject from the dashboard
                     first.
                   </p>
@@ -411,12 +413,12 @@ export default function StudentForm({
               </div>
             </section>
 
-            <div className="flex flex-col gap-3 border-t border-[#dadce0] pt-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 border-t border-[#E5E5EA] pt-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeForm}
                 disabled={saving}
-                className="rounded-full border border-[#dadce0] bg-white px-6 py-3 font-semibold text-[#3c4043] transition hover:bg-[#f1f3f4] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-[#E5E5EA] bg-white px-6 py-3 font-semibold text-[#3A3A3C] transition hover:bg-[#f1f3f4] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -426,7 +428,7 @@ export default function StudentForm({
                 disabled={
                   saving || sections.length === 0 || subjects.length === 0
                 }
-                className="rounded-full bg-[#1a73e8] px-7 py-3 font-semibold text-white transition hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#dadce0] disabled:text-[#80868b]"
+                className="rounded-full bg-[#007AFF] px-7 py-3 font-semibold text-white transition hover:bg-[#0051D5] disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93]"
               >
                 {saving
                   ? "Saving..."
@@ -446,7 +448,75 @@ export default function StudentForm({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] p-4 sm:p-6 lg:p-8">
+    <div
+      className="edulite-ios-corners min-h-screen bg-[#F2F2F7] p-4 text-[#1C1C1E] sm:p-6 lg:p-8"
+      style={{ fontFamily: APPLE_FONT }}
+    >
+      <style>{`
+        .edulite-ios-corners [class*="rounded-["]:not(.rounded-full) {
+          corner-shape: squircle;
+        }
+
+        .edulite-ios-corners button {
+          transition:
+            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 220ms ease,
+            background-color 220ms ease,
+            color 220ms ease,
+            opacity 220ms ease,
+            filter 220ms ease;
+          will-change: transform;
+        }
+
+        .edulite-ios-corners button:not(:disabled):hover {
+          transform: translateY(-1px) scale(1.01);
+          filter: brightness(1.025);
+        }
+
+        .edulite-ios-corners button:not(:disabled):active {
+          transform: translateY(0) scale(0.97);
+          transition-duration: 90ms;
+        }
+
+        .edulite-ios-corners input,
+        .edulite-ios-corners select {
+          transition:
+            border-color 220ms ease,
+            box-shadow 220ms ease,
+            background-color 220ms ease,
+            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .edulite-ios-corners input:focus,
+        .edulite-ios-corners select:focus {
+          transform: translateY(-1px);
+        }
+
+        .ui-panel-enter {
+          animation: ios-panel-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+
+        @keyframes ios-panel-in {
+          from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.99);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .edulite-ios-corners *,
+          .edulite-ios-corners *::before,
+          .edulite-ios-corners *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
       <div className="mx-auto max-w-5xl">{formCard}</div>
     </div>
   );
@@ -461,8 +531,8 @@ function TextField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-[#3c4043]">
-        {label} {required && <span className="text-[#ea4335]">*</span>}
+      <label className="mb-2 block text-sm font-semibold text-[#3A3A3C]">
+        {label} {required && <span className="text-[#FF3B30]">*</span>}
       </label>
 
       <input
@@ -470,7 +540,7 @@ function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[14px] border border-[#dadce0] bg-white px-4 py-3 text-[#202124] placeholder-[#80868b] outline-none transition focus:border-[#4285f4] focus:ring-4 focus:ring-[#4285f4]/20"
+        className="w-full rounded-[14px] border border-[#E5E5EA] bg-white px-4 py-3 text-[#1C1C1E] placeholder-[#8E8E93] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20"
         required={required}
       />
     </div>
