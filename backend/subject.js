@@ -1,210 +1,512 @@
 import express from "express";
-import db from "./database/db.js";
+import mongoose from "mongoose";
+
+import Subject from "./models/Subject.js";
+import Student from "./models/Student.js";
+import Assessment from "./models/Assessment.js";
+
+import {
+  requireAuth,
+} from "./middleware/auth.js";
 
 const router = express.Router();
 
-function normalizeSubjectName(value) {
-  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+function normalizeName(value) {
+  return typeof value === "string"
+    ? value
+        .trim()
+        .replace(/\s+/g, " ")
+    : "";
 }
 
-function normalizeStudentIds(value) {
-  if (value === undefined) return [];
-  if (!Array.isArray(value)) return null;
-
-  return [...new Set(value.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+function createNameKey(value) {
+  return normalizeName(
+    value,
+  ).toLowerCase();
 }
 
-function validateStudentIds(studentIds) {
-  if (studentIds === null) return "student_ids must be an array.";
-  if (studentIds.length === 0) return null;
-
-  const placeholders = studentIds.map(() => "?").join(", ");
-  const existingStudents = db.prepare(`SELECT id FROM students WHERE id IN (${placeholders})`).all(...studentIds);
-
-  if (existingStudents.length !== studentIds.length) {
-    return "One or more selected students do not exist.";
-  }
-
-  return null;
+function isValidId(value) {
+  return mongoose.Types.ObjectId.isValid(
+    value,
+  );
 }
 
-router.get("/subjects", (req, res) => {
-  try {
-    const subjects = db.prepare(`
-      SELECT
-        subject.id,
-        subject.name,
-        COUNT(DISTINCT student_subjects.student_id) AS student_count,
-        COUNT(DISTINCT assessments.id) AS assessment_count
-      FROM subjects AS subject
-      LEFT JOIN student_subjects ON student_subjects.subject_id = subject.id
-      LEFT JOIN assessments ON assessments.subject_id = subject.id
-      GROUP BY subject.id, subject.name
-      ORDER BY subject.name COLLATE NOCASE
-    `).all();
-
-    res.json(subjects);
-  } catch (error) {
-    console.error("GET /subjects failed:", error);
-    res.status(500).json({ message: "Unable to load subjects." });
-  }
-});
-
-router.get("/subjects/:id", (req, res) => {
-  try {
-    const subject = db.prepare(`
-      SELECT
-        subject.id,
-        subject.name,
-        COUNT(DISTINCT student_subjects.student_id) AS student_count,
-        COUNT(DISTINCT assessments.id) AS assessment_count
-      FROM subjects AS subject
-      LEFT JOIN student_subjects ON student_subjects.subject_id = subject.id
-      LEFT JOIN assessments ON assessments.subject_id = subject.id
-      WHERE subject.id = ?
-      GROUP BY subject.id, subject.name
-    `).get(req.params.id);
-
-    if (!subject) {
-      return res.status(404).json({ message: "Subject not found." });
-    }
-
-    const enrolledStudents = db.prepare(`
-      SELECT students.id, students.name, students.grade, students.section
-      FROM student_subjects
-      JOIN students ON students.id = student_subjects.student_id
-      WHERE student_subjects.subject_id = ?
-      ORDER BY students.grade, students.section, students.name
-    `).all(req.params.id);
-
-    res.json({ ...subject, students: enrolledStudents });
-  } catch (error) {
-    console.error("GET /subjects/:id failed:", error);
-    res.status(500).json({ message: "Unable to load the subject." });
-  }
-});
-
-const createSubject = db.transaction((name, studentIds) => {
-  const result = db.prepare("INSERT INTO subjects (name) VALUES (?)").run(name);
-  const subjectId = Number(result.lastInsertRowid);
-  const enrollStudent = db.prepare("INSERT INTO student_subjects (student_id, subject_id) VALUES (?, ?)");
-
-  for (const studentId of studentIds) {
-    enrollStudent.run(studentId, subjectId);
+function normalizeIds(value) {
+  if (value === undefined) {
+    return [];
   }
 
-  return subjectId;
-});
-
-router.post("/subjects", (req, res) => {
-  const name = normalizeSubjectName(req.body.name);
-  const studentIds = normalizeStudentIds(req.body.student_ids);
-
-  if (!name) {
-    return res.status(400).json({ message: "Subject name is required." });
+  if (!Array.isArray(value)) {
+    return null;
   }
 
-  const studentValidationError = validateStudentIds(studentIds);
+  return [
+    ...new Set(
+      value.map(String),
+    ),
+  ];
+}
 
-  if (studentValidationError) {
-    return res.status(400).json({ message: studentValidationError });
-  }
+async function getCounts(
+  subjectId,
+  ownerId,
+) {
+  const [
+    studentCount,
+    assessmentCount,
+  ] = await Promise.all([
+    Student.countDocuments({
+      ownerId,
+      subjectIds: subjectId,
+    }),
 
-  try {
-    const subjectId = createSubject(name, studentIds);
+    Assessment.countDocuments({
+      ownerId,
+      subjectId,
+    }),
+  ]);
 
-    res.status(201).json({
-      message: "Subject added successfully.",
-      id: subjectId,
-      student_count: studentIds.length,
-    });
-  } catch (error) {
-    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      return res.status(409).json({
-        message: "A subject with this name already exists.",
+  return {
+    studentCount,
+    assessmentCount,
+  };
+}
+
+router.get(
+  "/subjects",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const ownerId = req.user.id;
+
+      const subjects =
+        await Subject.find({
+          ownerId,
+        })
+          .sort({ nameKey: 1 })
+          .lean();
+
+      const results =
+        await Promise.all(
+          subjects.map(
+            async (subject) => {
+              const {
+                studentCount,
+                assessmentCount,
+              } = await getCounts(
+                subject._id,
+                ownerId,
+              );
+
+              return {
+                id:
+                  subject._id.toString(),
+                name: subject.name,
+                student_count:
+                  studentCount,
+                assessment_count:
+                  assessmentCount,
+              };
+            },
+          ),
+        );
+
+      return res.json(results);
+    } catch (error) {
+      console.error(
+        "GET /subjects failed:",
+        error,
+      );
+
+      return res.status(500).json({
+        message:
+          "Unable to load subjects.",
       });
     }
+  },
+);
 
-    console.error("POST /subjects failed:", error);
-
-    res.status(500).json({
-      message: "Unable to add the subject.",
-    });
-  }
-});
-
-router.put("/subjects/:id", (req, res) => {
-  const name = normalizeSubjectName(req.body.name);
-
-  if (!name) {
-    return res.status(400).json({
-      message: "Subject name is required.",
-    });
-  }
-
-  try {
-    const result = db.prepare("UPDATE subjects SET name = ? WHERE id = ?").run(name, req.params.id);
-
-    if (result.changes === 0) {
+router.get(
+  "/subjects/:id",
+  requireAuth,
+  async (req, res) => {
+    if (!isValidId(req.params.id)) {
       return res.status(404).json({
-        message: "Subject not found.",
+        message:
+          "Subject not found.",
       });
     }
 
-    res.json({
-      message: "Subject updated successfully.",
-    });
-  } catch (error) {
-    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      return res.status(409).json({
-        message: "A subject with this name already exists.",
+    try {
+      const ownerId = req.user.id;
+
+      const subject =
+        await Subject.findOne({
+          _id: req.params.id,
+          ownerId,
+        }).lean();
+
+      if (!subject) {
+        return res.status(404).json({
+          message:
+            "Subject not found.",
+        });
+      }
+
+      const students =
+        await Student.find({
+          ownerId,
+          subjectIds: subject._id,
+        })
+          .populate({
+            path: "sectionId",
+            select: "name",
+            match: { ownerId },
+          })
+          .sort({
+            grade: 1,
+            name: 1,
+          })
+          .lean();
+
+      const assessmentCount =
+        await Assessment.countDocuments(
+          {
+            ownerId,
+            subjectId:
+              subject._id,
+          },
+        );
+
+      return res.json({
+        id: subject._id.toString(),
+        name: subject.name,
+        student_count:
+          students.length,
+        assessment_count:
+          assessmentCount,
+
+        students: students.map(
+          (student) => ({
+            id:
+              student._id.toString(),
+            name: student.name,
+            grade: student.grade,
+            section:
+              student.sectionId
+                ?.name ?? "",
+          }),
+        ),
+      });
+    } catch (error) {
+      console.error(
+        "GET /subjects/:id failed:",
+        error,
+      );
+
+      return res.status(500).json({
+        message:
+          "Unable to load the subject.",
+      });
+    }
+  },
+);
+
+router.post(
+  "/subjects",
+  requireAuth,
+  async (req, res) => {
+    const name =
+      normalizeName(
+        req.body.name,
+      );
+
+    const studentIds =
+      normalizeIds(
+        req.body.student_ids,
+      );
+
+    if (!name) {
+      return res.status(400).json({
+        message:
+          "Subject name is required.",
       });
     }
 
-    console.error("PUT /subjects/:id failed:", error);
+    if (studentIds === null) {
+      return res.status(400).json({
+        message:
+          "student_ids must be an array.",
+      });
+    }
 
-    res.status(500).json({
-      message: "Unable to update the subject.",
-    });
-  }
-});
+    if (
+      studentIds.some(
+        (id) => !isValidId(id),
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "One or more selected students are invalid.",
+      });
+    }
 
-router.delete("/subjects/:id", (req, res) => {
-  try {
-    const subject = db.prepare(`
-      SELECT
-        subject.id,
-        subject.name,
-        (SELECT COUNT(*) FROM student_subjects WHERE subject_id = subject.id) AS student_count,
-        (SELECT COUNT(*) FROM assessments WHERE subject_id = subject.id) AS assessment_count
-      FROM subjects AS subject
-      WHERE subject.id = ?
-    `).get(req.params.id);
+    try {
+      const ownerId = req.user.id;
+      const nameKey =
+        createNameKey(name);
 
-    if (!subject) {
+      const existing =
+        await Subject.findOne({
+          ownerId,
+          nameKey,
+        }).lean();
+
+      if (existing) {
+        return res.status(409).json({
+          message:
+            "A subject with this name already exists.",
+        });
+      }
+
+      const ownedStudents =
+        await Student.find({
+          ownerId,
+          _id: { $in: studentIds },
+        }).select("_id");
+
+      if (
+        ownedStudents.length !==
+        studentIds.length
+      ) {
+        return res.status(400).json({
+          message:
+            "One or more selected students do not exist.",
+        });
+      }
+
+      let subject;
+
+      await mongoose.connection.transaction(
+        async (session) => {
+          [subject] =
+            await Subject.create(
+              [
+                {
+                  ownerId,
+                  name,
+                  nameKey,
+                },
+              ],
+              { session },
+            );
+
+          if (studentIds.length) {
+            await Student.updateMany(
+              {
+                ownerId,
+                _id: {
+                  $in: studentIds,
+                },
+              },
+              {
+                $addToSet: {
+                  subjectIds:
+                    subject._id,
+                },
+              },
+              { session },
+            );
+          }
+        },
+      );
+
+      return res.status(201).json({
+        message:
+          "Subject added successfully.",
+        id: subject._id.toString(),
+        name: subject.name,
+        student_count:
+          studentIds.length,
+        assessment_count: 0,
+      });
+    } catch (error) {
+      console.error(
+        "POST /subjects MongoDB error:",
+        {
+          message: error.message,
+          code: error.code,
+          keyPattern:
+            error.keyPattern,
+          keyValue:
+            error.keyValue,
+          index: error.index,
+        },
+      );
+
+      if (error?.code === 11000) {
+        if (
+          error.keyPattern
+            ?.legacyId
+        ) {
+          return res.status(409).json({
+            message:
+              "The legacyId_1 index is blocking this subject. Remove that index from the subjects collection.",
+          });
+        }
+
+        return res.status(409).json({
+          message:
+            "A subject with this name already exists.",
+        });
+      }
+
+      return res.status(500).json({
+        message:
+          "Unable to add the subject.",
+      });
+    }
+  },
+);
+
+router.put(
+  "/subjects/:id",
+  requireAuth,
+  async (req, res) => {
+    const name =
+      normalizeName(
+        req.body.name,
+      );
+
+    if (!isValidId(req.params.id)) {
       return res.status(404).json({
-        message: "Subject not found.",
+        message:
+          "Subject not found.",
       });
     }
 
-    if (subject.student_count > 0 || subject.assessment_count > 0) {
-      return res.status(409).json({
-        message: `Remove enrolled students and assessments from "${subject.name}" before deleting it.`,
+    if (!name) {
+      return res.status(400).json({
+        message:
+          "Subject name is required.",
       });
     }
 
-    db.prepare("DELETE FROM subjects WHERE id = ?").run(req.params.id);
+    try {
+      const subject =
+        await Subject.findOneAndUpdate(
+          {
+            _id: req.params.id,
+            ownerId: req.user.id,
+          },
+          {
+            $set: {
+              name,
+              nameKey:
+                createNameKey(name),
+            },
+          },
+          {
+            new: true,
+            runValidators: true,
+          },
+        );
 
-    res.json({
-      message: "Subject deleted successfully.",
-    });
-  } catch (error) {
-    console.error("DELETE /subjects/:id failed:", error);
+      if (!subject) {
+        return res.status(404).json({
+          message:
+            "Subject not found.",
+        });
+      }
 
-    res.status(500).json({
-      message: "Unable to delete the subject.",
-    });
-  }
-});
+      return res.json({
+        message:
+          "Subject updated successfully.",
+        id: subject._id.toString(),
+        name: subject.name,
+      });
+    } catch (error) {
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          message:
+            "A subject with this name already exists.",
+        });
+      }
+
+      return res.status(500).json({
+        message:
+          "Unable to update the subject.",
+      });
+    }
+  },
+);
+
+router.delete(
+  "/subjects/:id",
+  requireAuth,
+  async (req, res) => {
+    if (!isValidId(req.params.id)) {
+      return res.status(404).json({
+        message:
+          "Subject not found.",
+      });
+    }
+
+    try {
+      const ownerId = req.user.id;
+
+      const subject =
+        await Subject.findOne({
+          _id: req.params.id,
+          ownerId,
+        }).lean();
+
+      if (!subject) {
+        return res.status(404).json({
+          message:
+            "Subject not found.",
+        });
+      }
+
+      const {
+        studentCount,
+        assessmentCount,
+      } = await getCounts(
+        subject._id,
+        ownerId,
+      );
+
+      if (
+        studentCount ||
+        assessmentCount
+      ) {
+        return res.status(409).json({
+          message:
+            `Remove enrolled students and assessments from "${subject.name}" before deleting it.`,
+        });
+      }
+
+      await Subject.deleteOne({
+        _id: subject._id,
+        ownerId,
+      });
+
+      return res.json({
+        message:
+          "Subject deleted successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "DELETE /subjects/:id failed:",
+        error,
+      );
+
+      return res.status(500).json({
+        message:
+          "Unable to delete the subject.",
+      });
+    }
+  },
+);
 
 export default router;

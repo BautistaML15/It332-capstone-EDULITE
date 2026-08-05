@@ -1,165 +1,309 @@
 import express from "express";
-import db from "./database/db.js";
+import mongoose from "mongoose";
+
+import Section from "./models/Section.js";
+import Student from "./models/Student.js";
+
+import {
+  requireAuth,
+} from "./middleware/auth.js";
 
 const router = express.Router();
 
+function normalizeSectionName(
+  value,
+) {
+  return typeof value === "string"
+    ? value
+        .trim()
+        .replace(/\s+/g, " ")
+    : "";
+}
+
+function createNameKey(value) {
+  return normalizeSectionName(
+    value,
+  ).toLowerCase();
+}
+
+function isValidObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(
+    value,
+  );
+}
+
+function formatSection(
+  section,
+  studentCount = 0,
+) {
+  return {
+    id: section._id.toString(),
+    name: section.name,
+
+    student_count:
+      studentCount,
+  };
+}
 
 // ===========================
 // GET ALL SECTIONS
 // ===========================
 
-router.get("/sections", (req, res) => {
+router.get(
+  "/sections",
+  requireAuth,
+  async (req, res) => {
     try {
-        const sections = db.prepare(`
-            SELECT
-                sections.id,
-                sections.name,
-                COUNT(students.id) AS student_count
+      const ownerId =
+        req.user.id;
 
-            FROM sections
+      const sections =
+        await Section.find({
+          ownerId,
+        })
+          .sort({
+            nameKey: 1,
+          })
+          .lean();
 
-            LEFT JOIN students
-                ON LOWER(TRIM(students.section))
-                =
-                LOWER(TRIM(sections.name))
+      const results =
+        await Promise.all(
+          sections.map(
+            async (section) => {
+              const studentCount =
+                await Student.countDocuments(
+                  {
+                    ownerId,
 
-            GROUP BY
-                sections.id,
-                sections.name
+                    sectionId:
+                      section._id,
+                  },
+                );
 
-            ORDER BY sections.name
-        `).all();
-
-        res.json(sections);
-
-    } catch (error) {
-        console.error(
-            "Error fetching sections:",
-            error
+              return formatSection(
+                section,
+                studentCount,
+              );
+            },
+          ),
         );
 
-        res.status(500).json({
-            message: "Unable to load sections."
-        });
-    }
-});
+      return res.json(results);
+    } catch (error) {
+      console.error(
+        "GET /sections failed:",
+        error,
+      );
 
+      return res.status(500).json({
+        message:
+          "Unable to load sections.",
+      });
+    }
+  },
+);
 
 // ===========================
 // ADD A SECTION
 // ===========================
 
-router.post("/sections", (req, res) => {
+router.post(
+  "/sections",
+  requireAuth,
+  async (req, res) => {
     const name =
-        typeof req.body.name === "string"
-            ? req.body.name.trim()
-            : "";
+      normalizeSectionName(
+        req.body.name,
+      );
 
     if (!name) {
-        return res.status(400).json({
-            message: "Section name is required."
-        });
+      return res.status(400).json({
+        message:
+          "Section name is required.",
+      });
     }
+
+    const nameKey =
+      createNameKey(name);
 
     try {
-        const result = db.prepare(`
-            INSERT INTO sections (name)
-            VALUES (?)
-        `).run(name);
+      const existingSection =
+        await Section.findOne({
+          ownerId: req.user.id,
+          nameKey,
+        }).lean();
 
-        res.status(201).json({
-            message:
-                "Section added successfully.",
+      if (existingSection) {
+        return res.status(409).json({
+          message:
+            "A section with this name already exists.",
+        });
+      }
 
-            id: result.lastInsertRowid,
-            name
+      const section =
+        await Section.create({
+          ownerId: req.user.id,
+          name,
+          nameKey,
         });
 
+      return res.status(201).json({
+        message:
+          "Section added successfully.",
+
+        ...formatSection(
+          section,
+          0,
+        ),
+      });
     } catch (error) {
+      console.error(
+        "POST /sections MongoDB error:",
+        {
+          message:
+            error.message,
+
+          code: error.code,
+
+          keyPattern:
+            error.keyPattern,
+
+          keyValue:
+            error.keyValue,
+
+          index: error.index,
+        },
+      );
+
+      if (error?.code === 11000) {
+        const duplicateField =
+          error.keyPattern
+            ? Object.keys(
+                error.keyPattern,
+              ).join(", ")
+            : "";
+
         if (
-            error.code ===
-            "SQLITE_CONSTRAINT_UNIQUE"
+          duplicateField.includes(
+            "legacyId",
+          )
         ) {
-            return res.status(400).json({
-                message:
-                    "That section already exists."
-            });
+          return res.status(409).json({
+            message:
+              "A legacy database index is blocking this section. Remove the legacyId_1 index from the sections collection.",
+          });
         }
 
-        console.error(
-            "Error adding section:",
-            error
-        );
-
-        res.status(500).json({
-            message:
-                "Unable to add the section."
+        return res.status(409).json({
+          message:
+            "A section with this name already exists.",
         });
-    }
-});
+      }
 
+      if (
+        error?.name ===
+        "ValidationError"
+      ) {
+        return res.status(400).json({
+          message:
+            Object.values(
+              error.errors ?? {},
+            )[0]?.message ||
+            "The section information is invalid.",
+        });
+      }
+
+      return res.status(500).json({
+        message:
+          "Unable to add the section.",
+      });
+    }
+  },
+);
 
 // ===========================
 // REMOVE A SECTION
 // ===========================
 
-router.delete("/sections/:id", (req, res) => {
-    try {
-        const section = db.prepare(`
-            SELECT id, name
-            FROM sections
-            WHERE id = ?
-        `).get(req.params.id);
+router.delete(
+  "/sections/:id",
+  requireAuth,
+  async (req, res) => {
+    const sectionId =
+      req.params.id;
 
-        if (!section) {
-            return res.status(404).json({
-                message: "Section not found."
-            });
-        }
-
-        /*
-            Do not allow the section to
-            be deleted while students are
-            still assigned to it.
-        */
-        const studentCount = db.prepare(`
-            SELECT COUNT(*) AS total
-            FROM students
-            WHERE
-                LOWER(TRIM(section))
-                =
-                LOWER(TRIM(?))
-        `).get(section.name).total;
-
-        if (studentCount > 0) {
-            return res.status(400).json({
-                message:
-                    `Cannot remove ${section.name} because it still has ${studentCount} student${studentCount === 1 ? "" : "s"}. Move or delete those students first.`
-            });
-        }
-
-        db.prepare(`
-            DELETE FROM sections
-            WHERE id = ?
-        `).run(req.params.id);
-
-        res.json({
-            message:
-                "Section removed successfully."
-        });
-
-    } catch (error) {
-        console.error(
-            "Error removing section:",
-            error
-        );
-
-        res.status(500).json({
-            message:
-                "Unable to remove the section."
-        });
+    if (
+      !isValidObjectId(sectionId)
+    ) {
+      return res.status(404).json({
+        message:
+          "Section not found.",
+      });
     }
-});
 
+    try {
+      const ownerId =
+        req.user.id;
+
+      const section =
+        await Section.findOne({
+          _id: sectionId,
+          ownerId,
+        }).lean();
+
+      if (!section) {
+        return res.status(404).json({
+          message:
+            "Section not found.",
+        });
+      }
+
+      const studentCount =
+        await Student.countDocuments({
+          ownerId,
+
+          sectionId:
+            section._id,
+        });
+
+      if (studentCount > 0) {
+        return res.status(409).json({
+          message:
+            `Cannot remove ${section.name} because it still has ${studentCount} student${studentCount === 1 ? "" : "s"}. Move or delete those students first.`,
+        });
+      }
+
+      const result =
+        await Section.deleteOne({
+          _id: section._id,
+          ownerId,
+        });
+
+      if (
+        result.deletedCount === 0
+      ) {
+        return res.status(404).json({
+          message:
+            "Section not found.",
+        });
+      }
+
+      return res.json({
+        message:
+          "Section removed successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "DELETE /sections/:id failed:",
+        error,
+      );
+
+      return res.status(500).json({
+        message:
+          "Unable to remove the section.",
+      });
+    }
+  },
+);
 
 export default router;

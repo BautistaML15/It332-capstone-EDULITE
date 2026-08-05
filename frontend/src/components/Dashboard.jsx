@@ -140,13 +140,23 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("user")) {
-      navigate("/");
-      return;
-    }
+  const token =
+    localStorage.getItem(
+      "eduliteToken",
+    );
 
-    fetchDashboardData();
-  }, [navigate]);
+  const storedUser =
+    localStorage.getItem(
+      "user",
+    );
+
+  if (!token || !storedUser) {
+    navigate("/");
+    return;
+  }
+
+  fetchDashboardData();
+}, [navigate]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -512,12 +522,21 @@ export default function Dashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
-  };
+  localStorage.removeItem(
+    "eduliteToken",
+  );
+
+  localStorage.removeItem(
+    "user",
+  );
+
+  navigate("/");
+};
 
   const selectedSubjectId =
-    selectedSubject === "ALL" ? null : Number(selectedSubject);
+  selectedSubject === "ALL"
+    ? null
+    : String(selectedSubject);
 
   const generateStudentRecommendation = async (student, supportType) => {
     const requestKey = `${supportType}-${student.id}`;

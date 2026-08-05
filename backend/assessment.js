@@ -1,5 +1,14 @@
 import express from "express";
-import db from "./database/db.js";
+import mongoose from "mongoose";
+
+import Assessment from "./models/Assessment.js";
+import AssessmentScore from "./models/AssessmentScore.js";
+import Subject from "./models/Subject.js";
+import Student from "./models/Student.js";
+
+import {
+  requireAuth,
+} from "./middleware/auth.js";
 
 const router = express.Router();
 
@@ -9,16 +18,32 @@ const ASSESSMENT_TYPES = new Set([
   "Quiz",
 ]);
 
+function normalizeText(value) {
+  return typeof value === "string"
+    ? value
+        .trim()
+        .replace(/\s+/g, " ")
+    : "";
+}
+
+function isValidObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(
+    value,
+  );
+}
+
 function isValidDate(value) {
   if (
     typeof value !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      value,
+    )
   ) {
     return false;
   }
 
   const date = new Date(
-    `${value}T00:00:00Z`,
+    `${value}T00:00:00.000Z`,
   );
 
   return (
@@ -29,27 +54,48 @@ function isValidDate(value) {
   );
 }
 
-function validateAssessment(body) {
+function formatDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (
+    Number.isNaN(date.getTime())
+  ) {
+    return null;
+  }
+
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+
+async function validateAssessment(
+  body,
+  ownerId,
+  session = null,
+) {
   const name =
-    typeof body.name === "string"
-      ? body.name
-          .trim()
-          .replace(/\s+/g, " ")
-      : "";
+    normalizeText(body.name);
 
   const type =
-    typeof body.type === "string"
-      ? body.type.trim()
-      : "";
+    normalizeText(body.type);
 
   const date = body.date;
+
   const totalItems = Number(
     body.total_items,
   );
 
-  const subjectId = Number(
-    body.subject_id,
-  );
+  const subjectId =
+    typeof body.subject_id ===
+    "string"
+      ? body.subject_id.trim()
+      : String(
+          body.subject_id ?? "",
+        );
 
   if (!name) {
     return {
@@ -85,22 +131,29 @@ function validateAssessment(body) {
   }
 
   if (
-    !Number.isInteger(subjectId) ||
-    subjectId <= 0
+    !isValidObjectId(subjectId)
   ) {
     return {
       error:
-        "Select a subject for the assessment.",
+        "Select a valid subject for the assessment.",
     };
   }
 
-  const subject = db
-    .prepare(`
-      SELECT id
-      FROM subjects
-      WHERE id = ?
-    `)
-    .get(subjectId);
+  let subjectQuery =
+    Subject.findOne({
+      _id: subjectId,
+      ownerId,
+    });
+
+  if (session) {
+    subjectQuery =
+      subjectQuery.session(
+        session,
+      );
+  }
+
+  const subject =
+    await subjectQuery;
 
   if (!subject) {
     return {
@@ -113,17 +166,19 @@ function validateAssessment(body) {
     value: {
       name,
       type,
-      date,
-      total_items: totalItems,
-      subject_id: subjectId,
+
+      date: new Date(
+        `${date}T00:00:00.000Z`,
+      ),
+
+      totalItems,
+      subjectId: subject._id,
     },
   };
 }
 
-function normalizeScores(
+function normalizeScoreEntries(
   scores,
-  totalItems,
-  subjectId,
 ) {
   if (scores === undefined) {
     return {
@@ -143,13 +198,17 @@ function normalizeScores(
     new Set();
 
   for (const entry of scores) {
-    const studentId = Number(
-      entry.student_id,
-    );
+    const studentId =
+      typeof entry.student_id ===
+      "string"
+        ? entry.student_id.trim()
+        : String(
+            entry.student_id ??
+              "",
+          );
 
     if (
-      !Number.isInteger(studentId) ||
-      studentId <= 0
+      !isValidObjectId(studentId)
     ) {
       return {
         error:
@@ -158,7 +217,9 @@ function normalizeScores(
     }
 
     if (
-      seenStudentIds.has(studentId)
+      seenStudentIds.has(
+        studentId,
+      )
     ) {
       return {
         error:
@@ -166,8 +227,85 @@ function normalizeScores(
       };
     }
 
-    seenStudentIds.add(studentId);
+    seenStudentIds.add(
+      studentId,
+    );
 
+    normalized.push({
+      studentId,
+      score: entry.score,
+    });
+  }
+
+  return {
+    value: normalized,
+  };
+}
+
+async function validateScores(
+  scores,
+  totalItems,
+  subjectId,
+  ownerId,
+  session = null,
+) {
+  const normalization =
+    normalizeScoreEntries(
+      scores,
+    );
+
+  if (normalization.error) {
+    return normalization;
+  }
+
+  const entries =
+    normalization.value;
+
+  if (entries.length === 0) {
+    return {
+      value: [],
+    };
+  }
+
+  const studentIds =
+    entries.map(
+      (entry) =>
+        entry.studentId,
+    );
+
+  let studentQuery =
+    Student.find({
+      _id: {
+        $in: studentIds,
+      },
+
+      ownerId,
+      subjectIds: subjectId,
+    });
+
+  if (session) {
+    studentQuery =
+      studentQuery.session(
+        session,
+      );
+  }
+
+  const students =
+    await studentQuery;
+
+  if (
+    students.length !==
+    studentIds.length
+  ) {
+    return {
+      error:
+        "Scores can only be recorded for students enrolled in the assessment subject.",
+    };
+  }
+
+  const normalizedScores = [];
+
+  for (const entry of entries) {
     if (
       entry.score === "" ||
       entry.score === null ||
@@ -191,95 +329,201 @@ function normalizeScores(
       };
     }
 
-    normalized.push({
-      student_id: studentId,
+    normalizedScores.push({
+      studentId:
+        entry.studentId,
       score,
     });
   }
 
-  if (seenStudentIds.size > 0) {
-    const ids = [
-      ...seenStudentIds,
-    ];
-
-    const placeholders = ids
-      .map(() => "?")
-      .join(", ");
-
-    const enrolledCount = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM student_subjects
-        WHERE subject_id = ?
-          AND student_id IN (
-            ${placeholders}
-          )
-      `)
-      .get(
-        subjectId,
-        ...ids,
-      ).count;
-
-    if (
-      enrolledCount !== ids.length
-    ) {
-      return {
-        error:
-          "Scores can only be recorded for students enrolled in the assessment subject.",
-      };
-    }
-  }
-
   return {
-    value: normalized,
+    value: normalizedScores,
   };
 }
 
+function formatAssessment(
+  assessment,
+  scoreCount = 0,
+) {
+  const subject =
+    assessment.subjectId;
+
+  return {
+    id:
+      assessment._id.toString(),
+
+    name: assessment.name,
+    type: assessment.type,
+
+    date: formatDate(
+      assessment.date,
+    ),
+
+    total_items:
+      assessment.totalItems,
+
+    subject_id:
+      subject?._id
+        ? subject._id.toString()
+        : assessment.subjectId?.toString(),
+
+    subject_name:
+      subject?.name ?? "",
+
+    score_count: scoreCount,
+  };
+}
+
+// ===========================
+// GET ASSESSMENT RECORDS
+// ===========================
+
 router.get(
   "/assessment-records",
-  (req, res) => {
+  requireAuth,
+  async (req, res) => {
     try {
-      const records = db
-        .prepare(`
-          SELECT
-            assessment_scores.id,
-            assessment_scores.score,
-            students.id AS student_id,
-            students.name AS student_name,
-            students.grade,
-            students.section,
-            assessments.id AS assessment_id,
-            assessments.name AS assessment_name,
-            assessments.type,
-            assessments.date,
-            assessments.total_items,
-            subjects.id AS subject_id,
-            subjects.name AS subject_name
-          FROM assessment_scores
-          JOIN students
-            ON students.id =
-              assessment_scores.student_id
-          JOIN assessments
-            ON assessments.id =
-              assessment_scores.assessment_id
-          JOIN subjects
-            ON subjects.id =
-              assessments.subject_id
-          ORDER BY
-            subjects.name,
-            students.name,
-            assessments.date DESC
-        `)
-        .all();
+      const ownerId = req.user.id;
 
-      res.json(records);
+      const scores =
+        await AssessmentScore.find({
+          ownerId,
+        })
+          .populate({
+            path: "studentId",
+
+            match: {
+              ownerId,
+            },
+
+            select:
+              "name grade sectionId",
+
+            populate: {
+              path: "sectionId",
+
+              match: {
+                ownerId,
+              },
+
+              select: "name",
+            },
+          })
+          .populate({
+            path: "assessmentId",
+
+            match: {
+              ownerId,
+            },
+
+            select:
+              "name type date totalItems subjectId",
+
+            populate: {
+              path: "subjectId",
+
+              match: {
+                ownerId,
+              },
+
+              select: "name",
+            },
+          })
+          .lean();
+
+      const records = scores
+        .filter(
+          (record) =>
+            record.studentId &&
+            record.assessmentId &&
+            record.assessmentId
+              .subjectId,
+        )
+        .map((record) => ({
+          id:
+            record._id.toString(),
+
+          score: record.score,
+
+          student_id:
+            record.studentId
+              ._id.toString(),
+
+          student_name:
+            record.studentId.name,
+
+          grade:
+            record.studentId.grade,
+
+          section:
+            record.studentId
+              .sectionId?.name ??
+            "",
+
+          assessment_id:
+            record.assessmentId
+              ._id.toString(),
+
+          assessment_name:
+            record.assessmentId
+              .name,
+
+          type:
+            record.assessmentId
+              .type,
+
+          date: formatDate(
+            record.assessmentId
+              .date,
+          ),
+
+          total_items:
+            record.assessmentId
+              .totalItems,
+
+          subject_id:
+            record.assessmentId
+              .subjectId._id.toString(),
+
+          subject_name:
+            record.assessmentId
+              .subjectId.name,
+        }));
+
+      records.sort(
+        (first, second) => {
+          const subjectOrder =
+            first.subject_name.localeCompare(
+              second.subject_name,
+            );
+
+          if (subjectOrder !== 0) {
+            return subjectOrder;
+          }
+
+          const studentOrder =
+            first.student_name.localeCompare(
+              second.student_name,
+            );
+
+          if (studentOrder !== 0) {
+            return studentOrder;
+          }
+
+          return second.date.localeCompare(
+            first.date,
+          );
+        },
+      );
+
+      return res.json(records);
     } catch (error) {
       console.error(
         "GET /assessment-records failed:",
         error,
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         message:
           "Unable to load assessment records.",
       });
@@ -287,141 +531,247 @@ router.get(
   },
 );
 
-router.get("/assessments", (req, res) => {
-  try {
-    const subjectId = Number(
-      req.query.subject_id,
-    );
+// ===========================
+// GET ALL ASSESSMENTS
+// ===========================
 
-    const hasSubjectFilter =
-      Number.isInteger(subjectId) &&
-      subjectId > 0;
+router.get(
+  "/assessments",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const ownerId = req.user.id;
 
-    const assessments = db
-      .prepare(`
-        SELECT
-          assessments.id,
-          assessments.name,
-          assessments.type,
-          assessments.date,
-          assessments.total_items,
-          assessments.subject_id,
-          subjects.name AS subject_name,
-          COUNT(
-            assessment_scores.id
-          ) AS scored_students,
-          ROUND(
-            AVG(
-              assessment_scores.score
-            ),
-            2
-          ) AS average_score
-        FROM assessments
-        JOIN subjects
-          ON subjects.id =
-            assessments.subject_id
-        LEFT JOIN assessment_scores
-          ON assessment_scores.assessment_id =
-            assessments.id
-        ${
-          hasSubjectFilter
-            ? "WHERE assessments.subject_id = ?"
-            : ""
+      const filter = {
+        ownerId,
+      };
+
+      if (
+        req.query.subject_id !==
+          undefined &&
+        req.query.subject_id !== ""
+      ) {
+        if (
+          !isValidObjectId(
+            req.query.subject_id,
+          )
+        ) {
+          return res.status(400).json({
+            message:
+              "The subject ID is invalid.",
+          });
         }
-        GROUP BY
-          assessments.id,
-          assessments.name,
-          assessments.type,
-          assessments.date,
-          assessments.total_items,
-          assessments.subject_id,
-          subjects.name
-        ORDER BY
-          subjects.name COLLATE NOCASE,
-          assessments.date DESC,
-          assessments.id DESC
-      `)
-      .all(
-        ...(
-          hasSubjectFilter
-            ? [subjectId]
-            : []
-        ),
+
+        const subject =
+          await Subject.findOne({
+            _id:
+              req.query.subject_id,
+            ownerId,
+          }).lean();
+
+        if (!subject) {
+          return res.status(404).json({
+            message:
+              "Subject not found.",
+          });
+        }
+
+        filter.subjectId =
+          subject._id;
+      }
+
+      const assessments =
+        await Assessment.find(
+          filter,
+        )
+          .populate({
+            path: "subjectId",
+            select: "name",
+            match: {
+              ownerId,
+            },
+          })
+          .sort({
+            date: -1,
+            createdAt: -1,
+          })
+          .lean();
+
+      const results =
+        await Promise.all(
+          assessments
+            .filter(
+              (assessment) =>
+                assessment.subjectId,
+            )
+            .map(
+              async (
+                assessment,
+              ) => {
+                const scoreCount =
+                  await AssessmentScore.countDocuments(
+                    {
+                      ownerId,
+
+                      assessmentId:
+                        assessment._id,
+                    },
+                  );
+
+                return formatAssessment(
+                  assessment,
+                  scoreCount,
+                );
+              },
+            ),
+        );
+
+      return res.json(results);
+    } catch (error) {
+      console.error(
+        "GET /assessments failed:",
+        error,
       );
 
-    res.json(assessments);
-  } catch (error) {
-    console.error(
-      "GET /assessments failed:",
-      error,
-    );
+      return res.status(500).json({
+        message:
+          "Unable to load assessments.",
+      });
+    }
+  },
+);
 
-    res.status(500).json({
-      message:
-        "Unable to load assessments.",
-    });
-  }
-});
+// ===========================
+// GET ONE ASSESSMENT
+// ===========================
 
 router.get(
   "/assessments/:id",
-  (req, res) => {
-    try {
-      const assessment = db
-        .prepare(`
-          SELECT
-            assessments.id,
-            assessments.name,
-            assessments.type,
-            assessments.date,
-            assessments.total_items,
-            assessments.subject_id,
-            subjects.name AS subject_name
-          FROM assessments
-          JOIN subjects
-            ON subjects.id =
-              assessments.subject_id
-          WHERE assessments.id = ?
-        `)
-        .get(req.params.id);
+  requireAuth,
+  async (req, res) => {
+    const assessmentId =
+      req.params.id;
 
-      if (!assessment) {
+    if (
+      !isValidObjectId(
+        assessmentId,
+      )
+    ) {
+      return res.status(404).json({
+        message:
+          "Assessment not found.",
+      });
+    }
+
+    try {
+      const ownerId = req.user.id;
+
+      const assessment =
+        await Assessment.findOne({
+          _id: assessmentId,
+          ownerId,
+        })
+          .populate({
+            path: "subjectId",
+            select: "name",
+            match: {
+              ownerId,
+            },
+          })
+          .lean();
+
+      if (
+        !assessment ||
+        !assessment.subjectId
+      ) {
         return res.status(404).json({
           message:
             "Assessment not found.",
         });
       }
 
-      const students = db
-        .prepare(`
-          SELECT
-            students.id,
-            students.name,
-            students.grade,
-            students.section,
-            assessment_scores.score
-          FROM student_subjects
-          JOIN students
-            ON students.id =
-              student_subjects.student_id
-          LEFT JOIN assessment_scores
-            ON assessment_scores.student_id =
-              students.id
-            AND assessment_scores.assessment_id = ?
-          WHERE student_subjects.subject_id = ?
-          ORDER BY
-            students.grade,
-            students.section,
-            students.name
-        `)
-        .all(
-          req.params.id,
-          assessment.subject_id,
-        );
+      const students =
+        await Student.find({
+          ownerId,
 
-      res.json({
-        ...assessment,
-        students,
+          subjectIds:
+            assessment.subjectId
+              ._id,
+        })
+          .populate({
+            path: "sectionId",
+            select: "name",
+            match: {
+              ownerId,
+            },
+          })
+          .sort({
+            grade: 1,
+            name: 1,
+          })
+          .lean();
+
+      const scores =
+        await AssessmentScore.find({
+          ownerId,
+          assessmentId:
+            assessment._id,
+        }).lean();
+
+      const scoreMap = new Map(
+        scores.map((score) => [
+          score.studentId.toString(),
+          score,
+        ]),
+      );
+
+      const formattedStudents =
+        students.map((student) => {
+          const score =
+            scoreMap.get(
+              student._id.toString(),
+            );
+
+          return {
+            id:
+              student._id.toString(),
+
+            name: student.name,
+            grade: student.grade,
+
+            section:
+              student.sectionId
+                ?.name ?? "",
+
+            score:
+              score?.score ?? null,
+
+            score_id:
+              score?._id
+                ? score._id.toString()
+                : null,
+          };
+        });
+
+      return res.json({
+        ...formatAssessment(
+          assessment,
+          scores.length,
+        ),
+
+        students:
+          formattedStudents,
+
+        scores:
+          formattedStudents.map(
+            (student) => ({
+              student_id:
+                student.id,
+
+              score:
+                student.score,
+            }),
+          ),
       });
     } catch (error) {
       console.error(
@@ -429,7 +779,7 @@ router.get(
         error,
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         message:
           "Unable to load the assessment.",
       });
@@ -437,170 +787,22 @@ router.get(
   },
 );
 
-const createAssessment =
-  db.transaction(
-    (assessment, scores) => {
-      const result = db
-        .prepare(`
-          INSERT INTO assessments (
-            name,
-            type,
-            date,
-            total_items,
-            subject_id
-          )
-          VALUES (?, ?, ?, ?, ?)
-        `)
-        .run(
-          assessment.name,
-          assessment.type,
-          assessment.date,
-          assessment.total_items,
-          assessment.subject_id,
-        );
+// ===========================
+// CREATE AN ASSESSMENT
+// ===========================
 
-      const assessmentId = Number(
-        result.lastInsertRowid,
-      );
-
-      const insertScore = db.prepare(`
-        INSERT INTO assessment_scores (
-          student_id,
-          assessment_id,
-          score
-        )
-        VALUES (?, ?, ?)
-      `);
-
-      for (const entry of scores) {
-        insertScore.run(
-          entry.student_id,
-          assessmentId,
-          entry.score,
-        );
-      }
-
-      return assessmentId;
-    },
-  );
-
-router.post("/assessments", (req, res) => {
-  try {
-    const assessmentValidation =
-      validateAssessment(req.body);
-
-    if (
-      assessmentValidation.error
-    ) {
-      return res.status(400).json({
-        message:
-          assessmentValidation.error,
-      });
-    }
-
-    const scoresValidation =
-      normalizeScores(
-        req.body.scores,
-        assessmentValidation.value
-          .total_items,
-        assessmentValidation.value
-          .subject_id,
-      );
-
-    if (scoresValidation.error) {
-      return res.status(400).json({
-        message:
-          scoresValidation.error,
-      });
-    }
-
-    const assessmentId =
-      createAssessment(
-        assessmentValidation.value,
-        scoresValidation.value,
-      );
-
-    res.status(201).json({
-      message:
-        "Assessment created successfully.",
-      id: assessmentId,
-    });
-  } catch (error) {
-    console.error(
-      "POST /assessments failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to create the assessment.",
-    });
-  }
-});
-
-const updateAssessment =
-  db.transaction(
-    (
-      assessmentId,
-      assessment,
-      scores,
-    ) => {
-      const result = db
-        .prepare(`
-          UPDATE assessments
-          SET
-            name = ?,
-            type = ?,
-            date = ?,
-            total_items = ?,
-            subject_id = ?
-          WHERE id = ?
-        `)
-        .run(
-          assessment.name,
-          assessment.type,
-          assessment.date,
-          assessment.total_items,
-          assessment.subject_id,
-          assessmentId,
-        );
-
-      if (result.changes === 0) {
-        return false;
-      }
-
-      db.prepare(`
-        DELETE FROM assessment_scores
-        WHERE assessment_id = ?
-      `).run(assessmentId);
-
-      const insertScore = db.prepare(`
-        INSERT INTO assessment_scores (
-          student_id,
-          assessment_id,
-          score
-        )
-        VALUES (?, ?, ?)
-      `);
-
-      for (const entry of scores) {
-        insertScore.run(
-          entry.student_id,
-          assessmentId,
-          entry.score,
-        );
-      }
-
-      return true;
-    },
-  );
-
-router.put(
-  "/assessments/:id",
-  (req, res) => {
+router.post(
+  "/assessments",
+  requireAuth,
+  async (req, res) => {
     try {
+      const ownerId = req.user.id;
+
       const assessmentValidation =
-        validateAssessment(req.body);
+        await validateAssessment(
+          req.body,
+          ownerId,
+        );
 
       if (
         assessmentValidation.error
@@ -612,12 +814,13 @@ router.put(
       }
 
       const scoresValidation =
-        normalizeScores(
+        await validateScores(
           req.body.scores,
           assessmentValidation.value
-            .total_items,
+            .totalItems,
           assessmentValidation.value
-            .subject_id,
+            .subjectId,
+          ownerId,
         );
 
       if (scoresValidation.error) {
@@ -627,31 +830,283 @@ router.put(
         });
       }
 
-      const updated =
-        updateAssessment(
-          Number(req.params.id),
-          assessmentValidation.value,
-          scoresValidation.value,
-        );
+      let createdAssessment =
+        null;
 
-      if (!updated) {
+      await mongoose.connection.transaction(
+        async (session) => {
+          const [assessment] =
+            await Assessment.create(
+              [
+                {
+                  ownerId,
+
+                  ...assessmentValidation.value,
+                },
+              ],
+              {
+                session,
+              },
+            );
+
+          createdAssessment =
+            assessment;
+
+          if (
+            scoresValidation.value
+              .length > 0
+          ) {
+            await AssessmentScore.insertMany(
+              scoresValidation.value.map(
+                (entry) => ({
+                  ownerId,
+
+                  studentId:
+                    entry.studentId,
+
+                  assessmentId:
+                    assessment._id,
+
+                  score:
+                    entry.score,
+                }),
+              ),
+              {
+                session,
+              },
+            );
+          }
+        },
+      );
+
+      return res.status(201).json({
+        message:
+          "Assessment created successfully.",
+
+        id:
+          createdAssessment._id.toString(),
+      });
+    } catch (error) {
+      if (
+        error?.name ===
+        "ValidationError"
+      ) {
+        return res.status(400).json({
+          message:
+            "The assessment information is invalid.",
+        });
+      }
+
+      console.error(
+  "POST /assessments full error:",
+  {
+    message: error.message,
+    code: error.code,
+    keyPattern:
+      error.keyPattern,
+    keyValue:
+      error.keyValue,
+
+    validationErrors:
+      Object.fromEntries(
+        Object.entries(
+          error.errors ?? {},
+        ).map(
+          ([
+            field,
+            fieldError,
+          ]) => [
+            field,
+            fieldError.message,
+          ],
+        ),
+      ),
+  },
+);
+
+      return res.status(500).json({
+        message:
+          "Unable to create the assessment.",
+      });
+    }
+  },
+);
+
+// ===========================
+// UPDATE AN ASSESSMENT
+// ===========================
+
+router.put(
+  "/assessments/:id",
+  requireAuth,
+  async (req, res) => {
+    const assessmentId =
+      req.params.id;
+
+    if (
+      !isValidObjectId(
+        assessmentId,
+      )
+    ) {
+      return res.status(404).json({
+        message:
+          "Assessment not found.",
+      });
+    }
+
+    try {
+      const ownerId = req.user.id;
+
+      const existingAssessment =
+        await Assessment.findOne({
+          _id: assessmentId,
+          ownerId,
+        }).lean();
+
+      if (!existingAssessment) {
         return res.status(404).json({
           message:
             "Assessment not found.",
         });
       }
 
-      res.json({
+      const assessmentValidation =
+        await validateAssessment(
+          req.body,
+          ownerId,
+        );
+
+      if (
+        assessmentValidation.error
+      ) {
+        return res.status(400).json({
+          message:
+            assessmentValidation.error,
+        });
+      }
+
+      const scoresValidation =
+        await validateScores(
+          req.body.scores,
+          assessmentValidation.value
+            .totalItems,
+          assessmentValidation.value
+            .subjectId,
+          ownerId,
+        );
+
+      if (scoresValidation.error) {
+        return res.status(400).json({
+          message:
+            scoresValidation.error,
+        });
+      }
+
+      await mongoose.connection.transaction(
+        async (session) => {
+          const assessment =
+            await Assessment.findOneAndUpdate(
+              {
+                _id: assessmentId,
+                ownerId,
+              },
+              {
+                $set:
+                  assessmentValidation.value,
+              },
+              {
+                new: true,
+                runValidators: true,
+                session,
+              },
+            );
+
+          if (!assessment) {
+            const error =
+              new Error(
+                "Assessment not found.",
+              );
+
+            error.statusCode = 404;
+
+            throw error;
+          }
+
+          await AssessmentScore.deleteMany(
+            {
+              ownerId,
+              assessmentId:
+                assessment._id,
+            },
+            {
+              session,
+            },
+          );
+
+          if (
+            scoresValidation.value
+              .length > 0
+          ) {
+            await AssessmentScore.insertMany(
+              scoresValidation.value.map(
+                (entry) => ({
+                  ownerId,
+
+                  studentId:
+                    entry.studentId,
+
+                  assessmentId:
+                    assessment._id,
+
+                  score:
+                    entry.score,
+                }),
+              ),
+              {
+                session,
+              },
+            );
+          }
+        },
+      );
+
+      return res.json({
         message:
           "Assessment updated successfully.",
+
+        id: assessmentId,
       });
     } catch (error) {
+      if (error?.statusCode) {
+        return res
+          .status(error.statusCode)
+          .json({
+            message: error.message,
+          });
+      }
+
+      if (
+  error?.name ===
+  "ValidationError"
+) {
+  const firstError =
+    Object.values(
+      error.errors ?? {},
+    )[0];
+
+  return res.status(400).json({
+    message:
+      firstError?.message ||
+      "The assessment information is invalid.",
+  });
+}
+
       console.error(
         "PUT /assessments/:id failed:",
         error,
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         message:
           "Unable to update the assessment.",
       });
@@ -659,21 +1114,47 @@ router.put(
   },
 );
 
+// ===========================
+// UPDATE ONE STUDENT SCORE
+// ===========================
+
 router.put(
   "/assessments/:assessmentId/scores/:studentId",
-  (req, res) => {
+  requireAuth,
+  async (req, res) => {
+    const {
+      assessmentId,
+      studentId,
+    } = req.params;
+
+    if (
+      !isValidObjectId(
+        assessmentId,
+      )
+    ) {
+      return res.status(404).json({
+        message:
+          "Assessment not found.",
+      });
+    }
+
+    if (
+      !isValidObjectId(studentId)
+    ) {
+      return res.status(404).json({
+        message:
+          "Student not found.",
+      });
+    }
+
     try {
-      const assessment = db
-        .prepare(`
-          SELECT
-            assessments.total_items,
-            assessments.subject_id
-          FROM assessments
-          WHERE assessments.id = ?
-        `)
-        .get(
-          req.params.assessmentId,
-        );
+      const ownerId = req.user.id;
+
+      const assessment =
+        await Assessment.findOne({
+          _id: assessmentId,
+          ownerId,
+        }).lean();
 
       if (!assessment) {
         return res.status(404).json({
@@ -682,19 +1163,16 @@ router.put(
         });
       }
 
-      const enrollment = db
-        .prepare(`
-          SELECT 1
-          FROM student_subjects
-          WHERE student_id = ?
-            AND subject_id = ?
-        `)
-        .get(
-          req.params.studentId,
-          assessment.subject_id,
-        );
+      const student =
+        await Student.findOne({
+          _id: studentId,
+          ownerId,
 
-      if (!enrollment) {
+          subjectIds:
+            assessment.subjectId,
+        }).lean();
+
+      if (!student) {
         return res.status(400).json({
           message:
             "The student is not enrolled in this assessment subject.",
@@ -706,17 +1184,18 @@ router.put(
         req.body.score === null ||
         req.body.score === undefined
       ) {
-        db.prepare(`
-          DELETE FROM assessment_scores
-          WHERE assessment_id = ?
-            AND student_id = ?
-        `).run(
-          req.params.assessmentId,
-          req.params.studentId,
-        );
+        await AssessmentScore.deleteOne({
+          ownerId,
+          studentId:
+            student._id,
+
+          assessmentId:
+            assessment._id,
+        });
 
         return res.json({
-          message: "Score cleared.",
+          message:
+            "Score cleared.",
         });
       }
 
@@ -728,44 +1207,73 @@ router.put(
         !Number.isInteger(score) ||
         score < 0 ||
         score >
-          assessment.total_items
+          assessment.totalItems
       ) {
         return res.status(400).json({
           message:
-            `Score must be a whole number from 0 to ${assessment.total_items}.`,
+            `Score must be a whole number from 0 to ${assessment.totalItems}.`,
         });
       }
 
-      db.prepare(`
-        INSERT INTO assessment_scores (
-          student_id,
-          assessment_id,
-          score
-        )
-        VALUES (?, ?, ?)
-        ON CONFLICT(
-          student_id,
-          assessment_id
-        )
-        DO UPDATE SET
-          score = excluded.score,
-          updated_at = CURRENT_TIMESTAMP
-      `).run(
-        req.params.studentId,
-        req.params.assessmentId,
-        score,
-      );
+      const savedScore =
+        await AssessmentScore.findOneAndUpdate(
+          {
+            ownerId,
+            studentId:
+              student._id,
 
-      res.json({
-        message: "Score saved.",
+            assessmentId:
+              assessment._id,
+          },
+          {
+            $set: {
+              score,
+            },
+
+            $setOnInsert: {
+              ownerId,
+
+              studentId:
+                student._id,
+
+              assessmentId:
+                assessment._id,
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+            runValidators: true,
+          },
+        );
+
+      return res.json({
+        message:
+          "Score saved.",
+
+        id:
+          savedScore._id.toString(),
+
+        score:
+          savedScore.score,
       });
     } catch (error) {
+      if (
+        error?.name ===
+        "ValidationError"
+      ) {
+        return res.status(400).json({
+          message:
+            "The score is invalid.",
+        });
+      }
+
       console.error(
         "PUT assessment score failed:",
         error,
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         message:
           "Unable to save the score.",
       });
@@ -773,35 +1281,102 @@ router.put(
   },
 );
 
+// ===========================
+// DELETE AN ASSESSMENT
+// ===========================
+
 router.delete(
   "/assessments/:id",
-  (req, res) => {
-    try {
-      const result = db
-        .prepare(`
-          DELETE FROM assessments
-          WHERE id = ?
-        `)
-        .run(req.params.id);
+  requireAuth,
+  async (req, res) => {
+    const assessmentId =
+      req.params.id;
 
-      if (result.changes === 0) {
+    if (
+      !isValidObjectId(
+        assessmentId,
+      )
+    ) {
+      return res.status(404).json({
+        message:
+          "Assessment not found.",
+      });
+    }
+
+    try {
+      const ownerId = req.user.id;
+
+      const assessment =
+        await Assessment.findOne({
+          _id: assessmentId,
+          ownerId,
+        }).lean();
+
+      if (!assessment) {
         return res.status(404).json({
           message:
             "Assessment not found.",
         });
       }
 
-      res.json({
+      await mongoose.connection.transaction(
+        async (session) => {
+          await AssessmentScore.deleteMany(
+            {
+              ownerId,
+              assessmentId:
+                assessment._id,
+            },
+            {
+              session,
+            },
+          );
+
+          const result =
+            await Assessment.deleteOne(
+              {
+                _id: assessment._id,
+                ownerId,
+              },
+              {
+                session,
+              },
+            );
+
+          if (
+            result.deletedCount === 0
+          ) {
+            const error =
+              new Error(
+                "Assessment not found.",
+              );
+
+            error.statusCode = 404;
+
+            throw error;
+          }
+        },
+      );
+
+      return res.json({
         message:
           "Assessment deleted successfully.",
       });
     } catch (error) {
+      if (error?.statusCode) {
+        return res
+          .status(error.statusCode)
+          .json({
+            message: error.message,
+          });
+      }
+
       console.error(
         "DELETE /assessments/:id failed:",
         error,
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         message:
           "Unable to delete the assessment.",
       });
