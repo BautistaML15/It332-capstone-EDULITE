@@ -1,43 +1,127 @@
 import express from "express";
-import db from "./database/db.js";
+import mongoose from "mongoose";
+
+import Student from "./models/Student.js";
+import Section from "./models/Section.js";
+import Subject from "./models/Subject.js";
+import Assessment from "./models/Assessment.js";
+import AssessmentScore from "./models/AssessmentScore.js";
+import StudentAiInsight from "./models/StudentAiInsight.js";
+
+import {
+  requireAuth,
+} from "./middleware/auth.js";
 
 const router = express.Router();
 
-function normalizeSubjectIds(value) {
+function normalizeText(value) {
+  return typeof value === "string"
+    ? value
+        .trim()
+        .replace(/\s+/g, " ")
+    : "";
+}
+
+function isValidId(value) {
+  return mongoose.Types.ObjectId.isValid(
+    value,
+  );
+}
+
+function normalizeIds(value) {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return [
     ...new Set(
-      value
-        .map(Number)
-        .filter(
-          (id) =>
-            Number.isInteger(id) &&
-            id > 0,
-        ),
+      value.map(String),
     ),
   ];
 }
 
-function validateStudent(body) {
+function formatStudent(student) {
+  const subjects =
+    (
+      student.subjectIds ?? []
+    ).filter(Boolean);
+
+  return {
+    id: student._id.toString(),
+    name: student.name,
+    grade: student.grade,
+
+    section:
+      student.sectionId?.name ??
+      "",
+
+    section_id:
+      student.sectionId?._id
+        ?.toString() ?? null,
+
+    subjects: subjects.map(
+      (subject) => ({
+        id:
+          subject._id.toString(),
+        name: subject.name,
+      }),
+    ),
+
+    subject_ids:
+      subjects.map((subject) =>
+        subject._id.toString(),
+      ),
+
+    subject_names:
+      subjects.map(
+        (subject) =>
+          subject.name,
+      ),
+  };
+}
+
+async function findStudent(
+  studentId,
+  ownerId,
+) {
+  return Student.findOne({
+    _id: studentId,
+    ownerId,
+  })
+    .populate({
+      path: "sectionId",
+      select: "name",
+      match: { ownerId },
+    })
+    .populate({
+      path: "subjectIds",
+      select: "name nameKey",
+      match: { ownerId },
+      options: {
+        sort: { nameKey: 1 },
+      },
+    })
+    .lean();
+}
+
+async function validateStudent(
+  body,
+  ownerId,
+) {
   const name =
-    typeof body.name === "string"
-      ? body.name
-          .trim()
-          .replace(/\s+/g, " ")
-      : "";
+    normalizeText(body.name);
 
-  const grade = Number(body.grade);
+  const grade = Number(
+    body.grade,
+  );
 
-  const section =
-    typeof body.section === "string"
-      ? body.section.trim()
-      : "";
+  const sectionName =
+    normalizeText(
+      body.section,
+    );
 
   const subjectIds =
-    normalizeSubjectIds(
+    normalizeIds(
       body.subject_ids,
     );
 
@@ -58,48 +142,57 @@ function validateStudent(body) {
     };
   }
 
-  if (!section) {
+  if (!sectionName) {
     return {
-      error: "Section is required.",
+      error:
+        "Section is required.",
     };
   }
 
-  if (subjectIds.length === 0) {
+  if (!subjectIds.length) {
     return {
       error:
         "Select at least one subject for the student.",
     };
   }
 
-  const sectionExists = db
-    .prepare(`
-      SELECT id
-      FROM sections
-      WHERE name = ? COLLATE NOCASE
-    `)
-    .get(section);
+  if (
+    subjectIds.some(
+      (id) => !isValidId(id),
+    )
+  ) {
+    return {
+      error:
+        "One or more selected subjects are invalid.",
+    };
+  }
 
-  if (!sectionExists) {
+  const section =
+    await Section.findOne({
+      ownerId,
+
+      nameKey:
+        sectionName.toLowerCase(),
+    });
+
+  if (!section) {
     return {
       error:
         "The selected section does not exist.",
     };
   }
 
-  const placeholders = subjectIds
-    .map(() => "?")
-    .join(", ");
+  const subjects =
+    await Subject.find({
+      ownerId,
 
-  const existingSubjects = db
-    .prepare(`
-      SELECT id
-      FROM subjects
-      WHERE id IN (${placeholders})
-    `)
-    .all(...subjectIds);
+      _id: {
+        $in: subjectIds,
+      },
+    });
 
   if (
-    existingSubjects.length !==
+    subjects.length !==
     subjectIds.length
   ) {
     return {
@@ -112,553 +205,412 @@ function validateStudent(body) {
     value: {
       name,
       grade,
-      section,
-      subject_ids: subjectIds,
+
+      sectionId:
+        section._id,
+
+      subjectIds:
+        subjects.map(
+          (subject) =>
+            subject._id,
+        ),
     },
   };
 }
 
-function attachSubjects(students) {
-  if (students.length === 0) {
-    return students;
-  }
+router.get(
+  "/students",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const ownerId = req.user.id;
+      const filter = { ownerId };
 
-  const ids = students.map(
-    (student) => student.id,
-  );
+      if (
+        req.query.subject_id
+      ) {
+        if (
+          !isValidId(
+            req.query.subject_id,
+          )
+        ) {
+          return res.status(400).json({
+            message:
+              "The subject ID is invalid.",
+          });
+        }
 
-  const placeholders = ids
-    .map(() => "?")
-    .join(", ");
+        const subject =
+          await Subject.findOne({
+            _id:
+              req.query.subject_id,
+            ownerId,
+          });
 
-  const enrollments = db
-    .prepare(`
-      SELECT
-        student_subjects.student_id,
-        subjects.id,
-        subjects.name
-      FROM student_subjects
-      JOIN subjects
-        ON subjects.id =
-          student_subjects.subject_id
-      WHERE student_subjects.student_id
-        IN (${placeholders})
-      ORDER BY
-        subjects.name COLLATE NOCASE
-    `)
-    .all(...ids);
+        if (!subject) {
+          return res.status(404).json({
+            message:
+              "Subject not found.",
+          });
+        }
 
-  const subjectMap = new Map(
-    ids.map((id) => [id, []]),
-  );
+        filter.subjectIds =
+          subject._id;
+      }
 
-  for (
-    const enrollment
-    of enrollments
-  ) {
-    subjectMap
-      .get(enrollment.student_id)
-      ?.push({
-        id: enrollment.id,
-        name: enrollment.name,
-      });
-  }
+      const students =
+        await Student.find(filter)
+          .populate({
+            path: "sectionId",
+            select: "name",
+            match: { ownerId },
+          })
+          .populate({
+            path: "subjectIds",
+            select: "name nameKey",
+            match: { ownerId },
+            options: {
+              sort: { nameKey: 1 },
+            },
+          })
+          .sort({
+            grade: 1,
+            name: 1,
+          })
+          .lean();
 
-  return students.map((student) => {
-    const subjects =
-      subjectMap.get(student.id) ?? [];
-
-    return {
-      ...student,
-      subjects,
-      subject_ids: subjects.map(
-        (subject) => subject.id,
-      ),
-      subject_names: subjects.map(
-        (subject) => subject.name,
-      ),
-    };
-  });
-}
-
-router.get("/sections", (req, res) => {
-  try {
-    const sections = db
-      .prepare(`
-        SELECT
-          sections.id,
-          sections.name,
-          COUNT(students.id)
-            AS student_count
-        FROM sections
-        LEFT JOIN students
-          ON students.section =
-            sections.name COLLATE NOCASE
-        GROUP BY
-          sections.id,
-          sections.name
-        ORDER BY
-          sections.name COLLATE NOCASE
-      `)
-      .all();
-
-    res.json(sections);
-  } catch (error) {
-    console.error(
-      "GET /sections failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to load sections.",
-    });
-  }
-});
-
-router.post("/sections", (req, res) => {
-  const name =
-    typeof req.body.name === "string"
-      ? req.body.name
-          .trim()
-          .replace(/\s+/g, " ")
-      : "";
-
-  if (!name) {
-    return res.status(400).json({
-      message:
-        "Section name is required.",
-    });
-  }
-
-  try {
-    const result = db
-      .prepare(`
-        INSERT INTO sections (name)
-        VALUES (?)
-      `)
-      .run(name);
-
-    res.status(201).json({
-      message:
-        "Section added successfully.",
-      id: Number(result.lastInsertRowid),
-    });
-  } catch (error) {
-    if (
-      error.code ===
-      "SQLITE_CONSTRAINT_UNIQUE"
-    ) {
-      return res.status(409).json({
-        message:
-          "A section with this name already exists.",
-      });
-    }
-
-    console.error(
-      "POST /sections failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to add the section.",
-    });
-  }
-});
-
-router.delete("/sections/:id", (req, res) => {
-  try {
-    const section = db
-      .prepare(`
-        SELECT id, name
-        FROM sections
-        WHERE id = ?
-      `)
-      .get(req.params.id);
-
-    if (!section) {
-      return res.status(404).json({
-        message: "Section not found.",
-      });
-    }
-
-    const studentCount = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM students
-        WHERE section = ? COLLATE NOCASE
-      `)
-      .get(section.name).count;
-
-    if (studentCount > 0) {
-      return res.status(409).json({
-        message:
-          `Move or remove students from "${section.name}" before deleting it.`,
-      });
-    }
-
-    db.prepare(`
-      DELETE FROM sections
-      WHERE id = ?
-    `).run(req.params.id);
-
-    res.json({
-      message:
-        "Section deleted successfully.",
-    });
-  } catch (error) {
-    console.error(
-      "DELETE /sections/:id failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to delete the section.",
-    });
-  }
-});
-
-router.get("/students", (req, res) => {
-  try {
-    const subjectId = Number(
-      req.query.subject_id,
-    );
-
-    let students;
-
-    if (
-      Number.isInteger(subjectId) &&
-      subjectId > 0
-    ) {
-      students = db
-        .prepare(`
-          SELECT DISTINCT
-            students.id,
-            students.name,
-            students.grade,
-            students.section
-          FROM students
-          JOIN student_subjects
-            ON student_subjects.student_id =
-              students.id
-          WHERE student_subjects.subject_id = ?
-          ORDER BY
-            students.grade,
-            students.section,
-            students.name
-        `)
-        .all(subjectId);
-    } else {
-      students = db
-        .prepare(`
-          SELECT
-            id,
-            name,
-            grade,
-            section
-          FROM students
-          ORDER BY
-            grade,
-            section,
-            name
-        `)
-        .all();
-    }
-
-    res.json(
-      attachSubjects(students),
-    );
-  } catch (error) {
-    console.error(
-      "GET /students failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to load students.",
-    });
-  }
-});
-
-router.get("/students/:id", (req, res) => {
-  try {
-    const student = db
-      .prepare(`
-        SELECT
-          id,
-          name,
-          grade,
-          section
-        FROM students
-        WHERE id = ?
-      `)
-      .get(req.params.id);
-
-    if (!student) {
-      return res.status(404).json({
-        message: "Student not found.",
-      });
-    }
-
-    res.json(
-      attachSubjects([student])[0],
-    );
-  } catch (error) {
-    console.error(
-      "GET /students/:id failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to load the student.",
-    });
-  }
-});
-
-const createStudent = db.transaction(
-  (student) => {
-    const result = db
-      .prepare(`
-        INSERT INTO students (
-          name,
-          grade,
-          section
-        )
-        VALUES (?, ?, ?)
-      `)
-      .run(
-        student.name,
-        student.grade,
-        student.section,
+      return res.json(
+        students.map(
+          formatStudent,
+        ),
+      );
+    } catch (error) {
+      console.error(
+        "GET /students failed:",
+        error,
       );
 
-    const studentId = Number(
-      result.lastInsertRowid,
-    );
-
-    const enroll = db.prepare(`
-      INSERT INTO student_subjects (
-        student_id,
-        subject_id
-      )
-      VALUES (?, ?)
-    `);
-
-    for (
-      const subjectId
-      of student.subject_ids
-    ) {
-      enroll.run(
-        studentId,
-        subjectId,
-      );
+      return res.status(500).json({
+        message:
+          "Unable to load students.",
+      });
     }
-
-    return studentId;
   },
 );
 
-router.post("/students", (req, res) => {
-  try {
-    const validation =
-      validateStudent(req.body);
-
-    if (validation.error) {
-      return res.status(400).json({
-        message: validation.error,
+router.get(
+  "/students/:id",
+  requireAuth,
+  async (req, res) => {
+    if (!isValidId(req.params.id)) {
+      return res.status(404).json({
+        message:
+          "Student not found.",
       });
     }
 
-    const studentId = createStudent(
-      validation.value,
-    );
+    try {
+      const student =
+        await findStudent(
+          req.params.id,
+          req.user.id,
+        );
 
-    res.status(201).json({
-      message:
-        "Student added successfully.",
-      id: studentId,
-    });
-  } catch (error) {
-    console.error(
-      "POST /students failed:",
-      error,
-    );
+      if (!student) {
+        return res.status(404).json({
+          message:
+            "Student not found.",
+        });
+      }
 
-    res.status(500).json({
-      message:
-        "Unable to add the student.",
-    });
-  }
-});
-
-const updateStudent = db.transaction(
-  (studentId, student) => {
-    const result = db
-      .prepare(`
-        UPDATE students
-        SET
-          name = ?,
-          grade = ?,
-          section = ?
-        WHERE id = ?
-      `)
-      .run(
-        student.name,
-        student.grade,
-        student.section,
-        studentId,
+      return res.json(
+        formatStudent(student),
+      );
+    } catch (error) {
+      console.error(
+        "GET /students/:id failed:",
+        error,
       );
 
-    if (result.changes === 0) {
-      return false;
+      return res.status(500).json({
+        message:
+          "Unable to load the student.",
+      });
     }
-
-    db.prepare(`
-      DELETE FROM student_subjects
-      WHERE student_id = ?
-    `).run(studentId);
-
-    const enroll = db.prepare(`
-      INSERT INTO student_subjects (
-        student_id,
-        subject_id
-      )
-      VALUES (?, ?)
-    `);
-
-    for (
-      const subjectId
-      of student.subject_ids
-    ) {
-      enroll.run(
-        studentId,
-        subjectId,
-      );
-    }
-
-    db.prepare(`
-      DELETE FROM assessment_scores
-      WHERE student_id = ?
-        AND assessment_id IN (
-          SELECT assessments.id
-          FROM assessments
-          LEFT JOIN student_subjects
-            ON student_subjects.student_id = ?
-            AND student_subjects.subject_id =
-              assessments.subject_id
-          WHERE student_subjects.student_id
-            IS NULL
-        )
-    `).run(
-      studentId,
-      studentId,
-    );
-
-    return true;
   },
 );
 
-router.put("/students/:id", (req, res) => {
-  try {
-    const validation =
-      validateStudent(req.body);
+router.post(
+  "/students",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const ownerId = req.user.id;
 
-    if (validation.error) {
-      return res.status(400).json({
-        message: validation.error,
+      const validation =
+        await validateStudent(
+          req.body,
+          ownerId,
+        );
+
+      if (validation.error) {
+        return res.status(400).json({
+          message:
+            validation.error,
+        });
+      }
+
+      const student =
+        await Student.create({
+          ownerId,
+          ...validation.value,
+        });
+
+      const populated =
+        await findStudent(
+          student._id,
+          ownerId,
+        );
+
+      return res.status(201).json({
+        message:
+          "Student added successfully.",
+
+        ...formatStudent(
+          populated,
+        ),
+      });
+    } catch (error) {
+      console.error(
+        "POST /students failed:",
+        {
+          message: error.message,
+          code: error.code,
+          keyPattern:
+            error.keyPattern,
+          keyValue:
+            error.keyValue,
+        },
+      );
+
+      if (error?.code === 11000) {
+        if (
+          error.keyPattern
+            ?.legacyId
+        ) {
+          return res.status(409).json({
+            message:
+              "The legacyId_1 index is blocking this student. Remove that index from the students collection.",
+          });
+        }
+
+        return res.status(409).json({
+          message:
+            "A student with this information already exists.",
+        });
+      }
+
+      return res.status(500).json({
+        message:
+          "Unable to add the student.",
       });
     }
+  },
+);
 
-    const updated = updateStudent(
-      Number(req.params.id),
-      validation.value,
-    );
-
-    if (!updated) {
+router.put(
+  "/students/:id",
+  requireAuth,
+  async (req, res) => {
+    if (!isValidId(req.params.id)) {
       return res.status(404).json({
-        message: "Student not found.",
+        message:
+          "Student not found.",
       });
     }
 
-    res.json({
-      message:
-        "Student updated successfully.",
-    });
-  } catch (error) {
-    console.error(
-      "PUT /students/:id failed:",
-      error,
-    );
+    try {
+      const ownerId = req.user.id;
 
-    res.status(500).json({
-      message:
-        "Unable to update the student.",
-    });
-  }
-});
+      const validation =
+        await validateStudent(
+          req.body,
+          ownerId,
+        );
 
-const saveAssessmentScores =
-  db.transaction(
-    (studentId, scores) => {
-      const deleteScore = db.prepare(`
-        DELETE FROM assessment_scores
-        WHERE student_id = ?
-          AND assessment_id = ?
-      `);
+      if (validation.error) {
+        return res.status(400).json({
+          message:
+            validation.error,
+        });
+      }
 
-      const upsertScore = db.prepare(`
-        INSERT INTO assessment_scores (
-          student_id,
-          assessment_id,
-          score
-        )
-        VALUES (?, ?, ?)
-        ON CONFLICT(
-          student_id,
-          assessment_id
-        )
-        DO UPDATE SET
-          score = excluded.score,
-          updated_at = CURRENT_TIMESTAMP
-      `);
+      const student =
+        await Student.findOneAndUpdate(
+          {
+            _id: req.params.id,
+            ownerId,
+          },
+          {
+            $set:
+              validation.value,
+          },
+          {
+            new: true,
+            runValidators: true,
+          },
+        );
 
-      for (const entry of scores) {
-        const assessment = db
-          .prepare(`
-            SELECT
-              assessments.id,
-              assessments.total_items,
-              assessments.subject_id
-            FROM assessments
-            JOIN student_subjects
-              ON student_subjects.subject_id =
-                assessments.subject_id
-              AND student_subjects.student_id = ?
-            WHERE assessments.id = ?
-          `)
-          .get(
-            studentId,
-            entry.assessment_id,
+      if (!student) {
+        return res.status(404).json({
+          message:
+            "Student not found.",
+        });
+      }
+
+      const unavailable =
+        await Assessment.find({
+          ownerId,
+
+          subjectId: {
+            $nin:
+              validation.value
+                .subjectIds,
+          },
+        }).select("_id");
+
+      await AssessmentScore.deleteMany({
+        ownerId,
+        studentId:
+          student._id,
+
+        assessmentId: {
+          $in: unavailable.map(
+            (assessment) =>
+              assessment._id,
+          ),
+        },
+      });
+
+      const populated =
+        await findStudent(
+          student._id,
+          ownerId,
+        );
+
+      return res.json({
+        message:
+          "Student updated successfully.",
+
+        ...formatStudent(
+          populated,
+        ),
+      });
+    } catch (error) {
+      console.error(
+        "PUT /students/:id failed:",
+        error,
+      );
+
+      return res.status(500).json({
+        message:
+          "Unable to update the student.",
+      });
+    }
+  },
+);
+
+router.put(
+  "/students/:id/assessment-scores",
+  requireAuth,
+  async (req, res) => {
+    if (!isValidId(req.params.id)) {
+      return res.status(404).json({
+        message:
+          "Student not found.",
+      });
+    }
+
+    if (
+      !Array.isArray(
+        req.body.scores,
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Scores must be an array.",
+      });
+    }
+
+    try {
+      const ownerId = req.user.id;
+
+      const student =
+        await Student.findOne({
+          _id: req.params.id,
+          ownerId,
+        });
+
+      if (!student) {
+        return res.status(404).json({
+          message:
+            "Student not found.",
+        });
+      }
+
+      for (
+        const entry
+        of req.body.scores
+      ) {
+        const assessmentId =
+          String(
+            entry.assessment_id ??
+              "",
           );
+
+        if (
+          !isValidId(
+            assessmentId,
+          )
+        ) {
+          return res.status(400).json({
+            message:
+              "Every score must include a valid assessment_id.",
+          });
+        }
+
+        const assessment =
+          await Assessment.findOne({
+            _id: assessmentId,
+            ownerId,
+
+            subjectId: {
+              $in:
+                student.subjectIds,
+            },
+          });
 
         if (!assessment) {
-          throw new Error(
-            `Assessment ${entry.assessment_id} is not available for this student.`,
-          );
+          return res.status(400).json({
+            message:
+              "An assessment is not available for this student.",
+          });
         }
 
         if (
-          entry.score === "" ||
           entry.score === null ||
-          entry.score === undefined
+          entry.score === "" ||
+          entry.score ===
+            undefined
         ) {
-          deleteScore.run(
-            studentId,
-            assessment.id,
+          await AssessmentScore.deleteOne(
+            {
+              ownerId,
+              studentId:
+                student._id,
+              assessmentId:
+                assessment._id,
+            },
           );
 
           continue;
@@ -672,37 +624,76 @@ const saveAssessmentScores =
           !Number.isInteger(score) ||
           score < 0 ||
           score >
-            assessment.total_items
+            assessment.totalItems
         ) {
-          throw new Error(
-            `Score for assessment ${assessment.id} must be from 0 to ${assessment.total_items}.`,
-          );
+          return res.status(400).json({
+            message:
+              `Score must be from 0 to ${assessment.totalItems}.`,
+          });
         }
 
-        upsertScore.run(
-          studentId,
-          assessment.id,
-          score,
+        await AssessmentScore.findOneAndUpdate(
+          {
+            ownerId,
+            studentId:
+              student._id,
+            assessmentId:
+              assessment._id,
+          },
+          {
+            $set: { score },
+            $setOnInsert: {
+              ownerId,
+              studentId:
+                student._id,
+              assessmentId:
+                assessment._id,
+            },
+          },
+          {
+            upsert: true,
+            runValidators: true,
+          },
         );
       }
-    },
-  );
 
-router.put(
-  "/students/:id/assessment-scores",
-  (req, res) => {
-    try {
-      const studentId = Number(
-        req.params.id,
+      return res.json({
+        message:
+          "Scores updated successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "Score update failed:",
+        error,
       );
 
-      const student = db
-        .prepare(`
-          SELECT id
-          FROM students
-          WHERE id = ?
-        `)
-        .get(studentId);
+      return res.status(500).json({
+        message:
+          "Unable to update the student scores.",
+      });
+    }
+  },
+);
+
+router.delete(
+  "/students/:id",
+  requireAuth,
+  async (req, res) => {
+    if (!isValidId(req.params.id)) {
+      return res.status(404).json({
+        message:
+          "Student not found.",
+      });
+    }
+
+    try {
+      const ownerId = req.user.id;
+
+      const student =
+        await Student.findOne({
+          _id: req.params.id,
+          ownerId,
+        });
 
       if (!student) {
         return res.status(404).json({
@@ -711,96 +702,41 @@ router.put(
         });
       }
 
-      if (
-        !Array.isArray(
-          req.body.scores,
-        )
-      ) {
-        return res.status(400).json({
-          message:
-            "Scores must be an array.",
-        });
-      }
+      await Promise.all([
+        AssessmentScore.deleteMany({
+          ownerId,
+          studentId:
+            student._id,
+        }),
 
-      const normalized =
-        req.body.scores.map(
-          (entry) => ({
-            assessment_id: Number(
-              entry.assessment_id,
-            ),
-            score: entry.score,
-          }),
-        );
+        StudentAiInsight.deleteMany({
+          ownerId,
+          studentId:
+            student._id,
+        }),
+      ]);
 
-      if (
-        normalized.some(
-          (entry) =>
-            !Number.isInteger(
-              entry.assessment_id,
-            ) ||
-            entry.assessment_id <= 0,
-        )
-      ) {
-        return res.status(400).json({
-          message:
-            "Every score must include a valid assessment_id.",
-        });
-      }
+      await Student.deleteOne({
+        _id: student._id,
+        ownerId,
+      });
 
-      saveAssessmentScores(
-        studentId,
-        normalized,
-      );
-
-      res.json({
+      return res.json({
         message:
-          "Scores updated successfully.",
+          "Student deleted successfully.",
       });
     } catch (error) {
       console.error(
-        "PUT /students/:id/assessment-scores failed:",
+        "DELETE /students/:id failed:",
         error,
       );
 
-      res.status(400).json({
+      return res.status(500).json({
         message:
-          error.message ||
-          "Unable to update the student scores.",
+          "Unable to delete the student.",
       });
     }
   },
 );
-
-router.delete("/students/:id", (req, res) => {
-  try {
-    const result = db
-      .prepare(`
-        DELETE FROM students
-        WHERE id = ?
-      `)
-      .run(req.params.id);
-
-    if (result.changes === 0) {
-      return res.status(404).json({
-        message: "Student not found.",
-      });
-    }
-
-    res.json({
-      message:
-        "Student deleted successfully.",
-    });
-  } catch (error) {
-    console.error(
-      "DELETE /students/:id failed:",
-      error,
-    );
-
-    res.status(500).json({
-      message:
-        "Unable to delete the student.",
-    });
-  }
-});
 
 export default router;
