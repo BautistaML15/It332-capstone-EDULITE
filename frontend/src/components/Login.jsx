@@ -73,21 +73,44 @@ export default function Login() {
 
   return (
     <div
-      className="edulite-ios-corners min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
+      className="edulite-ios-corners login-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
       style={{ fontFamily: APPLE_FONT }}
     >
       <style>{`
+        .login-canvas {
+          color-scheme: light;
+          background:
+            radial-gradient(circle at 88% 8%, rgba(0, 122, 255, 0.09), transparent 28rem),
+            radial-gradient(circle at 72% 92%, rgba(52, 199, 89, 0.08), transparent 30rem),
+            #f5f5f7;
+        }
+
         .edulite-ios-corners [class*="rounded-["]:not(.rounded-full) {
           corner-shape: squircle;
         }
 
         .login-glass {
-          background: rgba(255, 255, 255, 0.72);
-          -webkit-backdrop-filter: blur(28px) saturate(180%);
-          backdrop-filter: blur(28px) saturate(180%);
+          border: 1px solid rgba(209, 209, 214, 0.82);
+          background: rgba(255, 255, 255, 0.92);
+          -webkit-backdrop-filter: blur(20px) saturate(145%);
+          backdrop-filter: blur(20px) saturate(145%);
           box-shadow:
-            0 24px 70px rgba(60, 60, 67, 0.16),
+            0 24px 64px rgba(60, 60, 67, 0.13),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .edulite-ios-corners button,
+        .edulite-ios-corners input {
+          min-height: 44px;
+        }
+
+        .edulite-ios-corners input {
+          font-size: 16px;
+        }
+
+        .edulite-ios-corners :where(button, input):focus-visible {
+          outline: 3px solid rgba(0, 122, 255, 0.5);
+          outline-offset: 3px;
         }
 
         .edulite-ios-corners button {
@@ -147,6 +170,20 @@ export default function Login() {
             transition-duration: 0.01ms !important;
           }
         }
+
+        @media (hover: none), (pointer: coarse) {
+          .edulite-ios-corners button:not(:disabled):hover,
+          .edulite-ios-corners input:focus {
+            transform: none;
+          }
+        }
+
+        @media (prefers-contrast: more) {
+          .login-glass,
+          .edulite-ios-corners input {
+            border-color: #636366;
+          }
+        }
       `}</style>
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
         <BrandPanel isLoginMode={isLoginMode} />
@@ -161,7 +198,10 @@ export default function Login() {
               />
             </div>
 
-            <section className="login-glass login-panel-enter overflow-hidden rounded-[32px]">
+            <section
+              aria-labelledby="account-title"
+              className="login-glass login-panel-enter overflow-hidden rounded-[32px]"
+            >
               <div className="border-b border-[#E5E5EA] px-6 py-6 sm:px-8">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -169,7 +209,10 @@ export default function Login() {
                       EduLITE Account
                     </p>
 
-                    <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#1C1C1E]">
+                    <h1
+                      id="account-title"
+                      className="mt-2 text-3xl font-bold tracking-tight text-[#1C1C1E]"
+                    >
                       {isLoginMode ? "Welcome back" : "Create your account"}
                     </h1>
 
@@ -192,7 +235,11 @@ export default function Login() {
                   </span>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 rounded-full border border-[#E5E5EA] bg-[#f1f3f4] p-1">
+                <div
+                  role="tablist"
+                  aria-label="Account access"
+                  className="mt-6 grid grid-cols-2 rounded-full border border-[#E5E5EA] bg-[#f1f3f4] p-1"
+                >
                   <ModeButton
                     active={isLoginMode}
                     label="Sign In"
@@ -227,7 +274,11 @@ export default function Login() {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form
+                  onSubmit={handleSubmit}
+                  aria-busy={submitting}
+                  className="space-y-5"
+                >
                   <div>
                     <label
                       htmlFor="username"
@@ -305,7 +356,7 @@ export default function Login() {
                   </div>
 
                   {!isLoginMode && (
-                  <div className="rounded-[18px] bg-[#FFCC00]/15 p-4 text-sm leading-6 text-[#8A5A00]">
+                    <div className="rounded-[18px] bg-[#FFCC00]/15 p-4 text-sm leading-6 text-[#8A5A00]">
                       Your username will be used to sign in to EduLITE. Choose a
                       password that is difficult for other people to guess.
                     </div>
@@ -415,8 +466,8 @@ function BrandPanel({ isLoginMode }) {
 
           <p className="mt-6 max-w-lg text-base leading-8 text-white/75">
             Manage student profiles, record assessment scores, review class
-            analytics, and generate targeted learning-support recommendations
-            in one workspace.
+            analytics, and generate targeted learning-support recommendations in
+            one workspace.
           </p>
         </div>
 
@@ -469,15 +520,10 @@ function BrandPanel({ isLoginMode }) {
   );
 }
 
-function FeatureCard({
-  colorClassName,
-  markerClassName,
-  title,
-  description,
-}) {
+function FeatureCard({ colorClassName, markerClassName, title, description }) {
   return (
     <article
-      className="rounded-[22px] bg-black/30 p-5 text-white shadow-lg backdrop-blur-xl"
+      className={`rounded-[22px] border bg-black/30 p-5 text-white shadow-lg backdrop-blur-xl ${colorClassName}`}
     >
       <span
         className={`block h-3 w-3 rounded-full ${markerClassName}`}
@@ -491,17 +537,14 @@ function FeatureCard({
   );
 }
 
-function ModeButton({
-  active,
-  label,
-  activeClassName,
-  onClick,
-}) {
+function ModeButton({ active, label, activeClassName, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      role="tab"
       aria-pressed={active}
+      aria-selected={active}
       className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
         active
           ? activeClassName
