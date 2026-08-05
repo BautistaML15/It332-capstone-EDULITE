@@ -84,7 +84,15 @@ export default function Dashboard() {
   const [assessmentFormId, setAssessmentFormId] = useState(null);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    return localStorage.getItem("eduliteSidebarCollapsed") === "true";
+    const savedPreference = localStorage.getItem("eduliteSidebarCollapsed");
+
+    if (savedPreference !== null) {
+      return savedPreference === "true";
+    }
+
+    return typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 1023px)").matches
+      : true;
   });
 
   const [aiRecommendation, setAiRecommendation] = useState(null);
@@ -140,23 +148,17 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-  const token =
-    localStorage.getItem(
-      "eduliteToken",
-    );
+    const token = localStorage.getItem("eduliteToken");
 
-  const storedUser =
-    localStorage.getItem(
-      "user",
-    );
+    const storedUser = localStorage.getItem("user");
 
-  if (!token || !storedUser) {
-    navigate("/");
-    return;
-  }
+    if (!token || !storedUser) {
+      navigate("/");
+      return;
+    }
 
-  fetchDashboardData();
-}, [navigate]);
+    fetchDashboardData();
+  }, [navigate]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -221,7 +223,17 @@ export default function Dashboard() {
     setActiveView(view);
     setError("");
     setSuccess("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      setSidebarCollapsed(true);
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   };
 
   const handleAddSection = async (event) => {
@@ -522,21 +534,15 @@ export default function Dashboard() {
   };
 
   const handleLogout = () => {
-  localStorage.removeItem(
-    "eduliteToken",
-  );
+    localStorage.removeItem("eduliteToken");
 
-  localStorage.removeItem(
-    "user",
-  );
+    localStorage.removeItem("user");
 
-  navigate("/");
-};
+    navigate("/");
+  };
 
   const selectedSubjectId =
-  selectedSubject === "ALL"
-    ? null
-    : String(selectedSubject);
+    selectedSubject === "ALL" ? null : String(selectedSubject);
 
   const generateStudentRecommendation = async (student, supportType) => {
     const requestKey = `${supportType}-${student.id}`;
@@ -986,16 +992,60 @@ export default function Dashboard() {
 
   return (
     <div
-      className="edulite-ios-corners min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
+      className="edulite-ios-corners dashboard-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
       style={{
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
       }}
     >
       <style>{`
+        .dashboard-canvas {
+          color-scheme: light;
+          background:
+            radial-gradient(circle at 92% 2%, rgba(0, 122, 255, 0.07), transparent 30rem),
+            radial-gradient(circle at 42% 100%, rgba(52, 199, 89, 0.05), transparent 34rem),
+            #f5f5f7;
+        }
+
         .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
         .edulite-ios-corners .rounded-lg {
           corner-shape: squircle;
+        }
+
+        .edulite-ios-corners button,
+        .edulite-ios-corners [role="button"],
+        .edulite-ios-corners input:not([type="checkbox"]):not([type="radio"]),
+        .edulite-ios-corners select,
+        .edulite-ios-corners textarea {
+          min-height: 44px;
+        }
+
+        .edulite-ios-corners input,
+        .edulite-ios-corners select,
+        .edulite-ios-corners textarea {
+          font-size: 16px;
+        }
+
+        .edulite-ios-corners :where(button, [role="button"], input, select, textarea, a):focus-visible {
+          outline: 3px solid rgba(0, 122, 255, 0.52);
+          outline-offset: 3px;
+        }
+
+        .dashboard-bento > section {
+          border: 1px solid rgba(209, 209, 214, 0.78);
+        }
+
+        .dashboard-bento [class~="text-[10px]"],
+        .liquid-glass-sidebar [class~="text-[9px]"],
+        .liquid-glass-sidebar [class~="text-[10px]"] {
+          font-size: 0.75rem !important;
+          line-height: 1rem !important;
+        }
+
+        .dashboard-bento [class~="text-[11px]"],
+        .sidebar-nav-button[class~="text-[12px]"] {
+          font-size: 0.8125rem !important;
+          line-height: 1.125rem !important;
         }
 
         .edulite-ios-corners button,
@@ -1095,6 +1145,27 @@ export default function Dashboard() {
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
+          }
+        }
+
+        @media (hover: none), (pointer: coarse) {
+          .edulite-ios-corners button:not(.sidebar-nav-button):not(:disabled):hover,
+          .edulite-ios-corners [role="button"]:hover,
+          .edulite-ios-corners input:focus,
+          .edulite-ios-corners select:focus,
+          .edulite-ios-corners textarea:focus,
+          .edulite-ios-corners article:hover {
+            transform: none;
+          }
+        }
+
+        @media (prefers-contrast: more) {
+          .edulite-ios-corners section,
+          .edulite-ios-corners article,
+          .edulite-ios-corners input,
+          .edulite-ios-corners select,
+          .edulite-ios-corners textarea {
+            border-color: #636366 !important;
           }
         }
 
@@ -1259,6 +1330,7 @@ export default function Dashboard() {
       `}</style>
 
       <aside
+        aria-label="EduLITE navigation"
         className={`liquid-glass-sidebar fixed inset-y-0 left-0 z-50 flex flex-col overflow-visible transition-[width] duration-300 ${
           sidebarCollapsed ? "w-14" : "w-52"
         }`}
@@ -1271,17 +1343,15 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => setSidebarCollapsed((current) => !current)}
+            aria-controls="edulite-main-navigation"
+            aria-expanded={!sidebarCollapsed}
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={`flex min-w-0 items-center ${
               sidebarCollapsed ? "justify-center" : "gap-2.5"
             }`}
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden">
-              <img
-                src="/logo.png"
-                alt="EduLITE logo"
-                className="h-7 w-7 object-contain"
-              />
+              <h1 className="font-black text-[#0091FF] text-[30px]">EL</h1>
             </div>
 
             {!sidebarCollapsed && (
@@ -1291,125 +1361,118 @@ export default function Dashboard() {
                 </p>
 
                 <p className="truncate text-[10px] text-[#6e6e73]">
-                  Teacher Workspace
+                  Welcome to EduLITE
                 </p>
               </div>
             )}
           </button>
 
-          {!sidebarCollapsed && (
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(true)}
-              aria-label="Collapse sidebar"
-              title="Collapse sidebar"
-              className="absolute right-2 top-5 flex h-6 w-6 items-center justify-center rounded-full bg-white/70 text-xs font-bold text-[#6e6e73] shadow-sm backdrop-blur-xl transition hover:bg-white hover:text-[#007AFF]"
-            >
-              ‹
-            </button>
-          )}
+
         </div>
 
         <nav
+          id="edulite-main-navigation"
           aria-label="Main navigation"
           className={`flex-1 overflow-x-hidden overflow-y-auto py-3 ${
             sidebarCollapsed ? "px-1.5" : "px-2.5"
           }`}
         >
           {!sidebarCollapsed && (
-            <p className="px-2.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8e8e93]">
+            <p className="px-2.5 text-[20px] font-semibold uppercase text-[#0091FF]">
               Menu
             </p>
           )}
 
-            <div className={`${sidebarCollapsed ? "" : "mt-2"} space-y-1`}>
-              <SidebarButton
-                active={activeView === "dashboard"}
-                label="Dashboard"
-                icon="dashboard"
-                tone="yellow"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("dashboard")}
-              />
+          <div className={`${sidebarCollapsed ? "" : "mt-2"} space-y-1`}>
 
-              <SidebarButton
-                active={
-                  activeView === "students" || activeView === "studentForm"
-                }
-                label="Students"
-                icon="groups"
-                tone="blue"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("students")}
-              />
 
-              <SidebarButton
-                active={activeView === "sections"}
-                label="Sections"
-                icon="category"
-                tone="red"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("sections")}
-              />
 
-              <SidebarButton
-                active={activeView === "subjects"}
-                label="Subjects"
-                icon="menu_book"
-                tone="yellow"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("subjects")}
-              />
-
-              <SidebarButton
-                active={
-                  activeView === "assessments" ||
-                  activeView === "assessmentForm"
-                }
-                label="Assessments"
-                icon="assignment"
-                tone="green"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("assessments")}
-              />
-
-              <SidebarButton
-                active={activeView === "records"}
-                label="Records"
-                icon="table_view"
-                tone="red"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("records")}
-              />
-
-              <SidebarButton
-                active={activeView === "aiInsights"}
-                label="AI Insights"
-                icon="auto_awesome"
-                tone="blue"
-                collapsed={sidebarCollapsed}
-                onClick={() => openView("aiInsights")}
-              />
-            </div>
-          </nav>
-
-          <div
-            className={`py-3 ${
-              sidebarCollapsed ? "px-1.5" : "px-2.5"
-            }`}
-          >
             <SidebarButton
-              label="Logout"
-              icon="logout"
+              active={activeView === "dashboard"}
+              label="Dashboard"
+              icon="dashboard"
+              tone="yellow"
+              collapsed={sidebarCollapsed}
+              onClick={() => openView("dashboard")}
+            />
+
+            <SidebarButton
+              active={activeView === "sections"}
+              label="Sections"
+              icon="category"
               tone="red"
               collapsed={sidebarCollapsed}
-              onClick={handleLogout}
+              onClick={() => openView("sections")}
+            />
+
+            <SidebarButton
+              active={activeView === "subjects"}
+              label="Subjects"
+              icon="menu_book"
+              tone="yellow"
+              collapsed={sidebarCollapsed}
+              onClick={() => openView("subjects")}
+            />
+
+            <SidebarButton
+              active={activeView === "students" || activeView === "studentForm"}
+              label="Students"
+              icon="groups"
+              tone="blue"
+              collapsed={sidebarCollapsed}
+              onClick={() => openView("students")}
+            />
+
+            
+
+            
+
+            <SidebarButton
+              active={
+                activeView === "assessments" || activeView === "assessmentForm"
+              }
+              label="Assessments"
+              icon="assignment"
+              tone="green"
+              collapsed={sidebarCollapsed}
+              onClick={() => openView("assessments")}
+            />
+
+            <SidebarButton
+              active={activeView === "records"}
+              label="Records"
+              icon="table_view"
+              tone="red"
+              collapsed={sidebarCollapsed}
+              onClick={() => openView("records")}
+            />
+
+            <SidebarButton
+              active={activeView === "aiInsights"}
+              label="AI Insights"
+              icon="auto_awesome"
+              tone="blue"
+              collapsed={sidebarCollapsed}
+              onClick={() => openView("aiInsights")}
             />
           </div>
+        </nav>
+
+        <div className={`py-3 ${sidebarCollapsed ? "px-1.5" : "px-2.5"}`}>
+          <SidebarButton
+            label="Logout"
+            icon="logout"
+            tone="red"
+            collapsed={sidebarCollapsed}
+            onClick={handleLogout}
+          />
+        </div>
       </aside>
 
       <div
-        className="min-h-screen pl-14"
+        className={`min-h-screen transition-[padding] duration-300 ${
+          sidebarCollapsed ? "pl-14" : "pl-14 lg:pl-52"
+        }`}
       >
         <header
           className={`z-30 px-4 pt-4 sm:px-6 lg:px-8 ${
@@ -1419,40 +1482,21 @@ export default function Dashboard() {
           }`}
         >
           {activeView === "dashboard" ? (
-            <div className="ui-panel-enter relative h-56 overflow-hidden rounded-[28px] bg-[#1C1C1E] shadow-[0_16px_40px_rgba(60,60,67,0.16)] sm:h-64 lg:h-72">
-              <img
-                src="/hero.jpg"
-                alt="Dashboard header"
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                draggable="false"
-              />
 
-              <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/18 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+            //Dashboard Top View
+          <div className="ui-panel-enter rounded-b-[28px] bg-[#0091FF]/80 px-6 py-7 sm:py-9 mt-[-20px] mb-[-17px]">
+            <p className="text-xs uppercase text-white ">
+              EduLITE Teacher Workspace
+            </p>
 
-              <div className="absolute bottom-0 left-0 max-w-2xl p-6 text-white sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
-                  EduLITE Teacher Workspace
-                </p>
+            <h1 className="mt-2 text-4xl tracking-tight text-white font-black sm:text-5xl">
+              Dashboard
+            </h1>
 
-                <h1 className="mt-2 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                  Dashboard
-                </h1>
-
-                <p className="mt-2 text-sm leading-6 text-white/80 sm:text-base">
-                  Student performance analytics, learning insights, and subject
-                  assessments.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed((current) => !current)}
-                className="absolute right-5 top-5 hidden rounded-full bg-white/24 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-xl transition hover:bg-white/34 sm:inline-flex"
-              >
-                {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              </button>
-            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white sm:text-base ">
+              Student performance analytics, learning insights, and subject assessments.
+            </p>
+          </div> 
           ) : (
             <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px] border border-[#D1D1D6] bg-white px-5 py-4 sm:px-6">
               <div className="min-w-0">
@@ -1460,7 +1504,7 @@ export default function Dashboard() {
                   {pageDetails.title}
                 </h1>
 
-                <p className="mt-1 truncate text-sm text-[#636366]">
+                <p className="mt-1 text-sm leading-5 text-[#636366]">
                   {pageDetails.description}
                 </p>
               </div>
@@ -1468,6 +1512,8 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed((current) => !current)}
+                aria-controls="edulite-main-navigation"
+                aria-expanded={!sidebarCollapsed}
                 className="hidden rounded-full border border-[#D1D1D6] bg-[#F2F2F7] px-4 py-2 text-sm font-medium text-[#3A3A3C] transition hover:bg-[#007AFF] hover:text-white sm:inline-flex"
               >
                 {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -1484,19 +1530,31 @@ export default function Dashboard() {
           }`}
         >
           {error && (
-            <div className="rounded-[20px] bg-[#FF3B30]/10 p-4 text-[#D70015] shadow-sm">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="rounded-[20px] border border-[#FF3B30]/20 bg-[#FF3B30]/10 p-4 text-[#D70015] shadow-sm"
+            >
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-[20px] bg-[#34C759]/12 p-4 text-[#248A3D] shadow-sm">
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-[20px] border border-[#34C759]/20 bg-[#34C759]/12 p-4 text-[#248A3D] shadow-sm"
+            >
               {success}
             </div>
           )}
 
           {loading ? (
-            <div className="rounded-[28px] border border-[#D1D1D6] bg-white p-12 text-center text-[#636366]">
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-[28px] border border-[#D1D1D6] bg-white p-12 text-center text-[#636366]"
+            >
               Loading EduLITE data...
             </div>
           ) : (
@@ -1740,7 +1798,8 @@ function DashboardView({
     sections.length === 0
       ? {
           title: "Create your first section",
-          description: "Sections are required before students can be registered.",
+          description:
+            "Sections are required before students can be registered.",
           action: () => openView("sections"),
           label: "Open Sections",
         }
@@ -1754,7 +1813,8 @@ function DashboardView({
         : students.length === 0
           ? {
               title: "Register your first student",
-              description: "Add learners and assign their section and subjects.",
+              description:
+                "Add learners and assign their section and subjects.",
               action: handleRegisterStudent,
               label: "Register Student",
             }
@@ -1766,8 +1826,9 @@ function DashboardView({
                 label: "Create Assessment",
               }
             : {
-                title: "Review student performance",
-                description: "Your workspace is ready. Review scores and learning needs.",
+                title: "Review Student Performance",
+                description:
+                  "Your workspace is ready. Review scores and learning needs.",
                 action: () => openView("records"),
                 label: "Open Records",
               };
@@ -1806,39 +1867,42 @@ function DashboardView({
     .slice(0, 3);
 
   return (
+    //
     <div className="dashboard-bento grid auto-rows-auto gap-3 lg:grid-flow-dense lg:grid-cols-12">
-      <section className="rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-7">
+      
+      <section className="rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-9">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#007AFF]">
-              Recommended next step
-            </p>
-            <h2 className="mt-1 truncate text-lg font-bold text-[#1C1C1E]">
+            
+            <h2 className="mt-1 text-[20px] text-[#1C1C1E]">
               {nextStep.title}
             </h2>
-            <p className="truncate text-xs text-[#636366]">
+            <p className="mt-1 text-sm  text-[#636366]">
               {nextStep.description}
             </p>
           </div>
+
           <button
             type="button"
             onClick={nextStep.action}
-            className="shrink-0 rounded-full bg-[#007AFF] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0066D6]"
+            className="shrink-0 rounded-[10px] bg-[#0091FF] px-3 py-1 text-xs text-white hover:bg-[#0066D6]"
           >
             {nextStep.label}
           </button>
+
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-white/90 p-3 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.08)] backdrop-blur-xl lg:col-span-5">
+      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-[#0091FF]/40 p-3 text-[#1C1C1E] backdrop-blur-xl lg:col-span-3">
+
         <label className="min-w-0">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]/75">
-            Section
+          <span className="mb-1 block text-[20px] text-[#1C1C1E]">
+            Sort By Section
           </span>
           <select
             value={selectedSection}
             onChange={(event) => setSelectedSection(event.target.value)}
-            className="bento-select w-full truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+            className="bento-select  truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
           >
             <option value="ALL">All Sections</option>
             {sections.map((section) => (
@@ -1848,14 +1912,15 @@ function DashboardView({
             ))}
           </select>
         </label>
+
         <label className="min-w-0">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]/75">
-            Subject
+          <span className="mb-1 block text-[20px] text-[#1C1C1E]">
+            Sort by Subject
           </span>
           <select
             value={selectedSubject}
             onChange={(event) => setSelectedSubject(event.target.value)}
-            className="bento-select w-full truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+            className="bento-select  truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
           >
             <option value="ALL">All Subjects</option>
             {subjects.map((subject) => (
@@ -1865,45 +1930,46 @@ function DashboardView({
             ))}
           </select>
         </label>
+        
       </section>
 
-      <section className="grid grid-cols-2 place-items-stretch gap-3 lg:col-span-5">
+      <section className="p-3 rounded-[22px] bg-[#0091FF]/30 grid grid-cols-2 place-items-stretch gap-3 lg:col-span-5">
         <BentoMetric
-          label="Class Average"
+           label="Class Average"
           value={`${classAverage.toFixed(1)}%`}
           detail={`${currentSectionLabel} · ${currentSubjectLabel}`}
           tone="yellow"
         />
         <BentoMetric
-          label="Passing Rate"
+          label="Class Passing Rate"
           value={`${passingRate.toFixed(1)}%`}
           detail={`${passingStudents.length} passing`}
           tone="green"
         />
         <BentoMetric
-          label="Assessed"
+          label="Students Assessed"
           value={assessedStudents.length}
           detail={`${displayedStudents.length} matching students`}
           tone="blue"
         />
         <BentoMetric
-          label="At Risk"
+          label="Students At Risk"
           value={atRiskStudents.length}
           detail="Below 75% average"
           tone="red"
         />
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-4">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/40 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-4">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
-              Performance
+            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
+              Your Student's Performance
             </p>
-            <h3 className="text-base font-bold text-[#1C1C1E]">Distribution</h3>
+            <h3 className="text-base text-[#1C1C1E]">Distribution</h3>
           </div>
           <span className="text-xs text-[#636366]/70">
-            {assessedStudents.length} assessed
+            {assessedStudents.length} Assessed
           </span>
         </div>
         <div className="mt-3 flex flex-1 flex-col justify-around gap-2">
@@ -1917,6 +1983,11 @@ function DashboardView({
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-black/10">
                 <div
+                  role="progressbar"
+                  aria-label={`${item.label}: ${item.percentage.toFixed(0)} percent`}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow={Math.round(item.percentage)}
                   className={`h-full rounded-full ${item.color}`}
                   style={{ width: `${item.percentage}%` }}
                 />
@@ -1926,42 +1997,65 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-3">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
               Setup
             </p>
-            <h3 className="text-base font-bold text-[#1C1C1E]">Workspace</h3>
+            <h3 className="text-base text-[#1C1C1E]">Workspace</h3>
           </div>
           <button
             type="button"
             onClick={() => openView("records")}
-            className="text-xs font-semibold text-[#1C1C1E] hover:underline"
+            className="bg-[#0091FF] px-4 py-2 rounded-[10px] text-xs  text-white hover:underline"
           >
             Records
           </button>
         </div>
+
         <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
-          <WorkflowStep label="Sections" value={sections.length} onClick={() => openView("sections")} compact />
-          <WorkflowStep label="Subjects" value={subjects.length} onClick={() => openView("subjects")} compact />
-          <WorkflowStep label="Students" value={students.length} onClick={() => openView("students")} compact />
-          <WorkflowStep label="Assessments" value={assessments.length} onClick={() => openView("assessments")} compact />
+          <WorkflowStep
+            label="Sections"
+            value={sections.length}
+            onClick={() => openView("sections")}
+            compact
+          />
+          <WorkflowStep
+            label="Subjects"
+            value={subjects.length}
+            onClick={() => openView("subjects")}
+            compact
+          />
+          <WorkflowStep
+            label="Students"
+            value={students.length}
+            onClick={() => openView("students")}
+            compact
+          />
+          <WorkflowStep
+            label="Assessments"
+            value={assessments.length}
+            onClick={() => openView("assessments")}
+            compact
+          />
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-7">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/40 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-7">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
               Learning support
             </p>
-            <h3 className="text-base font-bold text-[#1C1C1E]">Priority Insights</h3>
+            <h3 className="text-base text-[#1C1C1E]">
+              Priority Insights
+            </h3>
           </div>
           <button
             type="button"
             onClick={() => openView("aiInsights")}
-            className="rounded-full bg-black/5 px-3 py-1.5 text-xs font-semibold text-[#1C1C1E] hover:bg-black/10"
+            className="rounded-[10px] bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white"
           >
             Open AI Insights
           </button>
@@ -1984,20 +2078,20 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/90 p-4 text-[#1C1C1E] shadow-[0_8px_24px_rgba(60,60,67,0.10)] backdrop-blur-xl lg:col-span-5">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#636366]/70">
+            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
               Latest activity
             </p>
-            <h3 className="text-base font-bold text-[#1C1C1E]">Assessments</h3>
+            <h3 className="text-base text-[#1C1C1E]">Assessments</h3>
           </div>
           <button
             type="button"
             onClick={handleAddAssessment}
-            className="text-xs font-semibold text-[#1C1C1E] hover:underline"
+            className="text-xs bg-[#0091FF] px-4 rounded-[12px] font-semibold text-white"
           >
-            + Create
+            Create
           </button>
         </div>
         <div className="mt-2 min-h-0 flex-1 space-y-1.5">
@@ -2050,42 +2144,42 @@ function WorkflowStep({ label, value, onClick, compact = false }) {
         compact ? "p-2.5" : "p-4"
       }`}
     >
-      <span className={`block font-medium text-[#636366]/75 ${compact ? "text-[11px]" : "mt-1 text-sm"}`}>
+      <span
+        className={`block font-medium text-[#636366]/75 ${compact ? "text-[11px]" : "mt-1 text-sm"}`}
+      >
         {label}
       </span>
-      <span className={`block shrink-0 font-bold text-[#1C1C1E] ${compact ? "text-lg" : "text-2xl"}`}>{value}</span>
+      <span
+        className={`block shrink-0 font-bold text-[#1C1C1E] ${compact ? "text-lg" : "text-2xl"}`}
+      >
+        {value}
+      </span>
     </button>
   );
 }
 
 function BentoMetric({ label, value, detail, tone = "blue" }) {
   const tones = {
-    blue: "bg-[#007AFF]/10 text-[#007AFF]",
-    red: "bg-[#FF3B30]/10 text-[#D70015]",
-    green: "bg-[#34C759]/12 text-[#248A3D]",
-    yellow: "bg-[#FF9500]/12 text-[#8A5A00]",
+    blue: "bg-white/50 text-[#007AFF]",
+    red: "bg-white/50 text-[#D70015]",
+    green: "bg-white/50 text-[#248A3D]",
+    yellow: "bg-white/50 text-[#8A5A00]",
   };
 
   return (
     <div
-      className={`relative flex min-h-[108px] w-full flex-col justify-between overflow-hidden rounded-[20px] p-4 shadow-sm ${
+      className={`relative flex min-h-[108px] w-full flex-col justify-between overflow-hidden rounded-[18px] p-4 ${
         tones[tone] ?? tones.blue
       }`}
     >
-      <p className="text-[11px] font-semibold text-[#636366]/75">{label}</p>
-      <p className="my-1 text-2xl font-bold tracking-tight">{value}</p>
-      <p className="truncate text-[10px] text-[#636366]/70">{detail}</p>
+      <p className="text-[11px] font-semibold text-[#636366]">{label}</p>
+      <p className="my-1 text-5xl font-bold tracking-tight">{value}</p>
+      <p className="text-xs leading-4 text-[#636366]/70">{detail}</p>
     </div>
   );
 }
 
-function BentoInsight({
-  title,
-  student,
-  type,
-  onGenerate,
-  generatingKey,
-}) {
+function BentoInsight({ title, student, type, onGenerate, generatingKey }) {
   const isRisk = type === "risk";
   const supportType = isRisk ? "intervention" : "enrichment";
   const requestKey = student ? `${supportType}-${student.id}` : "";
@@ -2094,21 +2188,23 @@ function BentoInsight({
   return (
     <div
       className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-[#1C1C1E] shadow-sm ${
-        isRisk ? "bg-[#FF3B30]/10" : "bg-[#34C759]/12"
+        isRisk ? "bg-white/50" : "bg-white/50"
       }`}
     >
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#636366]/75">
+        <p className="text-[15px] font-semibold tracking-wide text-[#1C1C1E]/75 mb-[15px]">
           {title}
         </p>
         {student ? (
           <>
+          <div className="px-2 py-1 rounded-[12px] bg-white/90">
             <p className="mt-1 truncate text-sm font-bold text-[#1C1C1E]">
               {student.name}
             </p>
             <p className="text-[10px] text-[#636366]/70">
               {student.section} · {student.averagePercentage.toFixed(1)}%
             </p>
+          </div>
           </>
         ) : (
           <p className="mt-2 text-xs text-[#636366]/70">
@@ -2294,7 +2390,10 @@ function StudentsView({
               ))}
               {filteredStudents.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-[#636366]">
+                  <td
+                    colSpan="5"
+                    className="px-6 py-12 text-center text-[#636366]"
+                  >
                     {students.length === 0
                       ? "No students registered yet."
                       : "No students match the current search and section filter."}
@@ -2342,7 +2441,8 @@ function AssessmentsView({
               Assessment Library
             </h2>
             <p className="mt-1 text-sm text-[#636366]">
-              Create an assessment, enter scores, then review results in Records.
+              Create an assessment, enter scores, then review results in
+              Records.
             </p>
           </div>
           <button
@@ -2958,13 +3058,9 @@ function StudentExpandedProfile({
                       {record.subject_name}
                     </td>
 
-                    <td className="px-6 py-4 text-[#636366]">
-                      {record.type}
-                    </td>
+                    <td className="px-6 py-4 text-[#636366]">{record.type}</td>
 
-                    <td className="px-6 py-4 text-[#636366]">
-                      {record.date}
-                    </td>
+                    <td className="px-6 py-4 text-[#636366]">{record.date}</td>
 
                     <td className="px-6 py-4 text-[#3A3A3C]">
                       {hasScore
@@ -3540,13 +3636,9 @@ function AssessmentList({
                   </span>
                 </td>
 
-                <td className="px-6 py-4 text-[#636366]">
-                  {assessment.type}
-                </td>
+                <td className="px-6 py-4 text-[#636366]">{assessment.type}</td>
 
-                <td className="px-6 py-4 text-[#636366]">
-                  {assessment.date}
-                </td>
+                <td className="px-6 py-4 text-[#636366]">{assessment.date}</td>
 
                 <td className="px-6 py-4 text-[#636366]">
                   {assessment.total_items}
@@ -3604,14 +3696,22 @@ function SubjectEnrollmentModal({
 }) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1C1C1E]/55 p-4">
-      <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] border border-[#E5E5EA] bg-white">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="subject-enrollment-title"
+        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] border border-[#E5E5EA] bg-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
+      >
         <div className="flex items-start justify-between gap-4 bg-[#FF9500]/12 px-6 py-5">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#8A5A00]">
               New Subject Enrollment
             </p>
 
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
+            <h2
+              id="subject-enrollment-title"
+              className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]"
+            >
               {subjectName}
             </h2>
 
@@ -3624,6 +3724,7 @@ function SubjectEnrollmentModal({
             type="button"
             onClick={closeModal}
             disabled={addingSubject}
+            aria-label="Close subject enrollment"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#636366] hover:bg-[#F2F2F7] hover:text-[#1C1C1E] disabled:opacity-50"
           >
             ×
@@ -3631,7 +3732,11 @@ function SubjectEnrollmentModal({
         </div>
 
         <div className="space-y-3 border-b border-[#E5E5EA] px-6 py-4">
+          <label htmlFor="subject-student-search" className="sr-only">
+            Search students
+          </label>
           <input
+            id="subject-student-search"
             type="text"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
@@ -3640,7 +3745,11 @@ function SubjectEnrollmentModal({
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-[#636366]">
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-sm text-[#636366]"
+            >
               {selectedIds.length} of {students.length} students selected
             </p>
 
@@ -3751,28 +3860,24 @@ function SidebarButton({
 }) {
   const tones = {
     blue: {
-      active:
-        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      active: "bg-[#0091FF]/80 text-white ",
       icon: "text-[#007AFF]",
-      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
+      hover: "hover:bg-[#0091FF]/70 hover:text-white",
     },
     red: {
-      active:
-        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      active: "bg-[#0091FF]/80 text-white",
       icon: "text-[#D70015]",
-      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
+      hover: "hover:bg-[#0091FF]/70 hover:text-white",
     },
     green: {
-      active:
-        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      active: "bg-[#0091FF]/80 text-white",
       icon: "text-[#248A3D]",
-      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
+      hover: "hover:bg-[#0091FF]/70 hover:text-white",
     },
     yellow: {
-      active:
-        "bg-white/80 text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+      active: "bg-[#0091FF]/80 text-white ",
       icon: "text-[#9A6700]",
-      hover: "hover:bg-white/60 hover:text-[#1d1d1f]",
+      hover: "hover:bg-[#0091FF]/70 hover:text-white",
     },
   };
 
@@ -3792,9 +3897,7 @@ function SidebarButton({
       className={`sidebar-nav-button group flex w-full touch-manipulation items-center rounded-[13px] py-1.5 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/45 ${
         collapsed ? "justify-center px-1" : "gap-2.5 px-2 text-left"
       } ${
-        active
-          ? selectedTone.active
-          : `text-[#636366] ${selectedTone.hover}`
+        active ? selectedTone.active : `text-[#636366] ${selectedTone.hover}`
       }`}
     >
       <span
@@ -3901,6 +4004,11 @@ function PerformanceBar({ label, range, count, percentage, barClass }) {
 
       <div className="h-3.5 w-full overflow-hidden rounded-full bg-[#E5E5EA]">
         <div
+          role="progressbar"
+          aria-label={`${label}: ${percentage.toFixed(1)} percent`}
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow={Math.round(percentage)}
           className={`h-full rounded-full transition-[width] duration-500 ${barClass}`}
           style={{
             width: `${percentage}%`,
@@ -4018,12 +4126,15 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1C1C1E]/55 p-4">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-[#E5E5EA] bg-white">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recommendation-title"
+        className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-[#E5E5EA] bg-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
+      >
         <div
           className={`flex items-start justify-between gap-4 px-6 py-5 ${
-            isIntervention
-              ? "bg-[#FF3B30]/10"
-              : "bg-[#34C759]/12"
+            isIntervention ? "bg-[#FF3B30]/10" : "bg-[#34C759]/12"
           }`}
         >
           <div>
@@ -4046,7 +4157,10 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                   Gemini Learning Support
                 </p>
 
-                <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
+                <h2
+                  id="recommendation-title"
+                  className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]"
+                >
                   {plan?.title || "Learning-Support Recommendation"}
                 </h2>
               </div>
@@ -4065,7 +4179,7 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
             {recommendation?.savedInsight?.pdfUrl && (
               <a
                 href={`${API_URL}${recommendation.savedInsight.pdfUrl}`}
-                className="rounded-full bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066D6]"
+                className="inline-flex min-h-11 items-center rounded-full bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066D6]"
               >
                 Download PDF
               </a>
@@ -4084,7 +4198,10 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
         <div className="max-h-[calc(92vh-112px)] overflow-y-auto px-6 py-6">
           {error ? (
-            <div className="rounded-[22px] border border-[#FF3B30] bg-white p-5 text-[#D70015]">
+            <div
+              role="alert"
+              className="rounded-[22px] border border-[#FF3B30] bg-white p-5 text-[#D70015]"
+            >
               <h3 className="font-bold">
                 Recommendation could not be generated
               </h3>
@@ -4377,6 +4494,7 @@ function formatSavedDate(value) {
 function TableHeading({ children, align = "left" }) {
   return (
     <th
+      scope="col"
       className={`px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#636366] ${
         align === "right" ? "text-right" : "text-left"
       }`}
