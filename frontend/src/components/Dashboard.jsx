@@ -992,7 +992,7 @@ export default function Dashboard() {
 
   return (
     <div
-      className="edulite-ios-corners dashboard-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
+      className=" edulite-ios-corners dashboard-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
       style={{
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
@@ -1000,12 +1000,14 @@ export default function Dashboard() {
     >
       <style>{`
         .dashboard-canvas {
-          color-scheme: light;
-          background:
-            radial-gradient(circle at 92% 2%, rgba(0, 122, 255, 0.07), transparent 30rem),
-            radial-gradient(circle at 42% 100%, rgba(52, 199, 89, 0.05), transparent 34rem),
-            #f5f5f7;
-        }
+        color-scheme: light;
+        background-image: url("/bg9.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        
+      }
 
         .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
         .edulite-ios-corners .rounded-lg {
@@ -1204,10 +1206,10 @@ export default function Dashboard() {
           background:
             linear-gradient(
               110deg,
-              rgba(255, 255, 255, 0.14),
-              transparent 34%,
-              rgba(255, 255, 255, 0.03) 66%,
-              rgba(255, 255, 255, 0.1)
+              rgba(0, 0, 0, 0.5),
+              transparent 50%,
+              rgba(0, 0, 0, 0) 66%,
+              hsla(0, 0%, 100%, 0.00)
             );
           content: "";
           pointer-events: none;
@@ -1220,10 +1222,10 @@ export default function Dashboard() {
           border-radius: inherit;
           background: linear-gradient(
             180deg,
-            rgba(255, 255, 255, 0.05),
-            transparent 22%,
-            transparent 78%,
-            rgba(255, 255, 255, 0.03)
+            rgba(255, 255, 255, 0.5),
+            transparent 50%,
+            transparent 75%,
+            rgba(255, 255, 255, 0)
           );
           content: "";
           pointer-events: none;
@@ -1351,7 +1353,7 @@ export default function Dashboard() {
             }`}
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden">
-              <h1 className="font-black text-[#0091FF] text-[30px]">EL</h1>
+              <h1 className="font-black text-[#0068DA] text-[30px]">EL</h1>
             </div>
 
             {!sidebarCollapsed && (
@@ -1378,7 +1380,7 @@ export default function Dashboard() {
           }`}
         >
           {!sidebarCollapsed && (
-            <p className="px-2.5 text-[20px] font-semibold uppercase text-[#0091FF]">
+            <p className="px-2.5 text-[20px] font-semibold  text-[#0091FF]">
               Menu
             </p>
           )}
@@ -1478,29 +1480,26 @@ export default function Dashboard() {
           className={`z-30 px-4 pt-4 sm:px-6 lg:px-8 ${
             activeView === "dashboard"
               ? "relative"
-              : "sticky top-0 bg-[#F2F2F7]"
+              : "sticky top-0 "
           }`}
         >
           {activeView === "dashboard" ? (
 
             //Dashboard Top View
-          <div className="ui-panel-enter rounded-b-[28px] bg-[#0091FF]/80 px-6 py-7 sm:py-9 mt-[-20px] mb-[-17px]">
-            <p className="text-xs uppercase text-white ">
-              EduLITE Teacher Workspace
-            </p>
+          <div className="ui-panel-enter border-1 border-white rounded-b-[28px] bg-white/35 backdrop-blur-[15px] px-6 py-7 sm:py-9 mt-[-20px] mb-[-17px]">
 
-            <h1 className="mt-2 text-4xl tracking-tight text-white font-black sm:text-5xl">
+            <h1 className="mt-2 text-xl tracking-tight text-[#36454F] font-bold sm:text-5xl">
               Dashboard
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white sm:text-base ">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#36454F] sm:text-base ">
               Student performance analytics, learning insights, and subject assessments.
             </p>
           </div> 
           ) : (
-            <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px] border border-[#D1D1D6] bg-white px-5 py-4 sm:px-6">
+            <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px] border border-x-white/0 border-y-white backdrop-blur-[20px] bg-white/35 px-5 py-4 sm:px-6">
               <div className="min-w-0">
-                <h1 className="truncate text-2xl font-bold tracking-tight text-[#1C1C1E]">
+                <h1 className="truncate text-2xl font-bold text-[#36454F]">
                   {pageDetails.title}
                 </h1>
 
@@ -1509,15 +1508,7 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed((current) => !current)}
-                aria-controls="edulite-main-navigation"
-                aria-expanded={!sidebarCollapsed}
-                className="hidden rounded-full border border-[#D1D1D6] bg-[#F2F2F7] px-4 py-2 text-sm font-medium text-[#3A3A3C] transition hover:bg-[#007AFF] hover:text-white sm:inline-flex"
-              >
-                {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              </button>
+              
             </div>
           )}
         </header>
@@ -1838,25 +1829,25 @@ function DashboardView({
       label: "Excellent",
       count: excellentStudents.length,
       percentage: getPercentage(excellentStudents.length),
-      color: "bg-[#34C759]",
+      color: "bg-[#008000]",
     },
     {
       label: "Very Satisfactory",
       count: verySatisfactoryStudents.length,
       percentage: getPercentage(verySatisfactoryStudents.length),
-      color: "bg-[#007AFF]",
+      color: "bg-[#0088FF]",
     },
     {
       label: "Satisfactory",
       count: satisfactoryStudents.length,
       percentage: getPercentage(satisfactoryStudents.length),
-      color: "bg-[#FFCC00]",
+      color: "bg-[#9A7B0C]",
     },
     {
       label: "Needs Support",
       count: atRiskStudents.length,
       percentage: getPercentage(atRiskStudents.length),
-      color: "bg-[#FF3B30]",
+      color: "bg-[#FF0000]",
     },
   ];
 
@@ -1867,17 +1858,17 @@ function DashboardView({
     .slice(0, 3);
 
   return (
-    //
+    //Dashboard view
     <div className="dashboard-bento grid auto-rows-auto gap-3 lg:grid-flow-dense lg:grid-cols-12">
       
-      <section className="rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-9">
+      <section className="rounded-[22px] bg-white/35 p-4 text-[#36454F] backdrop-blur-[20px] lg:col-span-9">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             
-            <h2 className="mt-1 text-[20px] text-[#1C1C1E]">
+            <h2 className="mt-1 text-[20px] text-[#36454F] font-bold">
               {nextStep.title}
             </h2>
-            <p className="mt-1 text-sm  text-[#636366]">
+            <p className="mt-1 text-sm  text-[#36454F]">
               {nextStep.description}
             </p>
           </div>
@@ -1893,16 +1884,16 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-[#0091FF]/40 p-3 text-[#1C1C1E] backdrop-blur-xl lg:col-span-3">
+      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-white/35 p-3 text-[#FFFFFF] backdrop-blur-[20px] lg:col-span-3">
 
         <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#1C1C1E]">
+          <span className="mb-1 block text-[20px] text-[#36454F]">
             Sort By Section
           </span>
           <select
             value={selectedSection}
             onChange={(event) => setSelectedSection(event.target.value)}
-            className="bento-select  truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+            className="bento-select  truncate rounded-[12px] bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
           >
             <option value="ALL">All Sections</option>
             {sections.map((section) => (
@@ -1914,13 +1905,13 @@ function DashboardView({
         </label>
 
         <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#1C1C1E]">
+          <span className="mb-1 block text-[20px] text-[#36454F]">
             Sort by Subject
           </span>
           <select
             value={selectedSubject}
             onChange={(event) => setSelectedSubject(event.target.value)}
-            className="bento-select  truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+            className="bento-select  truncate rounded-[12px] border-0 bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
           >
             <option value="ALL">All Subjects</option>
             {subjects.map((subject) => (
@@ -1933,7 +1924,7 @@ function DashboardView({
         
       </section>
 
-      <section className="p-3 rounded-[22px] bg-[#0091FF]/30 grid grid-cols-2 place-items-stretch gap-3 lg:col-span-5">
+      <section className="p-3 rounded-[22px] bg-white/35 backdrop-blur-[20px] grid grid-cols-2 place-items-stretch gap-3 lg:col-span-3">
         <BentoMetric
            label="Class Average"
           value={`${classAverage.toFixed(1)}%`}
@@ -1960,24 +1951,24 @@ function DashboardView({
         />
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/40 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-4">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/35 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-6">
         <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
+          <div className="px-5 py-3 rounded-[12px]">
+            <p className="text-[20px] font-semibold text-text-[#36454F]/50">
               Your Student's Performance
             </p>
-            <h3 className="text-base text-[#1C1C1E]">Distribution</h3>
-          </div>
-          <span className="text-xs text-[#636366]/70">
+            <span className="text-l text-text-[#36454F]/50">
             {assessedStudents.length} Assessed
           </span>
+          </div>
+          
         </div>
-        <div className="mt-3 flex flex-1 flex-col justify-around gap-2">
+        <div className="mt-3 flex flex-col grid flex-1 grid-cols-2 gap-2 justify-around gap-2 ">
           {distribution.map((item) => (
-            <div key={item.label}>
-              <div className="mb-1 flex items-center justify-between text-[11px]">
-                <span className="font-medium text-[#1C1C1E]">{item.label}</span>
-                <span className="text-[#636366]/70">
+            <div key={item.label} className="bg-white/20 px-3 py-2 rounded-[10px]">
+              <div className="mb-1 flex items-center justify-between text-[11px] ">
+                <span className="font-medium text-[#36454F]/75">{item.label}</span>
+                <span className="text-text-[#36454F]/75">
                   {item.count} · {item.percentage.toFixed(0)}%
                 </span>
               </div>
@@ -1997,18 +1988,18 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-3">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/35 p-4 text-white backdrop-blur-[20px] lg:col-span-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
+            <p className="text-[20px] font-semibold text-[#36454F]">
               Setup
             </p>
-            <h3 className="text-base text-[#1C1C1E]">Workspace</h3>
+            <h3 className="text-bold text-[#36454F]">Workspace</h3>
           </div>
           <button
             type="button"
             onClick={() => openView("records")}
-            className="bg-[#0091FF] px-4 py-2 rounded-[10px] text-xs  text-white hover:underline"
+            className="bg-[#0091FF] px-4 py-2 rounded-[10px] text-xs  text-white"
           >
             Records
           </button>
@@ -2042,13 +2033,13 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/40 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-7">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/35 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-7">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
+            <p className="text-[20px] font-semibold text-[#36454F]">
               Learning support
             </p>
-            <h3 className="text-base text-[#1C1C1E]">
+            <h3 className="text-base text-[#36454F]/75">
               Priority Insights
             </h3>
           </div>
@@ -2078,13 +2069,13 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-5">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/35 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
-              Latest activity
+            <p className="text-[20px] font-semibold  text-[#36454F]">
+              Latest Activity
             </p>
-            <h3 className="text-base text-[#1C1C1E]">Assessments</h3>
+            <h3 className="text-base text-[#36454F]/75">Assessments</h3>
           </div>
           <button
             type="button"
@@ -2098,34 +2089,34 @@ function DashboardView({
           {recentAssessments.map((assessment) => (
             <div
               key={assessment.id}
-              className="flex items-center gap-2 rounded-[13px] bg-[#F2F2F7] px-3 py-2"
+              className="flex items-center gap-2 rounded-[13px] bg-white/20 px-3 py-2"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-[#1C1C1E]">
+                <p className="truncate text-l font-semibold text-[#36454F]">
                   {assessment.name}
                 </p>
-                <p className="truncate text-[10px] text-[#636366]/70">
+                <p className="truncate text-[10px] text-[#36454F]/75">
                   {assessment.subject_name} · {assessment.date}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => onEditAssessment(assessment.id)}
-                className="text-[11px] font-semibold text-[#1C1C1E] hover:underline"
+                className="text-[11px] font-semibold text-[#0091FF]"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteAssessment(assessment.id)}
-                className="text-[11px] font-semibold text-[#636366]/75 hover:text-[#1C1C1E] hover:underline"
+                className="text-[11px] font-semibold text-[#FF4245]"
               >
                 Delete
               </button>
             </div>
           ))}
           {recentAssessments.length === 0 && (
-            <div className="flex h-full items-center justify-center rounded-[14px] bg-[#F2F2F7] text-center text-xs text-[#636366]/70">
+            <div className="flex h-full items-center justify-center rounded-[14px] bg-white/10 text-center text-xs text-white/70">
               No assessments yet.
             </div>
           )}
@@ -2140,17 +2131,17 @@ function WorkflowStep({ label, value, onClick, compact = false }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-[14px] border-0 bg-[#F2F2F7] text-left text-[#1C1C1E] transition hover:bg-[#E5E5EA] ${
+      className={`flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-[14px] bg-white/30 text-left text-white transition hover:bg-[#E5E5EA]/50 ${
         compact ? "p-2.5" : "p-4"
       }`}
     >
       <span
-        className={`block font-medium text-[#636366]/75 ${compact ? "text-[11px]" : "mt-1 text-sm"}`}
+        className={`block font-medium text-[#36454F] ${compact ? "text-[11px]" : "mt-1 text-sm"}`}
       >
         {label}
       </span>
       <span
-        className={`block shrink-0 font-bold text-[#1C1C1E] ${compact ? "text-lg" : "text-2xl"}`}
+        className={`block shrink-0 font-bold text-[#36454F] ${compact ? "text-[50px]" : "text-2xl"}`}
       >
         {value}
       </span>
@@ -2160,10 +2151,10 @@ function WorkflowStep({ label, value, onClick, compact = false }) {
 
 function BentoMetric({ label, value, detail, tone = "blue" }) {
   const tones = {
-    blue: "bg-white/50 text-[#007AFF]",
-    red: "bg-white/50 text-[#D70015]",
-    green: "bg-white/50 text-[#248A3D]",
-    yellow: "bg-white/50 text-[#8A5A00]",
+    blue: "text-[#0088FF] bg-white/10 backdrop-blur-[5px]",
+    red: " text-[#FF0000] bg-white/10 backdrop-blur-[5px]",
+    green: " text-[#008000] bg-white/10 backdrop-blur-[5px]",
+    yellow: " text-[#9A7B0C] bg-white/10 backdrop-blur-[5px]",
   };
 
   return (
@@ -2172,9 +2163,9 @@ function BentoMetric({ label, value, detail, tone = "blue" }) {
         tones[tone] ?? tones.blue
       }`}
     >
-      <p className="text-[11px] font-semibold text-[#636366]">{label}</p>
       <p className="my-1 text-5xl font-bold tracking-tight">{value}</p>
-      <p className="text-xs leading-4 text-[#636366]/70">{detail}</p>
+      <p className="text-[11px] font-semibold text-[#36454F]/75">{label}</p>
+      <p className="text-xs leading-4 text-[#36454F]/50">{detail}</p>
     </div>
   );
 }
@@ -2187,27 +2178,27 @@ function BentoInsight({ title, student, type, onGenerate, generatingKey }) {
 
   return (
     <div
-      className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-[#1C1C1E] shadow-sm ${
-        isRisk ? "bg-white/50" : "bg-white/50"
+      className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-white shadow-sm ${
+        isRisk ? "bg-white/20" : "bg-white/20"
       }`}
     >
       <div className="min-w-0">
-        <p className="text-[15px] font-semibold tracking-wide text-[#1C1C1E]/75 mb-[15px]">
+        <p className="text-[15px] font-semibold tracking-wide text-[#36454F] mb-[15px]">
           {title}
         </p>
         {student ? (
           <>
-          <div className="px-2 py-1 rounded-[12px] bg-white/90">
-            <p className="mt-1 truncate text-sm font-bold text-[#1C1C1E]">
+          <div className="px-2 py-1 rounded-[12px] bg-white/15">
+            <p className="mt-1 truncate text-sm text-[#36454F]">
               {student.name}
             </p>
-            <p className="text-[10px] text-[#636366]/70">
+            <p className="text-[10px] text-[#36454F]/70">
               {student.section} · {student.averagePercentage.toFixed(1)}%
             </p>
           </div>
           </>
         ) : (
-          <p className="mt-2 text-xs text-[#636366]/70">
+          <p className="mt-2 text-xs text-white/70">
             No student identified.
           </p>
         )}
@@ -3227,7 +3218,7 @@ function ProfileMetric({ label, value, tone = "blue" }) {
     </div>
   );
 }
-
+//Sections view
 function SectionManagementView({
   sections,
   newSection,
@@ -3238,52 +3229,45 @@ function SectionManagementView({
   openDashboardForSection,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-4 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-[28px] p-3 bg-white/35 backdrop-blur-[20px]">
+      <div className="flex flex-col gap-4 rounded-[24px]  px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8A5A00]">
-            Classroom Setup
-          </p>
 
-          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
+          <h2 className="mt-1 text-xl font-bold text-[#36454F]">
             Section Management
           </h2>
 
-          <p className="mt-1 text-sm text-[#636366]">
+          <p className="mt-1 text-sm text-[#36454F]">
             Add sections before registering students, then manage existing
             section records below.
           </p>
         </div>
-
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFCC00] text-xl font-bold text-[#1C1C1E]">
-          S
-        </span>
       </div>
 
       <div className="p-6">
         <form
           onSubmit={handleAddSection}
-          className="flex flex-col gap-3 rounded-[40px] border border-[#D1D1D6] bg-[#F2F2F7] p-4 sm:flex-row"
+          className="flex flex-col gap-3 rounded-[22px] border border-[#D1D1D6] bg-white/30 p-2 sm:flex-row"
         >
           <input
             type="text"
             value={newSection}
             onChange={(event) => setNewSection(event.target.value)}
             placeholder="Enter section name"
-            className="flex-1 rounded-full border border-[#D1D1D6] bg-white px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
+            className="flex-1 rounded-[12px] border border-[#D1D1D6] bg-white/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
           />
 
           <button
             type="submit"
             disabled={addingSection || !newSection.trim()}
-            className="rounded-full bg-[#34C759] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
+            className="rounded-[12px] bg-[#0088FF] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
           >
             {addingSection ? "Adding..." : "+ Add Section"}
           </button>
         </form>
 
-        <div className="mt-6 overflow-hidden rounded-[22px] border border-[#E5E5EA]">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-[#E5E5EA] bg-[#F2F2F7] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
+        <div className="mt-6 overflow-hidden p-2 rounded-[22px] border border-[#E5E5EA]">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-3 rounded-[14px] border-y border-[#E5E5EA] bg-white/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
             <span>Section</span>
             <span>Students</span>
             <span>Action</span>
@@ -3293,25 +3277,24 @@ function SectionManagementView({
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-4 py-4 transition hover:bg-[#F2F2F7]"
+                className="grid grid-cols-[1fr_auto_auto] rounded-[14px] my-2 bg-white/30 items-center gap-3 px-4 py-3 transition hover:bg-white/50"
               >
                 <button
                   type="button"
                   onClick={() => openDashboardForSection(section.name)}
-                  className="text-left font-semibold text-[#1C1C1E] hover:text-[#8A5A00]"
+                  className="text-left font-semibold text-[#36454F] hover:text-[#0088FF]"
                 >
                   {section.name}
                 </button>
 
-                <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-[#8A5A00]">
+                <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm text-white">
                   {section.student_count}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => handleRemoveSection(section)}
-                  className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
-                >
+                  className="rounded-[7px] bg-white/50 p-3 text-sm text-[#D70015] hover:bg-[#FF0000] hover:text-white">
                   Remove
                 </button>
               </div>
@@ -3340,14 +3323,12 @@ function SubjectManagementView({
   openDashboardForSubject,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-4 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    //Section view
+    <section className="overflow-hidden rounded-[28px] backdrop-blur-[20px] bg-white/35">
+      <div className="flex flex-col gap-4  px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#248A3D]">
-            Learning Areas
-          </p>
 
-          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
+          <h2 className="mt-1 text-xl font-bold text-[#36454F]">
             Subject Management
           </h2>
 
@@ -3356,29 +3337,25 @@ function SubjectManagementView({
             subjects.
           </p>
         </div>
-
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#34C759] text-xl font-bold text-white">
-          B
-        </span>
       </div>
 
       <div className="p-6">
         <form
           onSubmit={openSubjectStudentPrompt}
-          className="flex flex-col gap-3 rounded-[40px] border border-[#D1D1D6] bg-[#F2F2F7] p-4 sm:flex-row"
+          className="flex flex-col gap-3 rounded-[22px] border border-[#D1D1D6] bg-white/30 p-2 sm:flex-row"
         >
           <input
             type="text"
             value={newSubject}
             onChange={(event) => setNewSubject(event.target.value)}
             placeholder="Enter subject name"
-            className="flex-1 rounded-full border border-[#D1D1D6] bg-white px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20"
+            className="flex-1 rounded-[12px] border border-[#D1D1D6] bg-white/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
           />
 
           <button
             type="submit"
             disabled={addingSubject || !newSubject.trim()}
-            className="rounded-full bg-[#007AFF] px-6 py-3 font-medium text-white transition hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
+            className="rounded-[12px] bg-[#0088FF] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
           >
             Choose Students
           </button>
