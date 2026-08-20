@@ -992,7 +992,7 @@ export default function Dashboard() {
 
   return (
     <div
-      className="edulite-ios-corners dashboard-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
+      className=" edulite-ios-corners dashboard-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
       style={{
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
@@ -1000,12 +1000,14 @@ export default function Dashboard() {
     >
       <style>{`
         .dashboard-canvas {
-          color-scheme: light;
-          background:
-            radial-gradient(circle at 92% 2%, rgba(0, 122, 255, 0.07), transparent 30rem),
-            radial-gradient(circle at 42% 100%, rgba(52, 199, 89, 0.05), transparent 34rem),
-            #f5f5f7;
-        }
+        color-scheme: light;
+        background-image: url("/bg9.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        
+      }
 
         .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
         .edulite-ios-corners .rounded-lg {
@@ -1165,73 +1167,14 @@ export default function Dashboard() {
           .edulite-ios-corners input,
           .edulite-ios-corners select,
           .edulite-ios-corners textarea {
-            border-color: #636366 !important;
+            border-color: #ffffff !important;
           }
         }
 
         .liquid-glass-sidebar {
-          isolation: isolate;
-          background:
-            radial-gradient(
-              circle at 15% 8%,
-              rgba(0, 122, 255, 0.16),
-              transparent 34%
-            ),
-            radial-gradient(
-              circle at 92% 88%,
-              rgba(52, 199, 89, 0.12),
-              transparent 38%
-            ),
-            linear-gradient(
-              145deg,
-              rgba(255, 255, 255, 0.34),
-              rgba(255, 255, 255, 0.08)
-            );
-          -webkit-backdrop-filter: blur(32px) saturate(180%);
-          backdrop-filter: blur(32px) saturate(180%);
-          box-shadow:
-            12px 0 36px rgba(60, 60, 67, 0.12),
-            2px 0 8px rgba(60, 60, 67, 0.06),
-            inset 0 1px 0 rgba(255, 255, 255, 0.38),
-            inset 0 -1px 0 rgba(255, 255, 255, 0.08);
-        }
-
-        .liquid-glass-sidebar::before {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          border-radius: inherit;
-          background:
-            linear-gradient(
-              110deg,
-              rgba(255, 255, 255, 0.14),
-              transparent 34%,
-              rgba(255, 255, 255, 0.03) 66%,
-              rgba(255, 255, 255, 0.1)
-            );
-          content: "";
-          pointer-events: none;
-        }
-
-        .liquid-glass-sidebar::after {
-          position: absolute;
-          inset: 1px;
-          z-index: 0;
-          border-radius: inherit;
-          background: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.05),
-            transparent 22%,
-            transparent 78%,
-            rgba(255, 255, 255, 0.03)
-          );
-          content: "";
-          pointer-events: none;
-        }
-
-        .liquid-glass-sidebar > * {
-          position: relative;
-          z-index: 1;
+          background: rgba(255, 255, 255, 0.3);
+          -webkit-backdrop-filter: blur(90px);
+          backdrop-filter: blur(20px);
         }
 
         @supports (corner-shape: squircle) {
@@ -1331,7 +1274,7 @@ export default function Dashboard() {
 
       <aside
         aria-label="EduLITE navigation"
-        className={`liquid-glass-sidebar fixed inset-y-0 left-0 z-50 flex flex-col overflow-visible transition-[width] duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col overflow-visible bg-white/70 backdrop-blur-[50px] transition-[width] duration-300 ${
           sidebarCollapsed ? "w-14" : "w-52"
         }`}
       >
@@ -1351,7 +1294,7 @@ export default function Dashboard() {
             }`}
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden">
-              <h1 className="font-black text-[#0091FF] text-[30px]">EL</h1>
+              <h1 className="font-black text-[#0068DA] text-[30px]">EL</h1>
             </div>
 
             {!sidebarCollapsed && (
@@ -1359,15 +1302,9 @@ export default function Dashboard() {
                 <p className="truncate text-[15px] font-bold tracking-tight text-[#1C1C1E]">
                   EduLITE
                 </p>
-
-                <p className="truncate text-[10px] text-[#6e6e73]">
-                  Welcome to EduLITE
-                </p>
               </div>
             )}
           </button>
-
-
         </div>
 
         <nav
@@ -1377,16 +1314,7 @@ export default function Dashboard() {
             sidebarCollapsed ? "px-1.5" : "px-2.5"
           }`}
         >
-          {!sidebarCollapsed && (
-            <p className="px-2.5 text-[20px] font-semibold uppercase text-[#0091FF]">
-              Menu
-            </p>
-          )}
-
           <div className={`${sidebarCollapsed ? "" : "mt-2"} space-y-1`}>
-
-
-
             <SidebarButton
               active={activeView === "dashboard"}
               label="Dashboard"
@@ -1422,10 +1350,6 @@ export default function Dashboard() {
               collapsed={sidebarCollapsed}
               onClick={() => openView("students")}
             />
-
-            
-
-            
 
             <SidebarButton
               active={
@@ -1476,31 +1400,25 @@ export default function Dashboard() {
       >
         <header
           className={`z-30 px-4 pt-4 sm:px-6 lg:px-8 ${
-            activeView === "dashboard"
-              ? "relative"
-              : "sticky top-0 bg-[#F2F2F7]"
+            activeView === "dashboard" ? "relative" : "sticky top-0 "
           }`}
         >
           {activeView === "dashboard" ? (
-
             //Dashboard Top View
-          <div className="ui-panel-enter rounded-b-[28px] bg-[#0091FF]/80 px-6 py-7 sm:py-9 mt-[-20px] mb-[-17px]">
-            <p className="text-xs uppercase text-white ">
-              EduLITE Teacher Workspace
-            </p>
+            <div className="ui-panel-enter border-1 border-white rounded-b-[28px] bg-white/70 backdrop-blur-[20px] px-6 py-7 sm:py-9 mt-[-20px] mb-[-17px]">
+              <h1 className="mt-2 text-xl tracking-tight text-[#36454F] font-bold sm:text-5xl">
+                Dashboard
+              </h1>
 
-            <h1 className="mt-2 text-4xl tracking-tight text-white font-black sm:text-5xl">
-              Dashboard
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white sm:text-base ">
-              Student performance analytics, learning insights, and subject assessments.
-            </p>
-          </div> 
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#36454F] sm:text-base ">
+                Student performance analytics, learning insights, and subject
+                assessments.
+              </p>
+            </div>
           ) : (
-            <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px] border border-[#D1D1D6] bg-white px-5 py-4 sm:px-6">
+            <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px]  backdrop-blur-[10px] bg-white/70 px-5 py-4 sm:px-6">
               <div className="min-w-0">
-                <h1 className="truncate text-2xl font-bold tracking-tight text-[#1C1C1E]">
+                <h1 className="truncate text-2xl font-bold text-[#36454F]">
                   {pageDetails.title}
                 </h1>
 
@@ -1508,16 +1426,6 @@ export default function Dashboard() {
                   {pageDetails.description}
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed((current) => !current)}
-                aria-controls="edulite-main-navigation"
-                aria-expanded={!sidebarCollapsed}
-                className="hidden rounded-full border border-[#D1D1D6] bg-[#F2F2F7] px-4 py-2 text-sm font-medium text-[#3A3A3C] transition hover:bg-[#007AFF] hover:text-white sm:inline-flex"
-              >
-                {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              </button>
             </div>
           )}
         </header>
@@ -1838,25 +1746,25 @@ function DashboardView({
       label: "Excellent",
       count: excellentStudents.length,
       percentage: getPercentage(excellentStudents.length),
-      color: "bg-[#34C759]",
+      color: "bg-[#008000]",
     },
     {
       label: "Very Satisfactory",
       count: verySatisfactoryStudents.length,
       percentage: getPercentage(verySatisfactoryStudents.length),
-      color: "bg-[#007AFF]",
+      color: "bg-[#0088FF]",
     },
     {
       label: "Satisfactory",
       count: satisfactoryStudents.length,
       percentage: getPercentage(satisfactoryStudents.length),
-      color: "bg-[#FFCC00]",
+      color: "bg-[#9A7B0C]",
     },
     {
       label: "Needs Support",
       count: atRiskStudents.length,
       percentage: getPercentage(atRiskStudents.length),
-      color: "bg-[#FF3B30]",
+      color: "bg-[#FF0000]",
     },
   ];
 
@@ -1867,17 +1775,15 @@ function DashboardView({
     .slice(0, 3);
 
   return (
-    //
+    //Dashboard view
     <div className="dashboard-bento grid auto-rows-auto gap-3 lg:grid-flow-dense lg:grid-cols-12">
-      
-      <section className="rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-9">
+      <section className="rounded-[22px] bg-white/70 p-4 text-[#36454F] backdrop-blur-[20px] lg:col-span-9">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            
-            <h2 className="mt-1 text-[20px] text-[#1C1C1E]">
+            <h2 className="mt-1 text-[20px] text-[#36454F] font-bold">
               {nextStep.title}
             </h2>
-            <p className="mt-1 text-sm  text-[#636366]">
+            <p className="mt-1 text-sm  text-[#36454F]">
               {nextStep.description}
             </p>
           </div>
@@ -1889,20 +1795,18 @@ function DashboardView({
           >
             {nextStep.label}
           </button>
-
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-[#0091FF]/40 p-3 text-[#1C1C1E] backdrop-blur-xl lg:col-span-3">
-
+      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-white/70 p-3 text-[#FFFFFF] backdrop-blur-[20px] lg:col-span-3">
         <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#1C1C1E]">
+          <span className="mb-1 block text-[20px] text-[#36454F]">
             Sort By Section
           </span>
           <select
             value={selectedSection}
             onChange={(event) => setSelectedSection(event.target.value)}
-            className="bento-select  truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+            className="bento-select  truncate rounded-[12px] bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
           >
             <option value="ALL">All Sections</option>
             {sections.map((section) => (
@@ -1914,13 +1818,13 @@ function DashboardView({
         </label>
 
         <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#1C1C1E]">
+          <span className="mb-1 block text-[20px] text-[#36454F]">
             Sort by Subject
           </span>
           <select
             value={selectedSubject}
             onChange={(event) => setSelectedSubject(event.target.value)}
-            className="bento-select  truncate rounded-[12px] border-0 bg-[#F2F2F7] px-3 py-2 text-xs text-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+            className="bento-select  truncate rounded-[12px] border-0 bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
           >
             <option value="ALL">All Subjects</option>
             {subjects.map((subject) => (
@@ -1930,12 +1834,11 @@ function DashboardView({
             ))}
           </select>
         </label>
-        
       </section>
 
-      <section className="p-3 rounded-[22px] bg-[#0091FF]/30 grid grid-cols-2 place-items-stretch gap-3 lg:col-span-5">
+      <section className="p-3 rounded-[22px] bg-white/70 backdrop-blur-[20px] grid grid-cols-2 place-items-stretch gap-3 lg:col-span-3">
         <BentoMetric
-           label="Class Average"
+          label="Class Average"
           value={`${classAverage.toFixed(1)}%`}
           detail={`${currentSectionLabel} · ${currentSubjectLabel}`}
           tone="yellow"
@@ -1960,24 +1863,28 @@ function DashboardView({
         />
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/40 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-4">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-6">
         <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
+          <div className="px-5 py-3 rounded-[12px]">
+            <p className="text-[20px] font-semibold text-text-[#36454F]/50">
               Your Student's Performance
             </p>
-            <h3 className="text-base text-[#1C1C1E]">Distribution</h3>
+            <span className="text-l text-text-[#36454F]/50">
+              {assessedStudents.length} Assessed
+            </span>
           </div>
-          <span className="text-xs text-[#636366]/70">
-            {assessedStudents.length} Assessed
-          </span>
         </div>
-        <div className="mt-3 flex flex-1 flex-col justify-around gap-2">
+        <div className="mt-3 flex flex-col grid flex-1 grid-cols-2 gap-2 justify-around gap-2 ">
           {distribution.map((item) => (
-            <div key={item.label}>
-              <div className="mb-1 flex items-center justify-between text-[11px]">
-                <span className="font-medium text-[#1C1C1E]">{item.label}</span>
-                <span className="text-[#636366]/70">
+            <div
+              key={item.label}
+              className="bg-white/20 px-3 py-2 rounded-[10px]"
+            >
+              <div className="mb-1 flex items-center justify-between text-[11px] ">
+                <span className="font-medium text-[#36454F]/75">
+                  {item.label}
+                </span>
+                <span className="text-text-[#36454F]/75">
                   {item.count} · {item.percentage.toFixed(0)}%
                 </span>
               </div>
@@ -1997,18 +1904,16 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-3">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-white backdrop-blur-[20px] lg:col-span-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
-              Setup
-            </p>
-            <h3 className="text-base text-[#1C1C1E]">Workspace</h3>
+            <p className="text-[20px] font-semibold text-[#36454F]">Setup</p>
+            <h3 className="text-bold text-[#36454F]">Workspace</h3>
           </div>
           <button
             type="button"
             onClick={() => openView("records")}
-            className="bg-[#0091FF] px-4 py-2 rounded-[10px] text-xs  text-white hover:underline"
+            className="bg-[#0091FF] px-4 py-2 rounded-[10px] text-xs  text-white"
           >
             Records
           </button>
@@ -2042,15 +1947,13 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/40 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-7">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-7">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
+            <p className="text-[20px] font-semibold text-[#36454F]">
               Learning support
             </p>
-            <h3 className="text-base text-[#1C1C1E]">
-              Priority Insights
-            </h3>
+            <h3 className="text-base text-[#36454F]/75">Priority Insights</h3>
           </div>
           <button
             type="button"
@@ -2078,13 +1981,13 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-[#0091FF]/30 p-4 text-[#1C1C1E] backdrop-blur-xl lg:col-span-5">
+      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[20px] font-semibold uppercase text-[#1C1C1E]">
-              Latest activity
+            <p className="text-[20px] font-semibold  text-[#36454F]">
+              Latest Activity
             </p>
-            <h3 className="text-base text-[#1C1C1E]">Assessments</h3>
+            <h3 className="text-base text-[#36454F]/75">Assessments</h3>
           </div>
           <button
             type="button"
@@ -2098,34 +2001,34 @@ function DashboardView({
           {recentAssessments.map((assessment) => (
             <div
               key={assessment.id}
-              className="flex items-center gap-2 rounded-[13px] bg-[#F2F2F7] px-3 py-2"
+              className="flex items-center gap-2 rounded-[13px] bg-white/20 px-3 py-2"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-[#1C1C1E]">
+                <p className="truncate text-l font-semibold text-[#36454F]">
                   {assessment.name}
                 </p>
-                <p className="truncate text-[10px] text-[#636366]/70">
+                <p className="truncate text-[10px] text-[#36454F]/75">
                   {assessment.subject_name} · {assessment.date}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => onEditAssessment(assessment.id)}
-                className="text-[11px] font-semibold text-[#1C1C1E] hover:underline"
+                className="text-[11px] font-semibold text-[#0091FF]"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteAssessment(assessment.id)}
-                className="text-[11px] font-semibold text-[#636366]/75 hover:text-[#1C1C1E] hover:underline"
+                className="text-[11px] font-semibold text-[#FF4245]"
               >
                 Delete
               </button>
             </div>
           ))}
           {recentAssessments.length === 0 && (
-            <div className="flex h-full items-center justify-center rounded-[14px] bg-[#F2F2F7] text-center text-xs text-[#636366]/70">
+            <div className="flex h-full items-center justify-center rounded-[14px] bg-white/10 text-center text-xs text-white/70">
               No assessments yet.
             </div>
           )}
@@ -2140,17 +2043,17 @@ function WorkflowStep({ label, value, onClick, compact = false }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-[14px] border-0 bg-[#F2F2F7] text-left text-[#1C1C1E] transition hover:bg-[#E5E5EA] ${
+      className={`flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-[14px] bg-white/30 text-left text-white transition hover:bg-[#E5E5EA]/50 ${
         compact ? "p-2.5" : "p-4"
       }`}
     >
       <span
-        className={`block font-medium text-[#636366]/75 ${compact ? "text-[11px]" : "mt-1 text-sm"}`}
+        className={`block font-medium text-[#36454F] ${compact ? "text-[11px]" : "mt-1 text-sm"}`}
       >
         {label}
       </span>
       <span
-        className={`block shrink-0 font-bold text-[#1C1C1E] ${compact ? "text-lg" : "text-2xl"}`}
+        className={`block shrink-0 font-bold text-[#36454F] ${compact ? "text-[50px]" : "text-2xl"}`}
       >
         {value}
       </span>
@@ -2160,10 +2063,10 @@ function WorkflowStep({ label, value, onClick, compact = false }) {
 
 function BentoMetric({ label, value, detail, tone = "blue" }) {
   const tones = {
-    blue: "bg-white/50 text-[#007AFF]",
-    red: "bg-white/50 text-[#D70015]",
-    green: "bg-white/50 text-[#248A3D]",
-    yellow: "bg-white/50 text-[#8A5A00]",
+    blue: "text-[#0088FF] bg-white/10 backdrop-blur-[5px]",
+    red: " text-[#FF0000] bg-white/10 backdrop-blur-[5px]",
+    green: " text-[#008000] bg-white/10 backdrop-blur-[5px]",
+    yellow: " text-[#9A7B0C] bg-white/10 backdrop-blur-[5px]",
   };
 
   return (
@@ -2172,9 +2075,9 @@ function BentoMetric({ label, value, detail, tone = "blue" }) {
         tones[tone] ?? tones.blue
       }`}
     >
-      <p className="text-[11px] font-semibold text-[#636366]">{label}</p>
       <p className="my-1 text-5xl font-bold tracking-tight">{value}</p>
-      <p className="text-xs leading-4 text-[#636366]/70">{detail}</p>
+      <p className="text-[11px] font-semibold text-[#36454F]/75">{label}</p>
+      <p className="text-xs leading-4 text-[#36454F]/50">{detail}</p>
     </div>
   );
 }
@@ -2187,29 +2090,27 @@ function BentoInsight({ title, student, type, onGenerate, generatingKey }) {
 
   return (
     <div
-      className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-[#1C1C1E] shadow-sm ${
-        isRisk ? "bg-white/50" : "bg-white/50"
+      className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-white shadow-sm ${
+        isRisk ? "bg-white/20" : "bg-white/20"
       }`}
     >
       <div className="min-w-0">
-        <p className="text-[15px] font-semibold tracking-wide text-[#1C1C1E]/75 mb-[15px]">
+        <p className="text-[15px] font-semibold tracking-wide text-[#36454F] mb-[15px]">
           {title}
         </p>
         {student ? (
           <>
-          <div className="px-2 py-1 rounded-[12px] bg-white/90">
-            <p className="mt-1 truncate text-sm font-bold text-[#1C1C1E]">
-              {student.name}
-            </p>
-            <p className="text-[10px] text-[#636366]/70">
-              {student.section} · {student.averagePercentage.toFixed(1)}%
-            </p>
-          </div>
+            <div className="px-2 py-1 rounded-[12px] bg-white/15">
+              <p className="mt-1 truncate text-sm text-[#36454F]">
+                {student.name}
+              </p>
+              <p className="text-[10px] text-[#36454F]/70">
+                {student.section} · {student.averagePercentage.toFixed(1)}%
+              </p>
+            </div>
           </>
         ) : (
-          <p className="mt-2 text-xs text-[#636366]/70">
-            No student identified.
-          </p>
+          <p className="mt-2 text-xs text-white/70">No student identified.</p>
         )}
       </div>
       {student && (
@@ -2266,12 +2167,9 @@ function StudentsView({
 
   return (
     <>
-      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
+      <section className="rounded-[28px]  bg-white/70 backdrop-blur-[20px] p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
-              Student Directory
-            </p>
             <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
               {students.length} registered student
               {students.length === 1 ? "" : "s"}
@@ -2284,15 +2182,15 @@ function StudentsView({
           <button
             type="button"
             onClick={onAddStudent}
-            className="rounded-full bg-[#007AFF] px-5 py-3 font-semibold text-white hover:bg-[#0066D6]"
+            className="rounded-[12px] bg-[#0088FF] px-5 py-3 font-semibold text-white hover:bg-[#0066D6]"
           >
-            + Register Student
+            Register Student
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-[1fr_240px]">
+        <div className="mt-6 bg-white/30 p-3 rounded-[14px] grid gap-4 md:grid-cols-[1fr_240px]">
           <label>
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#636366]">
+            <span className="mb-2 block text-xs font-semibold text-[#636366]/75">
               Search students
             </span>
             <input
@@ -2300,18 +2198,18 @@ function StudentsView({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Name, grade, section, or subject"
-              className="w-full rounded-[16px] border border-[#D1D1D6] px-4 py-3 focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/15"
+              className="w-full rounded-[9px] bg-white/50 px-4 py-3 focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/15"
             />
           </label>
 
           <label>
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#636366]">
-              Section
+            <span className="mb- block text-xs font-semibold text-[#636366]">
+              Sort by Section
             </span>
             <select
               value={sectionFilter}
               onChange={(event) => setSectionFilter(event.target.value)}
-              className="w-full rounded-[16px] border border-[#D1D1D6] bg-white px-4 py-3 focus:border-[#007AFF] focus:outline-none"
+              className="h-[30px] mt-[10px] rounded-[12px] border border-[#D1D1D6] bg-[#0088FF] text-white px-4 py-3 focus:border-[#007AFF] focus:outline-none"
             >
               <option value="ALL">All Sections</option>
               {sections.map((section) => (
@@ -2324,86 +2222,150 @@ function StudentsView({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[850px]">
-            <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7]">
-              <tr>
-                <TableHeading>Student</TableHeading>
-                <TableHeading>Grade</TableHeading>
-                <TableHeading>Section</TableHeading>
-                <TableHeading>Subjects</TableHeading>
-                <TableHeading align="right">Actions</TableHeading>
+      <section className="overflow-hidden rounded-[28px] bg-white/70 ">
+      <div className="backdrop-blur-[20px]">
+  <div className="relative flex w-full items-start overflow-x-auto p-2">
+    {/* Sticky student names */}
+    <div
+      className="
+        sticky left-2 z-20
+        w-[clamp(180px,30vw,300px)]
+        shrink-0
+        rounded-[20px]
+        bg-white/50
+        p-2
+        backdrop-blur-[20px]
+      "
+    >
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed">
+          <thead>
+            <tr className="h-10">
+              <TableHeadingA>Student</TableHeadingA>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-[#E5E5EA]/20">
+            {filteredStudents.map((student) => (
+              <tr
+                key={student.id}
+                className="h-10 hover:bg-[#F2F2F7]/20"
+              >
+                <td className="h-10 truncate whitespace-nowrap px-2 text-sm text-[#1C1C1E]">
+                  {student.name}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E5E5EA]">
-              {filteredStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-[#F2F2F7]">
-                  <td className="px-6 py-4 font-semibold text-[#1C1C1E]">
-                    {student.name}
-                  </td>
-                  <td className="px-6 py-4 text-[#636366]">{student.grade}</td>
-                  <td className="px-6 py-4 text-[#636366]">
-                    {student.section}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex max-w-md flex-wrap gap-1.5">
-                      {student.subjects?.map((subject) => (
-                        <span
-                          key={subject.id}
-                          className="rounded-full border border-[#007AFF] px-2.5 py-1 text-xs font-medium text-[#0051D5]"
-                        >
-                          {subject.name}
-                        </span>
-                      ))}
-                      {!student.subjects?.length && (
-                        <span className="text-sm text-[#8E8E93]">
-                          No subjects assigned
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right">
+            ))}
+
+            {filteredStudents.length === 0 && (
+              <tr className="h-10">
+                <td className="h-10 px-3 text-center text-xs text-[#636366]">
+                  {students.length === 0
+                    ? "No students registered yet."
+                    : "No students match the current filters."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* Scrolling student details */}
+    <div className="min-w-max flex-1 shrink-0 overflow-hidden">
+      <div className="rounded-[20px] p-2">
+        <table className="w-max min-w-full table-auto border-separate border-spacing-0">
+          <thead>
+            <tr className="h-10">
+              <TableHeading>Grade</TableHeading>
+              <TableHeading>Section</TableHeading>
+              <TableHeading>Subjects</TableHeading>
+              <TableHeading align="right">Actions</TableHeading>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-[#E5E5EA]/50">
+            {filteredStudents.map((student) => (
+              <tr
+                key={student.id}
+                className="h-10"
+              >
+                <td className="h-10 whitespace-nowrap px-4 text-center text-sm text-[#636366]">
+                  {student.grade}
+                </td>
+
+                <td className="h-10 whitespace-nowrap px-4 text-center text-sm text-[#636366]">
+                  {student.section}
+                </td>
+
+                <td className="h-10 whitespace-nowrap px-3">
+                  <div className="flex w-max flex-nowrap items-center gap-1.5">
+                    {student.subjects?.map((subject) => (
+                      <span
+                        key={subject.id}
+                        className="shrink-0 rounded-full border border-[#007AFF] px-2 py-0.5 text-xs text-[#0051D5]"
+                      >
+                        {subject.name}
+                      </span>
+                    ))}
+
+                    {!student.subjects?.length && (
+                      <span className="whitespace-nowrap text-xs text-[#8E8E93]">
+                        No subjects assigned
+                      </span>
+                    )}
+                  </div>
+                </td>
+
+                <td className="h-10 whitespace-nowrap px-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
                       onClick={() => onOpenRecords(student)}
-                      className="mr-2 rounded-full px-3.5 py-2 font-medium text-[#248A3D] hover:bg-[#34C759] hover:text-white"
+                      className="h-8 !min-h-0 rounded-[12px] px-3 py-0 text-xs text-[#248A3D] hover:bg-[#34C759] hover:text-white"
                     >
                       Records
                     </button>
+
                     <button
                       type="button"
                       onClick={() => onEditStudent(student.id)}
-                      className="mr-2 rounded-full px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
+                      className="h-8 !min-h-0 rounded-[12px] px-3 py-0 text-xs text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
                     >
                       Edit
                     </button>
+
                     <button
                       type="button"
                       onClick={() => onDeleteStudent(student.id)}
-                      className="rounded-full px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                      className="h-8 !min-h-0 rounded-[12px] px-3 py-0 text-xs text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
                     >
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredStudents.length === 0 && (
-                <tr>
-                  <td
-                    colSpan="5"
-                    className="px-6 py-12 text-center text-[#636366]"
-                  >
-                    {students.length === 0
-                      ? "No students registered yet."
-                      : "No students match the current search and section filter."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                  </div>
+                </td>
+              </tr>
+            ))}
+
+            {filteredStudents.length === 0 && (
+              <tr className="h-10">
+                <td
+                  colSpan="4"
+                  className="h-10 px-3 text-center text-xs text-[#636366]"
+                >
+                  {students.length === 0
+                    ? "No students registered yet."
+                    : "No students match the current filters."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
 
       {subjects.length === 0 && students.length > 0 && (
         <p className="rounded-[18px] border border-[#FFCC00] bg-white p-4 text-sm text-[#8A5A00]">
@@ -2431,16 +2393,14 @@ function AssessmentsView({
 }) {
   return (
     <>
-      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
+    
+      <section className="rounded-[28px] bg-white/70 backdrop-blur-[20px] p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#248A3D]">
-              Assessment Workflow
-            </p>
-            <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
+            <h2 className="mt-1 text-2xl font-bold text-[#636366]">
               Assessment Library
             </h2>
-            <p className="mt-1 text-sm text-[#636366]">
+            <p className="mt-1 text-sm text-[#636366]/75">
               Create an assessment, enter scores, then review results in
               Records.
             </p>
@@ -2448,7 +2408,7 @@ function AssessmentsView({
           <button
             type="button"
             onClick={onAddAssessment}
-            className="rounded-full bg-[#34C759] px-5 py-3 font-semibold text-white hover:bg-[#248A3D]"
+            className="rounded-[12px] bg-[#0088FF] px-5 py-3 text-white hover:bg-[#0091FF]"
           >
             + Create Assessment
           </button>
@@ -2509,10 +2469,7 @@ function AiInsightsView({
         setSelectedSubject={setSelectedSubject}
       />
 
-      <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
-          Evidence scope
-        </p>
+      <section className="rounded-[28px] bg-white/70 backdrop-blur-[20px] p-6">
         <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
           {currentSubjectLabel} · {currentSectionLabel}
         </h2>
@@ -2593,7 +2550,7 @@ function RecordsView({
         setSelectedSubject={setSelectedSubject}
       />
 
-      <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
+      <section className="overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-[20px]">
         <div className="border-b border-[#E5E5EA] px-6 py-5">
           <h2 className="text-xl font-bold text-[#1C1C1E]">
             Student Assessment Records - {currentSubjectLabel} -{" "}
@@ -2618,7 +2575,7 @@ function RecordsView({
                 {displayedAssessments.map((assessment) => (
                   <th
                     key={assessment.id}
-                    className="min-w-[175px] px-5 py-4 text-center text-xs font-semibold uppercase tracking-wide text-[#636366]"
+                    className="min-w-[175px] px-5 py-4 text-center text-xs font-semibold uppercase text-[#636366]"
                   >
                     <div>{assessment.name}</div>
 
@@ -2806,7 +2763,7 @@ function RecordsView({
 
                       <td className="px-5 py-4">
                         <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${status.className}`}
+                          className={`inline-flex rounded-[5px] border px-3 py-1 text-xs font-semibold ${status.className}`}
                         >
                           {status.label}
                         </span>
@@ -2819,7 +2776,7 @@ function RecordsView({
                               type="button"
                               onClick={() => saveStudentScores(student)}
                               disabled={savingScores}
-                              className="mr-2 rounded-full bg-[#007AFF] px-3.5 py-2 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
+                              className="mr-2 rounded-[12px] bg-[#007AFF] px-3.5 py-2 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
                             >
                               {savingScores ? "Saving..." : "Save Scores"}
                             </button>
@@ -2828,7 +2785,7 @@ function RecordsView({
                               type="button"
                               onClick={cancelEditingScores}
                               disabled={savingScores}
-                              className="rounded-full bg-[#E5E5EA] px-3.5 py-2 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
+                              className="rounded-[12px] bg-[#E5E5EA] px-3.5 py-2 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
                             >
                               Cancel
                             </button>
@@ -2838,7 +2795,7 @@ function RecordsView({
                             <button
                               type="button"
                               onClick={() => onEditStudent(student.id)}
-                              className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
+                              className="mr-2 rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
                             >
                               Edit Info
                             </button>
@@ -2849,7 +2806,7 @@ function RecordsView({
                               disabled={
                                 getStudentAssessments(student).length === 0
                               }
-                              className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#8A5A00] hover:bg-[#FFCC00] hover:text-[#1C1C1E] disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93]"
+                              className="mr-2 rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#8A5A00] hover:bg-[#FFCC00] hover:text-[#1C1C1E] disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93]"
                             >
                               Edit Scores
                             </button>
@@ -2857,7 +2814,7 @@ function RecordsView({
                             <button
                               type="button"
                               onClick={() => handleDeleteStudent(student.id)}
-                              className="rounded-full bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                              className="rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
                             >
                               Delete
                             </button>
@@ -2937,24 +2894,20 @@ function StudentExpandedProfile({
       : null;
 
   return (
-    <div className="rounded-[28px] border border-[#D1D1D6] bg-white p-5 sm:p-6">
+    <div className="rounded-[28px] border border-[#D1D1D6] bg-white/50 p-5 sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#3A3A3C]">
+          <p className="text-xs font-semibold uppercase text-[#3A3A3C]">
             Student Profile
           </p>
 
-          <h3 className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]">
-            {student.name}
+          <h3 className="mt-1 text-sm font-bold tracking-tight text-[#1C1C1E]">
+            {student.name} - Grade {student.grade} - {student.section}
           </h3>
-
-          <p className="mt-1 text-sm text-[#636366]">
-            Grade {student.grade} - {student.section}
-          </p>
         </div>
 
         <span
-          className={`inline-flex w-fit rounded-full border px-3 py-1 text-sm font-semibold ${status.className}`}
+          className={`inline-flex w-fit rounded-[6px] border px-3 py-1 text-sm font-semibold ${status.className}`}
         >
           {status.label}
         </span>
@@ -2999,7 +2952,7 @@ function StudentExpandedProfile({
           {student.subject_names?.map((subjectName) => (
             <span
               key={subjectName}
-              className="rounded-full border border-[#007AFF] bg-white px-3 py-1 text-sm font-medium text-[#0051D5]"
+              className="rounded-[6px] border border-[#007AFF] bg-white px-3 py-1 text-sm font-medium text-[#0051D5]"
             >
               {subjectName}
             </span>
@@ -3050,25 +3003,25 @@ function StudentExpandedProfile({
 
                 return (
                   <tr key={`${record.assessment_id}-${record.id}`}>
-                    <td className="px-6 py-4 font-medium text-[#1C1C1E]">
+                    <td className="px-6 py-4 font-medium text-[#1C1C1E] text-center">
                       {record.assessment_name}
                     </td>
 
-                    <td className="px-6 py-4 text-[#636366]">
+                    <td className="px-6 py-4 text-[#636366] text-center">
                       {record.subject_name}
                     </td>
 
-                    <td className="px-6 py-4 text-[#636366]">{record.type}</td>
+                    <td className="px-6 py-4 text-[#636366] text-center">{record.type}</td>
 
-                    <td className="px-6 py-4 text-[#636366]">{record.date}</td>
+                    <td className="px-6 py-4 text-[#636366] text-center">{record.date}</td>
 
-                    <td className="px-6 py-4 text-[#3A3A3C]">
+                    <td className="px-6 py-4 text-[#3A3A3C] text-center">
                       {hasScore
                         ? `${record.score} / ${record.total_items}`
                         : "Missing"}
                     </td>
 
-                    <td className="px-6 py-4 font-semibold text-[#1C1C1E]">
+                    <td className="px-6 py-4 font-semibold text-[#1C1C1E] text-center">
                       {percentage === null ? "-" : `${percentage.toFixed(1)}%`}
                     </td>
                   </tr>
@@ -3107,7 +3060,7 @@ function StudentExpandedProfile({
             type="button"
             onClick={reloadInsights}
             disabled={loadingInsights}
-            className="rounded-full border border-[#D1D1D6] bg-white px-4 py-2 text-sm font-medium text-[#3A3A3C] hover:bg-[#007AFF] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-[12px] border border-[#D1D1D6] bg-white px-4 py-2 text-sm font-medium text-[#3A3A3C] hover:bg-[#007AFF] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingInsights ? "Refreshing..." : "Refresh insights"}
           </button>
@@ -3227,7 +3180,7 @@ function ProfileMetric({ label, value, tone = "blue" }) {
     </div>
   );
 }
-
+//Sections view
 function SectionManagementView({
   sections,
   newSection,
@@ -3238,52 +3191,44 @@ function SectionManagementView({
   openDashboardForSection,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-4 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-[28px] p-3 bg-white/70 backdrop-blur-[20px]">
+      <div className="flex flex-col gap-4 rounded-[24px]  px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8A5A00]">
-            Classroom Setup
-          </p>
-
-          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
+          <h2 className="mt-1 text-xl font-bold text-[#36454F]">
             Section Management
           </h2>
 
-          <p className="mt-1 text-sm text-[#636366]">
+          <p className="mt-1 text-sm text-[#36454F]">
             Add sections before registering students, then manage existing
             section records below.
           </p>
         </div>
-
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFCC00] text-xl font-bold text-[#1C1C1E]">
-          S
-        </span>
       </div>
 
       <div className="p-6">
         <form
           onSubmit={handleAddSection}
-          className="flex flex-col gap-3 rounded-[40px] border border-[#D1D1D6] bg-[#F2F2F7] p-4 sm:flex-row"
+          className="flex flex-col gap-3 rounded-[22px] border border-[#D1D1D6] bg-white/30 p-2 sm:flex-row"
         >
           <input
             type="text"
             value={newSection}
             onChange={(event) => setNewSection(event.target.value)}
             placeholder="Enter section name"
-            className="flex-1 rounded-full border border-[#D1D1D6] bg-white px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
+            className="flex-1 rounded-[12px] border border-[#D1D1D6] bg-white/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
           />
 
           <button
             type="submit"
             disabled={addingSection || !newSection.trim()}
-            className="rounded-full bg-[#34C759] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
+            className="rounded-[12px] bg-[#0088FF] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
           >
             {addingSection ? "Adding..." : "+ Add Section"}
           </button>
         </form>
 
-        <div className="mt-6 overflow-hidden rounded-[22px] border border-[#E5E5EA]">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-[#E5E5EA] bg-[#F2F2F7] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
+        <div className="mt-6 overflow-hidden p-2 rounded-[22px] border border-[#E5E5EA]">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-3 rounded-[14px] border-y border-[#E5E5EA] bg-white/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
             <span>Section</span>
             <span>Students</span>
             <span>Action</span>
@@ -3293,24 +3238,24 @@ function SectionManagementView({
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-4 py-4 transition hover:bg-[#F2F2F7]"
+                className="grid grid-cols-[1fr_auto_auto] rounded-[14px] my-2 bg-white/30 items-center gap-3 px-4 py-3 transition hover:bg-white/50"
               >
                 <button
                   type="button"
                   onClick={() => openDashboardForSection(section.name)}
-                  className="text-left font-semibold text-[#1C1C1E] hover:text-[#8A5A00]"
+                  className="text-left font-semibold text-[#36454F] hover:text-[#0088FF]"
                 >
                   {section.name}
                 </button>
 
-                <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-[#8A5A00]">
+                <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm text-white">
                   {section.student_count}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => handleRemoveSection(section)}
-                  className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                  className="rounded-[7px] bg-white/50 p-3 text-sm text-[#D70015] hover:bg-[#FF0000] hover:text-white"
                 >
                   Remove
                 </button>
@@ -3340,14 +3285,11 @@ function SubjectManagementView({
   openDashboardForSubject,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-4 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    //Section view
+    <section className="overflow-hidden rounded-[28px] backdrop-blur-[20px] bg-white/70">
+      <div className="flex flex-col gap-4  px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#248A3D]">
-            Learning Areas
-          </p>
-
-          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
+          <h2 className="mt-1 text-xl font-bold text-[#36454F]">
             Subject Management
           </h2>
 
@@ -3356,29 +3298,25 @@ function SubjectManagementView({
             subjects.
           </p>
         </div>
-
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#34C759] text-xl font-bold text-white">
-          B
-        </span>
       </div>
 
       <div className="p-6">
         <form
           onSubmit={openSubjectStudentPrompt}
-          className="flex flex-col gap-3 rounded-[40px] border border-[#D1D1D6] bg-[#F2F2F7] p-4 sm:flex-row"
+          className="flex flex-col gap-3 rounded-[22px] border border-[#D1D1D6] bg-white/30 p-2 sm:flex-row"
         >
           <input
             type="text"
             value={newSubject}
             onChange={(event) => setNewSubject(event.target.value)}
             placeholder="Enter subject name"
-            className="flex-1 rounded-full border border-[#D1D1D6] bg-white px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20"
+            className="flex-1 rounded-[12px] border border-[#D1D1D6] bg-white/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
           />
 
           <button
             type="submit"
             disabled={addingSubject || !newSubject.trim()}
-            className="rounded-full bg-[#007AFF] px-6 py-3 font-medium text-white transition hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
+            className="rounded-[12px] bg-[#0088FF] px-6 py-3 font-medium text-white transition hover:bg-[#0091FF] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
           >
             Choose Students
           </button>
@@ -3388,15 +3326,15 @@ function SubjectManagementView({
           {subjects.map((subject, index) => {
             const tone =
               index % 3 === 0
-                ? "border-[#FFCC00] bg-white"
+                ? "border-white/20 bg-white/30"
                 : index % 3 === 1
-                  ? "border-[#34C759] bg-white"
-                  : "border-[#FF3B30] bg-white";
+                  ? " bg-white/30"
+                  : " bg-white/30";
 
             return (
               <div
                 key={subject.id}
-                className={`flex flex-col gap-4 rounded-[22px] border px-5 py-5 sm:flex-row sm:items-center sm:justify-between ${tone}`}
+                className={`flex flex-col gap-4 rounded-[22px] px-5 py-5 sm:flex-row sm:items-center sm:justify-between ${tone}`}
               >
                 <button
                   type="button"
@@ -3417,7 +3355,7 @@ function SubjectManagementView({
                   <button
                     type="button"
                     onClick={() => handleRenameSubject(subject)}
-                    className="rounded-full border border-[#007AFF] bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
+                    className="rounded-[12px] border border-[#007AFF] bg-[#0091FF] px-3.5 py-2 font-medium text-white hover:bg-[#007AFF] hover:text-white"
                   >
                     Edit
                   </button>
@@ -3425,7 +3363,7 @@ function SubjectManagementView({
                   <button
                     type="button"
                     onClick={() => handleRemoveSubject(subject)}
-                    className="rounded-full bg-[#FF3B30] px-3.5 py-2 font-medium text-white hover:bg-[#D70015]"
+                    className="rounded-[12px] bg-[#FF3B30] px-3.5 py-2 font-medium text-white hover:bg-[#D70015]"
                   >
                     Delete
                   </button>
@@ -3458,14 +3396,11 @@ function DashboardFilters({
   setSelectedSubject,
 }) {
   return (
-    <section className="rounded-[28px] border-2 border-[#1A2CA3] bg-white px-5 py-4">
+    <section className="rounded-[28px] bg-white/70 px-5 backdrop-blur-[20px] py-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-[#007AFF] font-bold text-white">
-          F
-        </span>
 
         <div>
-          <h2 className="text-sm font-semibold text-[#1C1C1E]">{title}</h2>
+          <h2 className="text-[20px] font-semibold text-[#1C1C1E]">{title}</h2>
 
           <p className="text-xs text-[#636366]">
             Choose a section and subject to update the view.
@@ -3476,8 +3411,8 @@ function DashboardFilters({
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0 rounded-[20px] border border-[#D1D1D6] bg-[#E5E5EA] p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8A5A00]">
+        <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
             Section
           </p>
 
@@ -3503,8 +3438,8 @@ function DashboardFilters({
           </div>
         </div>
 
-        <div className="min-w-0 rounded-[20px] border border-[#D1D1D6] bg-[#E5E5EA] p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#248A3D]">
+        <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
             Subject
           </p>
 
@@ -3537,22 +3472,22 @@ function DashboardFilters({
 function FilterPill({ active, label, title, tone = "blue", onClick }) {
   const tones = {
     blue: {
-      active: "border-[#007AFF] bg-[#007AFF] text-white",
+      active: " bg-[#0088FF] text-white",
       inactive:
-        "border-[#D1D1D6] bg-white text-[#0051D5] hover:border-[#007AFF]",
-      check: "bg-[#007AFF] text-white",
+        " bg-white text-[#0088FF]",
+      check: "text-white",
     },
     green: {
-      active: "border-[#34C759] bg-[#34C759] text-white",
+      active: "bg-[#0088FF] text-white",
       inactive:
-        "border-[#D1D1D6] bg-white text-[#248A3D] hover:border-[#34C759]",
-      check: "bg-[#34C759] text-white",
+        " bg-white text-[#0088FF]",
+      check: "text-white",
     },
     yellow: {
-      active: "border-[#FF9500] bg-[#FFCC00] text-[#3A3A3C]",
+      active: " bg-[#0088FF] text-white",
       inactive:
-        "border-[#D1D1D6] bg-white text-[#8A5A00] hover:border-[#FFCC00]",
-      check: "bg-[#FFCC00] text-[#1C1C1E]",
+        " bg-white text-[#0088FF]",
+      check: "text-white",
     },
   };
 
@@ -3564,13 +3499,13 @@ function FilterPill({ active, label, title, tone = "blue", onClick }) {
       aria-pressed={active}
       title={title}
       onClick={onClick}
-      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20 ${
+      className={`inline-flex min-h-9 items-center gap-1.5 rounded-[12px] px-3 py-1.5 text-xs transition focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20 ${
         active ? selectedTone.active : selectedTone.inactive
       }`}
     >
       {active && (
         <span
-          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${selectedTone.check}`}
+          className={`flex h-2 w-2 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${selectedTone.check}`}
         >
           ✓
         </span>
@@ -3588,12 +3523,9 @@ function AssessmentList({
   handleDeleteAssessment,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border-2 border-[#1A2CA3] bg-white">
-      <div className="flex flex-col gap-3 bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-[20px]">
+      <div className="m-4 rounded-[12px] flex flex-col gap-3 bg-white/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0051D5]">
-            Assessment Library
-          </p>
 
           <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
             Assessments — {currentSubjectLabel}
@@ -3605,14 +3537,11 @@ function AssessmentList({
           </p>
         </div>
 
-        <span className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#007AFF] text-xl font-bold text-white">
-          A
-        </span>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[850px]">
-          <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7]">
+          <thead className="bg-[#F2F2F7]/20 ">
             <tr>
               <TableHeading>Assessment</TableHeading>
               <TableHeading>Subject</TableHeading>
@@ -3625,22 +3554,22 @@ function AssessmentList({
 
           <tbody className="divide-y divide-[#E5E5EA]">
             {displayedAssessments.map((assessment) => (
-              <tr key={assessment.id} className="transition hover:bg-[#F2F2F7]">
-                <td className="px-6 py-4 font-medium text-[#1C1C1E]">
+              <tr key={assessment.id} className="transition hover:bg-[#F2F2F7]/30">
+                <td className="px-6 py-4 font-medium text-[#1C1C1E] text-center">
                   {assessment.name}
                 </td>
 
-                <td className="px-6 py-4 text-[#636366]">
-                  <span className="rounded-full border border-[#34C759] bg-white px-3 py-1 text-sm font-medium text-[#248A3D]">
+                <td className="px-6 py-4 text-center text-[#636366]">
+                  <span className="rounded-[5px] bg-[#0088FF]/90 px-3 py-1 text-sm  text-white">
                     {assessment.subject_name}
                   </span>
                 </td>
 
-                <td className="px-6 py-4 text-[#636366]">{assessment.type}</td>
+                <td className="px-6 py-4 text-[#636366] text-center">{assessment.type}</td>
 
-                <td className="px-6 py-4 text-[#636366]">{assessment.date}</td>
+                <td className="px-6 py-4 text-[#636366] text-center">{assessment.date}</td>
 
-                <td className="px-6 py-4 text-[#636366]">
+                <td className="px-6 py-4 text-[#636366] text-center">
                   {assessment.total_items}
                 </td>
 
@@ -3648,7 +3577,7 @@ function AssessmentList({
                   <button
                     type="button"
                     onClick={() => onEditAssessment(assessment.id)}
-                    className="mr-2 rounded-full bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
+                    className="mr-2 rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
                   >
                     Edit
                   </button>
@@ -3656,7 +3585,7 @@ function AssessmentList({
                   <button
                     type="button"
                     onClick={() => handleDeleteAssessment(assessment.id)}
-                    className="rounded-full bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                    className="rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
                   >
                     Delete
                   </button>
@@ -3700,17 +3629,13 @@ function SubjectEnrollmentModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="subject-enrollment-title"
-        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] border border-[#E5E5EA] bg-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
+        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] backdrop-blur-[20px] bg-white/50 shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
       >
-        <div className="flex items-start justify-between gap-4 bg-[#FF9500]/12 px-6 py-5">
+        <div className="flex items-start justify-between gap-4  px-6 py-5">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#8A5A00]">
-              New Subject Enrollment
-            </p>
-
             <h2
               id="subject-enrollment-title"
-              className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]"
+              className="mt-1 text-[20px] font-bold tracking-tight text-[#1C1C1E]"
             >
               {subjectName}
             </h2>
@@ -3719,19 +3644,9 @@ function SubjectEnrollmentModal({
               Select every student who is enrolled in this subject.
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={closeModal}
-            disabled={addingSubject}
-            aria-label="Close subject enrollment"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#636366] hover:bg-[#F2F2F7] hover:text-[#1C1C1E] disabled:opacity-50"
-          >
-            ×
-          </button>
         </div>
 
-        <div className="space-y-3 border-b border-[#E5E5EA] px-6 py-4">
+        <div className="space-y-3 px-6 py-4">
           <label htmlFor="subject-student-search" className="sr-only">
             Search students
           </label>
@@ -3741,7 +3656,7 @@ function SubjectEnrollmentModal({
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
             placeholder="Search students by name, grade, or section"
-            className="w-full rounded-full border border-[#D1D1D6] bg-[#F2F2F7] px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20"
+            className="w-full rounded-[12px] border border-[#D1D1D6] bg-[#F2F2F7]/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:bg-white/70 focus:outline-none  focus:ring-[#007AFF]/20"
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -3760,7 +3675,7 @@ function SubjectEnrollmentModal({
                   setSelectedIds(students.map((student) => student.id))
                 }
                 disabled={students.length === 0 || addingSubject}
-                className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#248A3D] hover:bg-[#34C759] hover:text-white disabled:opacity-50"
+                className="rounded-[12px] bg-white/50 border-1 border-[#0088FF] px-3.5 py-2 text-sm font-medium text-[#0088FF] hover:bg-[#0091FF] hover:text-white disabled:opacity-50"
               >
                 Select All
               </button>
@@ -3769,7 +3684,7 @@ function SubjectEnrollmentModal({
                 type="button"
                 onClick={() => setSelectedIds([])}
                 disabled={selectedIds.length === 0 || addingSubject}
-                className="rounded-full bg-white px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white disabled:opacity-50"
+                className="rounded-[12px] bg-white/50 border-1 border-[#D70015] px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white disabled:opacity-50"
               >
                 Clear
               </button>
@@ -3784,8 +3699,8 @@ function SubjectEnrollmentModal({
                 key={student.id}
                 className={`flex cursor-pointer items-start gap-3 rounded-[20px] border px-4 py-3 transition ${
                   selectedIds.includes(student.id)
-                    ? "border-2 border-[#007AFF] bg-white"
-                    : "border-[#E5E5EA] bg-white hover:bg-[#F2F2F7]"
+                    ? "border-1 border-white/70 bg-white/50"
+                    : "border-1 border-white/70 bg-white hover:bg-[#F2F2F7]"
                 }`}
               >
                 <input
@@ -3824,12 +3739,12 @@ function SubjectEnrollmentModal({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-[#E5E5EA] bg-[#F2F2F7] px-6 py-5 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 px-6 py-5 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={closeModal}
             disabled={addingSubject}
-            className="rounded-full border border-[#D1D1D6] bg-white px-5 py-2.5 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
+            className="rounded-[12px] border border-[#D1D1D6] bg-white px-5 py-2.5 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -3838,7 +3753,7 @@ function SubjectEnrollmentModal({
             type="button"
             onClick={createSubject}
             disabled={addingSubject}
-            className="rounded-full bg-[#007AFF] px-5 py-2.5 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
+            className="rounded-[12px] bg-[#007AFF] px-5 py-2.5 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
           >
             {addingSubject
               ? "Creating Subject..."
@@ -3860,24 +3775,24 @@ function SidebarButton({
 }) {
   const tones = {
     blue: {
-      active: "bg-[#0091FF]/80 text-white ",
+      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
       icon: "text-[#007AFF]",
-      hover: "hover:bg-[#0091FF]/70 hover:text-white",
+      hover: "hover:bg-[#0091FF]/50 hover:text-white",
     },
     red: {
-      active: "bg-[#0091FF]/80 text-white",
+      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
       icon: "text-[#D70015]",
-      hover: "hover:bg-[#0091FF]/70 hover:text-white",
+      hover: "hover:bg-[#0091FF]/50 hover:text-white",
     },
     green: {
-      active: "bg-[#0091FF]/80 text-white",
+      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
       icon: "text-[#248A3D]",
-      hover: "hover:bg-[#0091FF]/70 hover:text-white",
+      hover: "hover:bg-[#0091FF]/50 hover:text-white",
     },
     yellow: {
-      active: "bg-[#0091FF]/80 text-white ",
+      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
       icon: "text-[#9A6700]",
-      hover: "hover:bg-[#0091FF]/70 hover:text-white",
+      hover: "hover:bg-[#0091FF]/50 hover:text-white",
     },
   };
 
@@ -4031,7 +3946,7 @@ function InsightList({
 
   return (
     <div
-      className={`rounded-[24px] border-2 bg-white p-4 ${
+      className={`rounded-[24px] border-1 bg-white/70 backdrop-blur-[20px] p-4 ${
         isRisk ? "border-[#FF3B30]" : "border-[#34C759]"
       }`}
     >
@@ -4045,14 +3960,6 @@ function InsightList({
           </p>
         </div>
 
-        <span
-          className={`flex h-10 w-10 items-center justify-center rounded-[15px] text-lg text-white ${
-            isRisk ? "bg-[#FF3B30]" : "bg-[#34C759]"
-          }`}
-          aria-hidden="true"
-        >
-          {isRisk ? "!" : "★"}
-        </span>
       </div>
 
       <div className="mt-4 space-y-3">
@@ -4065,7 +3972,7 @@ function InsightList({
           return (
             <div
               key={student.id}
-              className="rounded-[18px] border border-[#D1D1D6] bg-white p-4"
+              className="rounded-[18px] border border-[#D1D1D6] bg-white/30 p-4"
             >
               <div className="flex justify-between gap-3">
                 <span className="font-medium text-[#1C1C1E]">
@@ -4092,7 +3999,7 @@ function InsightList({
                 type="button"
                 onClick={() => onGenerateRecommendation(student, supportType)}
                 disabled={Boolean(generatingRecommendationKey)}
-                className={`mt-3 w-full rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`mt-3 w-full rounded-[12px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   isRisk
                     ? "bg-[#FF3B30] text-white hover:bg-[#D70015]"
                     : "bg-[#34C759] text-white hover:bg-[#248A3D]"
@@ -4495,8 +4402,21 @@ function TableHeading({ children, align = "left" }) {
   return (
     <th
       scope="col"
-      className={`px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#636366] ${
-        align === "right" ? "text-right" : "text-left"
+      className={`px-1 py-1 first:rounded-l-[12px] last:rounded-r-[12px] text-[20px] bg-white/30 font-semibold text-[#636366] ${
+        align === "right" ? "text-center" : "text-center"
+      }`}
+    >
+      {children}
+    </th>
+  );
+}
+
+function TableHeadingA({ children, align = "left" }) {
+  return (
+    <th
+      scope="col"
+      className={`px-1 py-1 first:rounded-l-[12px] last:rounded-r-[12px] text-[20px] bg-white/30 font-semibold text-[#636366] ${
+        align === "center" ? "text-center" : "text-center"
       }`}
     >
       {children}
