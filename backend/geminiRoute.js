@@ -13,6 +13,11 @@ import Assessment from "./models/Assessment.js";
 import AssessmentScore from "./models/AssessmentScore.js";
 import StudentAiInsight from "./models/StudentAiInsight.js";
 
+import {
+  calculateTermGrade,
+  getSupportClassification,
+} from "./utils/grading.js";
+
 const router = express.Router();
 
 const PASSING_PERCENTAGE = 75;
@@ -286,20 +291,18 @@ async function buildSectionComparison(
   student,
   subjectIds,
   ownerId,
+  term,
 ) {
   if (
     !student.sectionId ||
-    !subjectIds.length
+    !subjectIds.length ||
+    ![1, 2, 3].includes(Number(term))
   ) {
     return {
-      sectionAveragePercentage:
-        null,
-
+      sectionAveragePercentage: null,
       studentRank: null,
       rankedStudents: 0,
-
-      differenceFromSectionAverage:
-        null,
+      differenceFromSectionAverage: null,
     };
   }
 
@@ -323,7 +326,8 @@ async function buildSectionComparison(
 
   const peerIds =
     peers.map(
-      (peer) => peer._id,
+      (peer) =>
+        peer._id,
     );
 
   const assessments =
@@ -333,9 +337,21 @@ async function buildSectionComparison(
       subjectId: {
         $in: subjectIds,
       },
+
+      term:
+        Number(term),
+
+      category: {
+        $in: [
+          "written_work",
+          "performance_task",
+          "summative_test",
+          "term_exam",
+        ],
+      },
     })
       .select(
-        "_id totalItems subjectId",
+        "_id name term category sequence totalItems subjectId",
       )
       .lean();
 
@@ -344,26 +360,12 @@ async function buildSectionComparison(
     !assessments.length
   ) {
     return {
-      sectionAveragePercentage:
-        null,
-
+      sectionAveragePercentage: null,
       studentRank: null,
       rankedStudents: 0,
-
-      differenceFromSectionAverage:
-        null,
+      differenceFromSectionAverage: null,
     };
   }
-
-  const assessmentMap =
-    new Map(
-      assessments.map(
-        (assessment) => [
-          assessment._id.toString(),
-          assessment,
-        ],
-      ),
-    );
 
   const scores =
     await AssessmentScore.find({
@@ -374,100 +376,198 @@ async function buildSectionComparison(
       },
 
       assessmentId: {
-        $in: assessments.map(
-          (assessment) =>
-            assessment._id,
-        ),
+        $in:
+          assessments.map(
+            (assessment) =>
+              assessment._id,
+          ),
       },
     }).lean();
 
-  const studentPercentages =
+  const scoreMap =
+    new Map(
+      scores.map(
+        (score) => [
+          `${score.studentId.toString()}:${score.assessmentId.toString()}`,
+
+          score.score,
+        ],
+      ),
+    );
+
+  const assessmentsBySubject =
     new Map();
 
-  for (const score of scores) {
-    const assessment =
-      assessmentMap.get(
-        score.assessmentId.toString(),
-      );
+  for (
+    const assessment
+    of assessments
+  ) {
+    const subjectId =
+      assessment
+        .subjectId
+        .toString();
 
     if (
-      !assessment ||
-      !assessment.totalItems
+      !assessmentsBySubject
+        .has(
+          subjectId,
+        )
     ) {
-      continue;
+      assessmentsBySubject
+        .set(
+          subjectId,
+          [],
+        );
     }
 
-    const studentId =
-      score.studentId.toString();
-
-    if (
-      !studentPercentages.has(
-        studentId,
+    assessmentsBySubject
+      .get(
+        subjectId,
       )
-    ) {
-      studentPercentages.set(
-        studentId,
-        [],
-      );
-    }
-
-    studentPercentages
-      .get(studentId)
       .push(
-        (Number(
-          score.score,
-        ) /
-          Number(
-            assessment.totalItems,
-          )) *
-          100,
+        assessment,
       );
   }
 
-  const rankedStudents = [
-    ...studentPercentages.entries(),
-  ]
-    .map(
-      ([
-        studentId,
-        percentages,
-      ]) => ({
-        studentId,
+  const rankedStudents =
+    [];
+
+  for (
+    const peer
+    of peers
+  ) {
+    const peerId =
+      peer
+        ._id
+        .toString();
+
+    const peerSubjectIds =
+      (
+        peer.subjectIds ??
+        []
+      )
+        .map(String)
+        .filter(
+          (subjectId) =>
+            subjectIds.includes(
+              subjectId,
+            ),
+        );
+
+    const termGrades =
+      [];
+
+    for (
+      const subjectId
+      of peerSubjectIds
+    ) {
+      const subjectAssessments =
+        assessmentsBySubject
+          .get(
+            subjectId,
+          ) ??
+        [];
+
+      const records =
+        subjectAssessments
+          .map(
+            (
+              assessment,
+            ) => ({
+              assessmentId:
+                assessment
+                  ._id
+                  .toString(),
+
+              name:
+                assessment
+                  .name,
+
+              term:
+                assessment
+                  .term,
+
+              category:
+                assessment
+                  .category,
+
+              sequence:
+                assessment
+                  .sequence,
+
+              totalItems:
+                assessment
+                  .totalItems,
+
+              score:
+                scoreMap.get(
+                  `${peerId}:${assessment._id.toString()}`,
+                ) ??
+                null,
+            }),
+          );
+
+      const result =
+        calculateTermGrade(
+          records,
+          Number(term),
+        );
+
+      if (
+        result.isComplete
+      ) {
+        termGrades.push(
+          result.termGrade,
+        );
+      }
+    }
+
+    if (
+      termGrades.length >
+      0
+    ) {
+      rankedStudents.push({
+        studentId:
+          peerId,
 
         averagePercentage:
           average(
-            percentages,
+            termGrades,
           ),
-      }),
-    )
-    .filter(
-      (entry) =>
-        entry.averagePercentage !==
-        null,
-    )
-    .sort(
-      (first, second) =>
-        second.averagePercentage -
-        first.averagePercentage,
-    );
+      });
+    }
+  }
+
+  rankedStudents.sort(
+    (
+      first,
+      second,
+    ) =>
+      second.averagePercentage -
+      first.averagePercentage,
+  );
 
   const sectionAverage =
     average(
       rankedStudents.map(
         (entry) =>
-          entry.averagePercentage,
+          entry
+            .averagePercentage,
       ),
     );
 
   const currentStudentId =
-    student._id.toString();
+    student
+      ._id
+      .toString();
 
   const rankIndex =
-    rankedStudents.findIndex(
-      (entry) =>
-        entry.studentId ===
-        currentStudentId,
-    );
+    rankedStudents
+      .findIndex(
+        (entry) =>
+          entry.studentId ===
+          currentStudentId,
+      );
 
   const currentStudent =
     rankIndex >= 0
@@ -506,7 +606,8 @@ function safelyParseGeminiJson(
   text,
 ) {
   if (
-    typeof text !== "string" ||
+    typeof text !==
+      "string" ||
     !text.trim()
   ) {
     throw new Error(
@@ -688,7 +789,10 @@ ${JSON.stringify(
 function normalizePdfText(
   value,
 ) {
-  return String(value ?? "")
+  return String(
+    value ??
+    "",
+  )
     .replace(
       /[\u2018\u2019]/g,
       "'",
@@ -724,35 +828,50 @@ function createInsightPdf(
   result,
 ) {
   return new Promise(
-    (resolve, reject) => {
+    (
+      resolve,
+      reject,
+    ) => {
       const doc =
         new PDFDocument({
-          size: "A4",
+          size:
+            "A4",
 
           margins: {
-            top: 48,
-            bottom: 48,
-            left: 50,
-            right: 50,
+            top:
+              48,
+
+            bottom:
+              48,
+
+            left:
+              50,
+
+            right:
+              50,
           },
 
           info: {
             Title:
               normalizePdfText(
-                result.plan.title,
+                result.plan
+                  .title,
               ),
 
-            Author: "EduLITE",
+            Author:
+              "EduLITE",
 
             Subject:
               "AI-assisted academic support report",
           },
         });
 
-      const chunks = [];
+      const chunks =
+        [];
 
       doc.on(
         "data",
+
         (chunk) => {
           chunks.push(
             chunk,
@@ -767,6 +886,7 @@ function createInsightPdf(
 
       doc.on(
         "end",
+
         () => {
           resolve(
             Buffer.concat(
@@ -780,11 +900,15 @@ function createInsightPdf(
         text,
       ) {
         doc
-          .moveDown(0.7)
+          .moveDown(
+            0.7,
+          )
           .font(
             "Helvetica-Bold",
           )
-          .fontSize(14)
+          .fontSize(
+            14,
+          )
           .fillColor(
             "#0f172a",
           )
@@ -806,7 +930,9 @@ function createInsightPdf(
           .font(
             "Helvetica",
           )
-          .fontSize(10)
+          .fontSize(
+            10,
+          )
           .fillColor(
             "#334155",
           )
@@ -814,8 +940,10 @@ function createInsightPdf(
             normalizePdfText(
               text,
             ),
+
             {
-              lineGap: 3,
+              lineGap:
+                3,
             },
           );
       }
@@ -831,7 +959,9 @@ function createInsightPdf(
           .font(
             "Helvetica",
           )
-          .fontSize(10)
+          .fontSize(
+            10,
+          )
           .fillColor(
             "#334155",
           )
@@ -839,9 +969,13 @@ function createInsightPdf(
             `- ${normalizePdfText(
               text,
             )}`,
+
             {
-              indent: 12,
-              lineGap: 2,
+              indent:
+                12,
+
+              lineGap:
+                2,
             },
           );
       }
@@ -850,32 +984,46 @@ function createInsightPdf(
         .font(
           "Helvetica-Bold",
         )
-        .fontSize(22)
+        .fontSize(
+          22,
+        )
         .fillColor(
           "#0f172a",
         )
         .text(
           "EduLITE Learning Insight",
+
           {
-            align: "center",
+            align:
+              "center",
           },
         );
 
       doc
-        .moveDown(0.4)
-        .font("Helvetica")
-        .fontSize(10)
+        .moveDown(
+          0.4,
+        )
+        .font(
+          "Helvetica",
+        )
+        .fontSize(
+          10,
+        )
         .fillColor(
           "#64748b",
         )
         .text(
           "AI-assisted academic support report",
+
           {
-            align: "center",
+            align:
+              "center",
           },
         );
 
-      doc.moveDown(1);
+      doc.moveDown(
+        1,
+      );
 
       writeParagraph(
         `Student: ${result.student.name}`,
@@ -910,11 +1058,13 @@ function createInsightPdf(
       );
 
       writeHeading(
-        result.plan.title,
+        result.plan
+          .title,
       );
 
       writeParagraph(
-        result.plan.overview,
+        result.plan
+          .overview,
       );
 
       writeHeading(
@@ -930,18 +1080,20 @@ function createInsightPdf(
           .overallAveragePercentage;
 
       writeParagraph(
-        `Focus average: ${
-          focusAverage === null
+        `Focus official Term Grade: ${
+          focusAverage ===
+          null
             ? "Not available"
-            : `${focusAverage}%`
+            : focusAverage
         }`,
       );
 
       writeParagraph(
-        `Overall average: ${
-          overallAverage === null
+        `Overall official Term Grade average: ${
+          overallAverage ===
+          null
             ? "Not available"
-            : `${overallAverage}%`
+            : overallAverage
         }`,
       );
 
@@ -959,7 +1111,8 @@ function createInsightPdf(
       );
 
       if (
-        result.plan.evidence
+        result.plan
+          .evidence
           .length
       ) {
         writeHeading(
@@ -968,7 +1121,8 @@ function createInsightPdf(
 
         for (
           const evidence
-          of result.plan.evidence
+          of result.plan
+            .evidence
         ) {
           writeBullet(
             `${evidence.observation}: ${evidence.dataPoint}`,
@@ -991,28 +1145,35 @@ function createInsightPdf(
             .targetedInterventions
         ) {
           doc
-            .moveDown(0.4)
+            .moveDown(
+              0.4,
+            )
             .font(
               "Helvetica-Bold",
             )
-            .fontSize(11)
+            .fontSize(
+              11,
+            )
             .fillColor(
               "#0f172a",
             )
             .text(
               normalizePdfText(
-                intervention.title,
+                intervention
+                  .title,
               ),
             );
 
           writeParagraph(
-            intervention.rationale,
+            intervention
+              .rationale,
           );
 
           for (
             const action
-            of intervention.actions ??
-            []
+            of intervention
+              .actions ??
+              []
           ) {
             writeBullet(
               action,
@@ -1021,14 +1182,16 @@ function createInsightPdf(
 
           writeParagraph(
             `Schedule: ${
-              intervention.schedule ||
+              intervention
+                .schedule ||
               "Not specified"
             }`,
           );
 
           writeParagraph(
             `Success indicator: ${
-              intervention.successIndicator ||
+              intervention
+                .successIndicator ||
               "Not specified"
             }`,
           );
@@ -1050,34 +1213,42 @@ function createInsightPdf(
             .enrichmentActivities
         ) {
           doc
-            .moveDown(0.4)
+            .moveDown(
+              0.4,
+            )
             .font(
               "Helvetica-Bold",
             )
-            .fontSize(11)
+            .fontSize(
+              11,
+            )
             .fillColor(
               "#0f172a",
             )
             .text(
               normalizePdfText(
-                activity.title,
+                activity
+                  .title,
               ),
             );
 
           writeParagraph(
-            activity.description,
+            activity
+              .description,
           );
 
           writeParagraph(
             `Implementation: ${
-              activity.implementation ||
+              activity
+                .implementation ||
               "Not specified"
             }`,
           );
 
           writeParagraph(
             `Expected outcome: ${
-              activity.expectedOutcome ||
+              activity
+                .expectedOutcome ||
               "Not specified"
             }`,
           );
@@ -1142,36 +1313,53 @@ function formatSavedInsight(
 ) {
   return {
     id:
-      insight._id.toString(),
+      insight
+        ._id
+        .toString(),
 
     studentId:
-      insight.studentId.toString(),
+      insight
+        .studentId
+        .toString(),
 
     supportType:
-      insight.supportType,
+      insight
+        .supportType,
 
     classification:
-      insight.classification,
+      insight
+        .classification,
 
     focusSubjectId:
-      insight.focusSubjectId
-        ? insight.focusSubjectId.toString()
+      insight
+        .focusSubjectId
+        ? insight
+            .focusSubjectId
+            .toString()
         : null,
 
     focusLabel:
-      insight.focusLabel,
+      insight
+        .focusLabel,
 
-    model: insight.model,
-    title: insight.title,
+    model:
+      insight
+        .model,
+
+    title:
+      insight
+        .title,
 
     createdAt:
-      insight.createdAt,
+      insight
+        .createdAt,
 
     pdfUrl:
       `/api/gemini/insights/${insight._id}/pdf`,
 
     result:
-      insight.result,
+      insight
+        .result,
   };
 }
 
@@ -1181,17 +1369,25 @@ function formatSavedInsight(
 
 router.get(
   "/api/students/:studentId/insights",
+
   requireAuth,
-  async (req, res) => {
+
+  async (
+    req,
+    res,
+  ) => {
     if (
       !isValidId(
-        req.params.studentId,
+        req.params
+          .studentId,
       )
     ) {
-      return res.status(400).json({
-        message:
-          "A valid student ID is required.",
-      });
+      return res
+        .status(400)
+        .json({
+          message:
+            "A valid student ID is required.",
+        });
     }
 
     try {
@@ -1199,32 +1395,41 @@ router.get(
         req.user.id;
 
       const studentExists =
-        await Student.exists({
-          _id:
-            req.params.studentId,
+        await Student
+          .exists({
+            _id:
+              req.params
+                .studentId,
 
-          ownerId,
-        });
+            ownerId,
+          });
 
-      if (!studentExists) {
-        return res.status(404).json({
-          message:
-            "Student not found.",
-        });
+      if (
+        !studentExists
+      ) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Student not found.",
+          });
       }
 
       const insights =
-        await StudentAiInsight.find(
-          {
+        await StudentAiInsight
+          .find({
             ownerId,
 
             studentId:
-              req.params.studentId,
-          },
-        )
+              req.params
+                .studentId,
+          })
           .sort({
-            createdAt: -1,
-            _id: -1,
+            createdAt:
+              -1,
+
+            _id:
+              -1,
           })
           .lean();
 
@@ -1239,10 +1444,12 @@ router.get(
         error,
       );
 
-      return res.status(500).json({
-        message:
-          "Unable to load the student's saved learning insights.",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Unable to load the student's saved learning insights.",
+        });
     }
   },
 );
@@ -1253,47 +1460,63 @@ router.get(
 
 router.get(
   "/api/gemini/insights/:insightId/pdf",
+
   requireAuth,
-  async (req, res) => {
+
+  async (
+    req,
+    res,
+  ) => {
     if (
       !isValidId(
-        req.params.insightId,
+        req.params
+          .insightId,
       )
     ) {
-      return res.status(400).json({
-        message:
-          "A valid insight ID is required.",
-      });
+      return res
+        .status(400)
+        .json({
+          message:
+            "A valid insight ID is required.",
+        });
     }
 
     try {
       const insight =
-        await StudentAiInsight.findOne(
-          {
+        await StudentAiInsight
+          .findOne({
             _id:
-              req.params.insightId,
+              req.params
+                .insightId,
 
             ownerId:
               req.user.id,
-          },
-        ).populate({
-          path: "studentId",
-          select: "name",
-        });
+          })
+          .populate({
+            path:
+              "studentId",
+
+            select:
+              "name",
+          });
 
       if (
         !insight ||
         !insight.studentId
       ) {
-        return res.status(404).json({
-          message:
-            "Saved insight not found.",
-        });
+        return res
+          .status(404)
+          .json({
+            message:
+              "Saved insight not found.",
+          });
       }
 
       const safeStudentName =
         normalizePdfText(
-          insight.studentId.name,
+          insight
+            .studentId
+            .name,
         )
           .replace(
             /[^a-zA-Z0-9]+/g,
@@ -1303,7 +1526,10 @@ router.get(
             /^-+|-+$/g,
             "",
           )
-          .slice(0, 60) ||
+          .slice(
+            0,
+            60,
+          ) ||
         "student";
 
       res.setHeader(
@@ -1318,11 +1544,14 @@ router.get(
 
       res.setHeader(
         "Content-Length",
-        insight.pdfData.length,
+        insight
+          .pdfData
+          .length,
       );
 
       return res.send(
-        insight.pdfData,
+        insight
+          .pdfData,
       );
     } catch (error) {
       console.error(
@@ -1330,10 +1559,12 @@ router.get(
         error,
       );
 
-      return res.status(500).json({
-        message:
-          "Unable to download the saved insight PDF.",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Unable to download the saved insight PDF.",
+        });
     }
   },
 );
@@ -1344,8 +1575,13 @@ router.get(
 
 router.get(
   "/api/gemini/status",
+
   requireAuth,
-  (req, res) => {
+
+  (
+    req,
+    res,
+  ) => {
     return res.json({
       configured:
         Boolean(
@@ -1367,33 +1603,46 @@ router.get(
 
 router.post(
   "/api/gemini/student-support/:studentId",
+
   requireAuth,
-  async (req, res) => {
+
+  async (
+    req,
+    res,
+  ) => {
     try {
       if (
         !process.env
           .GEMINI_API_KEY
       ) {
-        return res.status(503).json({
-          message:
-            "Gemini is not configured. Add GEMINI_API_KEY to the backend .env file and restart the backend.",
-        });
+        return res
+          .status(503)
+          .json({
+            message:
+              "Gemini is not configured. Add GEMINI_API_KEY to the backend .env file and restart the backend.",
+          });
       }
 
       const studentId =
-        req.params.studentId;
+        req.params
+          .studentId;
 
       if (
-        !isValidId(studentId)
+        !isValidId(
+          studentId,
+        )
       ) {
-        return res.status(400).json({
-          message:
-            "A valid student ID is required.",
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              "A valid student ID is required.",
+          });
       }
 
       const requestedSupportType =
-        req.body?.support_type;
+        req.body
+          ?.support_type;
 
       if (
         requestedSupportType !==
@@ -1401,10 +1650,12 @@ router.post(
         requestedSupportType !==
           "enrichment"
       ) {
-        return res.status(400).json({
-          message:
-            'support_type must be either "intervention" or "enrichment".',
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              'support_type must be either "intervention" or "enrichment".',
+          });
       }
 
       const rawFocusSubjectId =
@@ -1424,35 +1675,68 @@ router.post(
             );
 
       if (
-        focusSubjectId !== null &&
+        focusSubjectId !==
+          null &&
         !isValidId(
           focusSubjectId,
         )
       ) {
-        return res.status(400).json({
-          message:
-            "focus_subject_id must be a valid MongoDB subject ID.",
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              "focus_subject_id must be a valid MongoDB subject ID.",
+          });
+      }
+
+      const requestedTerm =
+        Number(
+          req.body
+            ?.term,
+        );
+
+      if (
+        ![
+          1,
+          2,
+          3,
+        ].includes(
+          requestedTerm,
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "term must be 1, 2, or 3.",
+          });
       }
 
       const ownerId =
         req.user.id;
 
       const student =
-        await Student.findOne({
-          _id: studentId,
-          ownerId,
-        })
+        await Student
+          .findOne({
+            _id:
+              studentId,
+
+            ownerId,
+          })
           .populate({
-            path: "sectionId",
-            select: "name",
+            path:
+              "sectionId",
+
+            select:
+              "name",
 
             match: {
               ownerId,
             },
           })
           .populate({
-            path: "subjectIds",
+            path:
+              "subjectIds",
 
             select:
               "name nameKey",
@@ -1463,16 +1747,19 @@ router.post(
 
             options: {
               sort: {
-                nameKey: 1,
+                nameKey:
+                  1,
               },
             },
           });
 
       if (!student) {
-        return res.status(404).json({
-          message:
-            "Student not found.",
-        });
+        return res
+          .status(404)
+          .json({
+            message:
+              "Student not found.",
+          });
       }
 
       const enrolledSubjects =
@@ -1482,83 +1769,116 @@ router.post(
         ).map(
           (subject) => ({
             id:
-              subject._id.toString(),
+              subject
+                ._id
+                .toString(),
 
             name:
-              subject.name,
+              subject
+                .name,
           }),
         );
 
       if (
         focusSubjectId &&
-        !enrolledSubjects.some(
-          (subject) =>
-            subject.id ===
-            focusSubjectId,
-        )
+        !enrolledSubjects
+          .some(
+            (subject) =>
+              subject.id ===
+              focusSubjectId,
+          )
       ) {
-        return res.status(400).json({
-          message:
-            "The student is not enrolled in the selected subject.",
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              "The student is not enrolled in the selected subject.",
+          });
       }
 
       const enrolledSubjectIds =
-        enrolledSubjects.map(
-          (subject) =>
-            subject.id,
-        );
+        enrolledSubjects
+          .map(
+            (subject) =>
+              subject.id,
+          );
 
       const assessments =
-        await Assessment.find({
-          ownerId,
+        await Assessment
+          .find({
+            ownerId,
 
-          subjectId: {
-            $in:
-              enrolledSubjectIds,
-          },
-        })
+            subjectId: {
+              $in:
+                enrolledSubjectIds,
+            },
+
+            term:
+              requestedTerm,
+
+            category: {
+              $in: [
+                "written_work",
+                "performance_task",
+                "summative_test",
+                "term_exam",
+              ],
+            },
+          })
           .populate({
-            path: "subjectId",
-            select: "name",
+            path:
+              "subjectId",
+
+            select:
+              "name",
 
             match: {
               ownerId,
             },
           })
           .sort({
-            date: -1,
-            _id: -1,
+            date:
+              -1,
+
+            _id:
+              -1,
           })
           .lean();
 
       const assessmentIds =
-        assessments.map(
-          (assessment) =>
-            assessment._id,
-        );
+        assessments
+          .map(
+            (assessment) =>
+              assessment
+                ._id,
+          );
 
       const scores =
-        await AssessmentScore.find(
-          {
+        await AssessmentScore
+          .find({
             ownerId,
 
             studentId:
-              student._id,
+              student
+                ._id,
 
             assessmentId: {
               $in:
                 assessmentIds,
             },
-          },
-        ).lean();
+          })
+          .lean();
 
       const scoreMap =
         new Map(
           scores.map(
             (score) => [
-              score.assessmentId.toString(),
-              score.score,
+              score
+                .assessmentId
+                .toString(),
+
+              score
+                .score,
             ],
           ),
         );
@@ -1567,12 +1887,17 @@ router.post(
         assessments
           .filter(
             (assessment) =>
-              assessment.subjectId,
+              assessment
+                .subjectId,
           )
           .map(
-            (assessment) => {
+            (
+              assessment,
+            ) => {
               const assessmentId =
-                assessment._id.toString();
+                assessment
+                  ._id
+                  .toString();
 
               const hasScore =
                 scoreMap.has(
@@ -1591,22 +1916,44 @@ router.post(
                   assessmentId,
 
                 assessment_name:
-                  assessment.name,
+                  assessment
+                    .name,
 
                 type:
-                  assessment.type,
+                  assessment
+                    .category,
+
+                term:
+                  assessment
+                    .term,
+
+                category:
+                  assessment
+                    .category,
+
+                sequence:
+                  assessment
+                    .sequence,
 
                 date:
-                  assessment.date.toISOString(),
+                  assessment
+                    .date
+                    .toISOString(),
 
                 total_items:
-                  assessment.totalItems,
+                  assessment
+                    .totalItems,
 
                 subject_id:
-                  assessment.subjectId._id.toString(),
+                  assessment
+                    .subjectId
+                    ._id
+                    .toString(),
 
                 subject_name:
-                  assessment.subjectId.name,
+                  assessment
+                    .subjectId
+                    .name,
 
                 score,
               };
@@ -1622,8 +1969,10 @@ router.post(
                   ),
 
                 status:
-                  score === null ||
-                  score === undefined
+                  score ===
+                    null ||
+                  score ===
+                    undefined
                     ? "Missing"
                     : "Recorded",
               };
@@ -1631,91 +1980,290 @@ router.post(
           );
 
       const focusRecords =
-        focusSubjectId === null
+        focusSubjectId ===
+        null
           ? assessmentRecords
-          : assessmentRecords.filter(
-              (record) =>
-                record.subject_id ===
-                focusSubjectId,
-            );
+          : assessmentRecords
+              .filter(
+                (record) =>
+                  record
+                    .subject_id ===
+                  focusSubjectId,
+              );
 
       const scoredFocusRecords =
-        focusRecords.filter(
-          (record) =>
-            record.percentage !==
-            null,
-        );
+        focusRecords
+          .filter(
+            (record) =>
+              record
+                .percentage !==
+              null,
+          );
 
       if (
-        !scoredFocusRecords.length
+        !scoredFocusRecords
+          .length
       ) {
-        return res.status(400).json({
-          message:
-            "This student has no recorded assessment scores for the current dashboard filter.",
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              `This student has no recorded assessment scores for Term ${requestedTerm} in the current dashboard filter.`,
+          });
       }
 
-      const allScoredRecords =
-        assessmentRecords.filter(
-          (record) =>
-            record.percentage !==
-            null,
-        );
+      /*
+        ========================================================
+        OFFICIAL ECR TERM GRADES
+        ========================================================
+
+        Instead of calculating an ordinary average of assessment
+        percentages, each subject is passed through grading.js.
+
+        grading.js calculates:
+
+        WW = 20%
+        PT = 50%
+        ST1/ST2/Term Exam component = 30%
+
+        then:
+
+        Initial Grade
+        → ECR Transmutation
+        → Official Term Grade
+      */
+
+      const subjectGradeResults =
+        enrolledSubjects
+          .map(
+            (subject) => {
+              const subjectRecords =
+                assessmentRecords
+                  .filter(
+                    (record) =>
+                      record
+                        .subject_id ===
+                      subject.id,
+                  );
+
+              const termResult =
+                calculateTermGrade(
+                  subjectRecords,
+                  requestedTerm,
+                );
+
+              return {
+                subjectId:
+                  subject.id,
+
+                subjectName:
+                  subject.name,
+
+                termResult,
+
+                records:
+                  subjectRecords,
+              };
+            },
+          );
+
+      const completeSubjectGrades =
+        subjectGradeResults
+          .filter(
+            (entry) =>
+              entry
+                .termResult
+                .isComplete,
+          );
+
+      const focusSubjectGrade =
+        focusSubjectId ===
+        null
+          ? null
+          : subjectGradeResults
+              .find(
+                (entry) =>
+                  entry
+                    .subjectId ===
+                  focusSubjectId,
+              ) ??
+            null;
+
+      if (
+        focusSubjectId !==
+          null &&
+        !focusSubjectGrade
+          ?.termResult
+          ?.isComplete
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              `The selected subject does not yet have an official Term ${requestedTerm} ECR grade. Make sure the assessment HPS values are configured and the Term Examination score has been recorded.`,
+          });
+      }
+
+      if (
+        focusSubjectId ===
+          null &&
+        !completeSubjectGrades
+          .length
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              `This student does not yet have a complete official Term ${requestedTerm} grade in any enrolled subject.`,
+          });
+      }
+
+      /*
+        When All Subjects is selected, this is an average of the
+        official transmuted Term Grades of subjects that currently
+        have a calculable Term Grade.
+
+        When one subject is selected, focusAverage is simply that
+        subject's official transmuted Term Grade.
+      */
 
       const overallAverage =
         average(
-          allScoredRecords.map(
-            (record) =>
-              record.percentage,
-          ),
+          completeSubjectGrades
+            .map(
+              (entry) =>
+                entry
+                  .termResult
+                  .termGrade,
+            ),
         );
 
       const focusAverage =
-        average(
-          scoredFocusRecords.map(
-            (record) =>
-              record.percentage,
-          ),
-        );
+        focusSubjectId ===
+        null
+          ? overallAverage
+          : focusSubjectGrade
+              .termResult
+              .termGrade;
 
       const subjectStatistics =
-        buildSubjectStatistics(
-          assessmentRecords,
-        );
+        subjectGradeResults
+          .map(
+            (entry) => {
+              const recorded =
+                entry.records
+                  .filter(
+                    (record) =>
+                      record
+                        .score !==
+                        null &&
+                      record
+                        .score !==
+                        undefined,
+                  )
+                  .length;
+
+              return {
+                subjectId:
+                  entry
+                    .subjectId,
+
+                subjectName:
+                  entry
+                    .subjectName,
+
+                totalAssessments:
+                  entry
+                    .records
+                    .length,
+
+                recordedAssessments:
+                  recorded,
+
+                missingAssessments:
+                  entry
+                    .records
+                    .length -
+                  recorded,
+
+                /*
+                  Kept under averagePercentage for compatibility
+                  with the existing Gemini prompt/report shape,
+                  but this now contains the official transmuted
+                  Term Grade, not the old simple percentage
+                  average.
+                */
+                averagePercentage:
+                  entry
+                    .termResult
+                    .isComplete
+                    ? entry
+                        .termResult
+                        .termGrade
+                    : null,
+
+                initialGrade:
+                  entry
+                    .termResult
+                    .initialGrade,
+
+                descriptor:
+                  entry
+                    .termResult
+                    .descriptor,
+
+                isComplete:
+                  entry
+                    .termResult
+                    .isComplete,
+              };
+            },
+          );
 
       const rankedSubjectStatistics =
         subjectStatistics
           .filter(
             (subject) =>
-              subject.averagePercentage !==
+              subject
+                .averagePercentage !==
               null,
           )
           .sort(
-            (first, second) =>
+            (
+              first,
+              second,
+            ) =>
               second.averagePercentage -
               first.averagePercentage,
           );
 
       const strongestSubject =
-        rankedSubjectStatistics[0] ??
+        rankedSubjectStatistics[
+          0
+        ] ??
         null;
 
       const weakestSubject =
         rankedSubjectStatistics[
-          rankedSubjectStatistics.length -
+          rankedSubjectStatistics
+            .length -
             1
-        ] ?? null;
+        ] ??
+        null;
 
       const focusSubject =
-        enrolledSubjects.find(
-          (subject) =>
-            subject.id ===
-            focusSubjectId,
-        );
+        enrolledSubjects
+          .find(
+            (subject) =>
+              subject.id ===
+              focusSubjectId,
+          );
 
       const comparisonSubjectIds =
         focusSubjectId
-          ? [focusSubjectId]
+          ? [
+              focusSubjectId,
+            ]
           : enrolledSubjectIds;
 
       const sectionComparison =
@@ -1723,32 +2271,53 @@ router.post(
           student,
           comparisonSubjectIds,
           ownerId,
+          requestedTerm,
         );
+
+      /*
+        Trend is still based on individual assessment percentages.
+
+        This is intentional: trend analysis measures whether recent
+        assessment performance is improving or declining, whereas
+        intervention/enrichment classification now uses the
+        official ECR Term Grade.
+      */
 
       const trend =
         buildTrend(
           focusRecords,
         );
 
+      /*
+        ========================================================
+        EDU LITE SUPPORT CLASSIFICATION
+        ========================================================
+
+        Uses official transmuted Term Grade:
+
+        < 75    At Risk
+        75-89   Within Expected Range
+        90+     High Performing
+      */
+
       const classification =
-        focusAverage <
-        PASSING_PERCENTAGE
-          ? "At Risk"
-          : focusAverage >=
-              HIGH_POTENTIAL_PERCENTAGE
-            ? "High Performing"
-            : "Within Expected Range";
+        getSupportClassification(
+          focusAverage,
+        );
 
       const profile = {
         studentAlias:
           `Student-${student._id}`,
 
         grade:
-          student.grade,
+          student
+            .grade,
 
         section:
-          student.sectionId
-            ?.name ?? "",
+          student
+            .sectionId
+            ?.name ??
+          "",
 
         requestedPlan:
           requestedSupportType ===
@@ -1757,8 +2326,12 @@ router.post(
             : "Enrichment",
 
         dashboardFocus:
-          focusSubject?.name ??
+          focusSubject
+            ?.name ??
           "All enrolled subjects",
+
+        gradingTerm:
+          `Term ${requestedTerm}`,
 
         derivedClassification:
           classification,
@@ -1772,6 +2345,26 @@ router.post(
         },
 
         summary: {
+          gradingTerm:
+            requestedTerm,
+
+          /*
+            These are now official ECR Term Grade values.
+
+            The old property names are retained too so the existing
+            PDF/UI response structure remains backward-compatible.
+          */
+
+          focusOfficialTermGrade:
+            round(
+              focusAverage,
+            ),
+
+          overallOfficialTermGradeAverage:
+            round(
+              overallAverage,
+            ),
+
           focusAveragePercentage:
             round(
               focusAverage,
@@ -1783,20 +2376,29 @@ router.post(
             ),
 
           recordedFocusAssessments:
-            scoredFocusRecords.length,
+            scoredFocusRecords
+              .length,
 
           totalFocusAssessments:
-            focusRecords.length,
+            focusRecords
+              .length,
 
           missingFocusAssessments:
-            focusRecords.length -
-            scoredFocusRecords.length,
+            focusRecords
+              .length -
+            scoredFocusRecords
+              .length,
 
           focusCompletionRatePercentage:
-            focusRecords.length
+            focusRecords
+              .length
               ? round(
-                  (scoredFocusRecords.length /
-                    focusRecords.length) *
+                  (
+                    scoredFocusRecords
+                      .length /
+                    focusRecords
+                      .length
+                  ) *
                     100,
                 )
               : null,
@@ -1813,62 +2415,108 @@ router.post(
         weakestSubject,
 
         focusAssessmentHistory:
-          focusRecords.map(
-            (record) => ({
-              assessment:
-                record.assessment_name,
+          focusRecords
+            .map(
+              (
+                record,
+              ) => ({
+                assessment:
+                  record
+                    .assessment_name,
 
-              subject:
-                record.subject_name,
+                subject:
+                  record
+                    .subject_name,
 
-              type:
-                record.type,
+                type:
+                  record
+                    .type,
 
-              date:
-                record.date,
+                term:
+                  record
+                    .term,
 
-              score:
-                record.score,
+                category:
+                  record
+                    .category,
 
-              totalItems:
-                record.total_items,
+                sequence:
+                  record
+                    .sequence,
 
-              percentage:
-                record.percentage,
+                date:
+                  record
+                    .date,
 
-              status:
-                record.status,
-            }),
-          ),
+                score:
+                  record
+                    .score,
+
+                totalItems:
+                  record
+                    .total_items,
+
+                percentage:
+                  record
+                    .percentage,
+
+                status:
+                  record
+                    .status,
+              }),
+            ),
 
         allAssessmentHistory:
-          assessmentRecords.map(
-            (record) => ({
-              assessment:
-                record.assessment_name,
+          assessmentRecords
+            .map(
+              (
+                record,
+              ) => ({
+                assessment:
+                  record
+                    .assessment_name,
 
-              subject:
-                record.subject_name,
+                subject:
+                  record
+                    .subject_name,
 
-              type:
-                record.type,
+                type:
+                  record
+                    .type,
 
-              date:
-                record.date,
+                term:
+                  record
+                    .term,
 
-              score:
-                record.score,
+                category:
+                  record
+                    .category,
 
-              totalItems:
-                record.total_items,
+                sequence:
+                  record
+                    .sequence,
 
-              percentage:
-                record.percentage,
+                date:
+                  record
+                    .date,
 
-              status:
-                record.status,
-            }),
-          ),
+                score:
+                  record
+                    .score,
+
+                totalItems:
+                  record
+                    .total_items,
+
+                percentage:
+                  record
+                    .percentage,
+
+                status:
+                  record
+                    .status,
+              }),
+            ),
       };
 
       const model =
@@ -1877,8 +2525,9 @@ router.post(
         DEFAULT_MODEL;
 
       const geminiResponse =
-        await ai.models.generateContent(
-          {
+        await ai
+          .models
+          .generateContent({
             model,
 
             contents:
@@ -1891,12 +2540,12 @@ router.post(
               responseMimeType:
                 "application/json",
             },
-          },
-        );
+          });
 
       const parsedPlan =
         safelyParseGeminiJson(
-          geminiResponse.text,
+          geminiResponse
+            .text,
         );
 
       const plan =
@@ -1906,37 +2555,48 @@ router.post(
         );
 
       const generatedAt =
-        new Date().toISOString();
+        new Date()
+          .toISOString();
 
       const focusLabel =
-        focusSubject?.name ??
+        focusSubject
+          ?.name ??
         "All Subjects";
 
       const resultPayload = {
         student: {
           id:
-            student._id.toString(),
+            student
+              ._id
+              .toString(),
 
           name:
-            student.name,
+            student
+              .name,
 
           grade:
-            student.grade,
+            student
+              .grade,
 
           section:
-            student.sectionId
-              ?.name ?? "",
+            student
+              .sectionId
+              ?.name ??
+            "",
         },
 
         supportType:
           requestedSupportType,
 
         classification,
+
         focusLabel,
+
         generatedAt,
 
         analytics:
-          profile.summary,
+          profile
+            .summary,
 
         plan,
       };
@@ -1947,12 +2607,13 @@ router.post(
         );
 
       const insight =
-        await StudentAiInsight.create(
-          {
+        await StudentAiInsight
+          .create({
             ownerId,
 
             studentId:
-              student._id,
+              student
+                ._id,
 
             supportType:
               requestedSupportType,
@@ -1964,6 +2625,7 @@ router.post(
               null,
 
             focusLabel,
+
             model,
 
             title:
@@ -1973,17 +2635,19 @@ router.post(
               resultPayload,
 
             pdfData,
-          },
-        );
+          });
 
-      return res.status(201).json({
-        ...resultPayload,
+      return res
+        .status(201)
+        .json({
+          ...resultPayload,
 
-        savedInsight:
-          formatSavedInsight(
-            insight.toObject(),
-          ),
-      });
+          savedInsight:
+            formatSavedInsight(
+              insight
+                .toObject(),
+            ),
+        });
     } catch (error) {
       console.error(
         "Gemini student-support request failed:",
@@ -1997,9 +2661,11 @@ router.post(
           : error?.message ||
             "Unable to generate the student support recommendation.";
 
-      return res.status(500).json({
-        message,
-      });
+      return res
+        .status(500)
+        .json({
+          message,
+        });
     }
   },
 );
