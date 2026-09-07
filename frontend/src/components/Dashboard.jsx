@@ -61,7 +61,9 @@ export default function Dashboard() {
   const [subjects, setSubjects] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [assessmentRecords, setAssessmentRecords] = useState([]);
+  const [gradeSummaries, setGradeSummaries] = useState([]);
   const [selectedSection, setSelectedSection] = useState("ALL");
+  const [selectedTerm, setSelectedTerm] = useState("1");
   const [selectedSubject, setSelectedSubject] = useState("ALL");
   const [newSection, setNewSection] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -171,12 +173,14 @@ export default function Dashboard() {
         subjectResponse,
         assessmentResponse,
         recordResponse,
+        gradeSummaryResponse,
       ] = await Promise.all([
         axios.get(`${API_URL}/students`),
         axios.get(`${API_URL}/sections`),
         axios.get(`${API_URL}/subjects`),
         axios.get(`${API_URL}/assessments`),
         axios.get(`${API_URL}/assessment-records`),
+        axios.get(`${API_URL}/grade-summaries`),
       ]);
 
       setStudents(studentResponse.data);
@@ -184,6 +188,7 @@ export default function Dashboard() {
       setSubjects(subjectResponse.data);
       setAssessments(assessmentResponse.data);
       setAssessmentRecords(recordResponse.data);
+      setGradeSummaries(gradeSummaryResponse.data ?? []);
 
       if (
         selectedSection !== "ALL" &&
@@ -561,6 +566,7 @@ export default function Dashboard() {
         {
           support_type: supportType,
           focus_subject_id: selectedSubjectId,
+          term: Number(selectedTerm),
         },
       );
 
@@ -701,14 +707,34 @@ export default function Dashboard() {
   }, [students, subjectStudentSearch]);
 
   const displayedAssessments = useMemo(() => {
-    if (selectedSubjectId === null) {
-      return assessments;
+    const subjectFiltered =
+      selectedSubjectId === null
+        ? assessments
+        : assessments.filter(
+            (assessment) =>
+              assessment.subject_id === selectedSubjectId,
+          );
+
+    // Keep legacy assessments visible in the Assessment Library so they
+    // can be opened and classified. Official grade views use one term.
+    if (activeView === "assessments") {
+      return subjectFiltered.filter(
+        (assessment) =>
+          !assessment.is_structured ||
+          Number(assessment.term) === Number(selectedTerm),
+      );
     }
 
-    return assessments.filter(
-      (assessment) => assessment.subject_id === selectedSubjectId,
+    return subjectFiltered.filter(
+      (assessment) =>
+        Number(assessment.term) === Number(selectedTerm),
     );
-  }, [assessments, selectedSubjectId]);
+  }, [
+    assessments,
+    selectedSubjectId,
+    selectedTerm,
+    activeView,
+  ]);
 
   const displayedStudents = useMemo(() => {
     return students.filter((student) => {
@@ -846,47 +872,61 @@ export default function Dashboard() {
   };
 
   const relevantAssessmentIds = useMemo(
-    () => new Set(displayedAssessments.map((assessment) => assessment.id)),
+    () =>
+      new Set(
+        displayedAssessments.map(
+          (assessment) => assessment.id,
+        ),
+      ),
     [displayedAssessments],
   );
 
+  const selectedTermKey = `term${selectedTerm}`;
+  const currentTermLabel = `Term ${selectedTerm}`;
+
   const studentAnalytics = useMemo(() => {
     return displayedStudents.map((student) => {
-      const enrolledAssessmentIds = new Set(
-        displayedAssessments
-          .filter((assessment) =>
-            student.subject_ids?.includes(assessment.subject_id),
-          )
-          .map((assessment) => assessment.id),
+      const matchingSummaries = gradeSummaries.filter(
+        (summary) =>
+          summary.student_id === student.id &&
+          (selectedSubjectId === null ||
+            summary.subject_id === selectedSubjectId),
       );
 
-      const percentages = assessmentRecords
-        .filter(
-          (record) =>
-            record.student_id === student.id &&
-            relevantAssessmentIds.has(record.assessment_id) &&
-            enrolledAssessmentIds.has(record.assessment_id) &&
-            Number(record.total_items) > 0,
-        )
+      const officialTermGrades = matchingSummaries
         .map(
-          (record) => (Number(record.score) / Number(record.total_items)) * 100,
-        );
+          (summary) =>
+            summary[selectedTermKey]?.termGrade,
+        )
+        .filter((grade) => Number.isFinite(Number(grade)))
+        .map(Number);
 
       const averagePercentage =
-        percentages.length > 0
-          ? percentages.reduce((total, percentage) => total + percentage, 0) /
-            percentages.length
+        officialTermGrades.length > 0
+          ? officialTermGrades.reduce(
+              (total, grade) => total + grade,
+              0,
+            ) / officialTermGrades.length
           : null;
+
+      const assessmentCount = assessmentRecords.filter(
+        (record) =>
+          record.student_id === student.id &&
+          relevantAssessmentIds.has(record.assessment_id),
+      ).length;
 
       return {
         ...student,
         averagePercentage,
-        assessmentCount: percentages.length,
+        assessmentCount,
+        officialTermGrades,
       };
     });
   }, [
     displayedStudents,
-    displayedAssessments,
+    gradeSummaries,
+    selectedSubjectId,
+    selectedTermKey,
     assessmentRecords,
     relevantAssessmentIds,
   ]);
@@ -898,7 +938,8 @@ export default function Dashboard() {
   const classAverage =
     assessedStudents.length > 0
       ? assessedStudents.reduce(
-          (total, student) => total + student.averagePercentage,
+          (total, student) =>
+            total + student.averagePercentage,
           0,
         ) / assessedStudents.length
       : 0;
@@ -909,30 +950,42 @@ export default function Dashboard() {
 
   const verySatisfactoryStudents = assessedStudents.filter(
     (student) =>
-      student.averagePercentage >= 85 && student.averagePercentage < 90,
+      student.averagePercentage >= 80 &&
+      student.averagePercentage < 90,
   );
 
   const satisfactoryStudents = assessedStudents.filter(
     (student) =>
-      student.averagePercentage >= 75 && student.averagePercentage < 85,
+      student.averagePercentage >= 75 &&
+      student.averagePercentage < 80,
   );
 
   const atRiskStudents = assessedStudents
-    .filter((student) => student.averagePercentage < PASSING_PERCENTAGE)
+    .filter(
+      (student) =>
+        student.averagePercentage < PASSING_PERCENTAGE,
+    )
     .sort(
       (firstStudent, secondStudent) =>
-        firstStudent.averagePercentage - secondStudent.averagePercentage,
+        firstStudent.averagePercentage -
+        secondStudent.averagePercentage,
     );
 
   const highPotentialStudents = assessedStudents
-    .filter((student) => student.averagePercentage >= HIGH_POTENTIAL_PERCENTAGE)
+    .filter(
+      (student) =>
+        student.averagePercentage >=
+        HIGH_POTENTIAL_PERCENTAGE,
+    )
     .sort(
       (firstStudent, secondStudent) =>
-        secondStudent.averagePercentage - firstStudent.averagePercentage,
+        secondStudent.averagePercentage -
+        firstStudent.averagePercentage,
     );
 
   const passingStudents = assessedStudents.filter(
-    (student) => student.averagePercentage >= PASSING_PERCENTAGE,
+    (student) =>
+      student.averagePercentage >= PASSING_PERCENTAGE,
   );
 
   const passingRate =
@@ -941,10 +994,13 @@ export default function Dashboard() {
       : 0;
 
   const currentSectionLabel =
-    selectedSection === "ALL" ? "All Sections" : selectedSection;
+    selectedSection === "ALL"
+      ? "All Sections"
+      : selectedSection;
 
   const currentSubject = subjects.find(
-    (subject) => String(subject.id) === String(selectedSubject),
+    (subject) =>
+      String(subject.id) === String(selectedSubject),
   );
 
   const currentSubjectLabel =
@@ -953,40 +1009,55 @@ export default function Dashboard() {
       : currentSubject?.name || "Selected Subject";
 
   const getPercentage = (count) =>
-    assessedStudents.length === 0 ? 0 : (count / assessedStudents.length) * 100;
+    assessedStudents.length === 0
+      ? 0
+      : (count / assessedStudents.length) * 100;
 
-  const getPerformanceStatus = (averagePercentage) => {
-    if (averagePercentage === null) {
+  const getPerformanceStatus = (grade) => {
+    if (grade === null || grade === undefined) {
       return {
-        label: "Not Assessed",
-        className: "border-[#8E8E93] bg-[#8E8E93] text-white",
+        label: "Incomplete",
+        className:
+          "border-[#8E8E93] bg-[#8E8E93] text-white",
       };
     }
 
-    if (averagePercentage >= 90) {
+    if (grade >= 90) {
       return {
-        label: "Excellent",
-        className: "border-[#34C759] bg-[#34C759] text-white",
+        label: "Advancing",
+        className:
+          "border-[#34C759] bg-[#34C759] text-white",
       };
     }
 
-    if (averagePercentage >= 85) {
+    if (grade >= 80) {
       return {
-        label: "Very Satisfactory",
-        className: "border-[#007AFF] bg-[#007AFF] text-white",
+        label: "Benchmarking",
+        className:
+          "border-[#007AFF] bg-[#007AFF] text-white",
       };
     }
 
-    if (averagePercentage >= 75) {
+    if (grade >= 75) {
       return {
-        label: "Satisfactory",
-        className: "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
+        label: "Connecting",
+        className:
+          "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
+      };
+    }
+
+    if (grade >= 65) {
+      return {
+        label: "Developing",
+        className:
+          "border-[#FF9500] bg-[#FF9500] text-white",
       };
     }
 
     return {
-      label: "At Risk",
-      className: "border-[#FF3B30] bg-[#FF3B30] text-white",
+      label: "Emerging",
+      className:
+        "border-[#FF3B30] bg-[#FF3B30] text-white",
     };
   };
 
@@ -1476,8 +1547,10 @@ export default function Dashboard() {
                   displayedAssessments={displayedAssessments}
                   selectedSection={selectedSection}
                   selectedSubject={selectedSubject}
+                  selectedTerm={selectedTerm}
                   setSelectedSection={setSelectedSection}
                   setSelectedSubject={setSelectedSubject}
+                  setSelectedTerm={setSelectedTerm}
                   currentSectionLabel={currentSectionLabel}
                   currentSubjectLabel={currentSubjectLabel}
                   classAverage={classAverage}
@@ -1527,10 +1600,13 @@ export default function Dashboard() {
                   studentAnalytics={studentAnalytics}
                   selectedSection={selectedSection}
                   selectedSubject={selectedSubject}
+                  selectedTerm={selectedTerm}
                   setSelectedSection={setSelectedSection}
                   setSelectedSubject={setSelectedSubject}
+                  setSelectedTerm={setSelectedTerm}
                   currentSectionLabel={currentSectionLabel}
                   currentSubjectLabel={currentSubjectLabel}
+                  currentTermLabel={currentTermLabel}
                   scoreMap={scoreMap}
                   editingStudentId={editingStudentId}
                   editedScores={editedScores}
@@ -1544,6 +1620,7 @@ export default function Dashboard() {
                   onEditStudent={handleEditStudent}
                   handleDeleteStudent={handleDeleteStudent}
                   assessmentRecords={assessmentRecords}
+                  gradeSummaries={gradeSummaries}
                   expandedStudentId={expandedStudentId}
                   toggleStudentProfile={toggleStudentProfile}
                   studentInsightsById={studentInsightsById}
@@ -1594,8 +1671,10 @@ export default function Dashboard() {
                   displayedAssessments={displayedAssessments}
                   selectedSection={selectedSection}
                   selectedSubject={selectedSubject}
+                  selectedTerm={selectedTerm}
                   setSelectedSection={setSelectedSection}
                   setSelectedSubject={setSelectedSubject}
+                  setSelectedTerm={setSelectedTerm}
                   currentSubjectLabel={currentSubjectLabel}
                   onAddAssessment={handleAddAssessment}
                   onEditAssessment={handleEditAssessment}
@@ -1611,10 +1690,13 @@ export default function Dashboard() {
                   assessments={assessments}
                   selectedSection={selectedSection}
                   selectedSubject={selectedSubject}
+                  selectedTerm={selectedTerm}
                   setSelectedSection={setSelectedSection}
                   setSelectedSubject={setSelectedSubject}
+                  setSelectedTerm={setSelectedTerm}
                   currentSectionLabel={currentSectionLabel}
                   currentSubjectLabel={currentSubjectLabel}
+                  currentTermLabel={currentTermLabel}
                   atRiskStudents={atRiskStudents}
                   highPotentialStudents={highPotentialStudents}
                   generateStudentRecommendation={generateStudentRecommendation}
@@ -1679,8 +1761,10 @@ function DashboardView({
   displayedAssessments,
   selectedSection,
   selectedSubject,
+  selectedTerm,
   setSelectedSection,
   setSelectedSubject,
+  setSelectedTerm,
   currentSectionLabel,
   currentSubjectLabel,
   classAverage,
@@ -1743,25 +1827,25 @@ function DashboardView({
 
   const distribution = [
     {
-      label: "Excellent",
+      label: "Advancing",
       count: excellentStudents.length,
       percentage: getPercentage(excellentStudents.length),
       color: "bg-[#008000]",
     },
     {
-      label: "Very Satisfactory",
+      label: "Benchmarking",
       count: verySatisfactoryStudents.length,
       percentage: getPercentage(verySatisfactoryStudents.length),
       color: "bg-[#0088FF]",
     },
     {
-      label: "Satisfactory",
+      label: "Connecting",
       count: satisfactoryStudents.length,
       percentage: getPercentage(satisfactoryStudents.length),
       color: "bg-[#9A7B0C]",
     },
     {
-      label: "Needs Support",
+      label: "Developing / Emerging",
       count: atRiskStudents.length,
       percentage: getPercentage(atRiskStudents.length),
       color: "bg-[#FF0000]",
@@ -1798,7 +1882,7 @@ function DashboardView({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-2 rounded-[22px] bg-white/70 p-3 text-[#FFFFFF] backdrop-blur-[20px] lg:col-span-3">
+      <section className="grid grid-cols-1 gap-2 rounded-[22px] bg-white/70 p-3 text-[#FFFFFF] backdrop-blur-[20px] sm:grid-cols-3 lg:col-span-3">
         <label className="min-w-0">
           <span className="mb-1 block text-[20px] text-[#36454F]">
             Sort By Section
@@ -1834,13 +1918,28 @@ function DashboardView({
             ))}
           </select>
         </label>
+
+        <label className="min-w-0">
+          <span className="mb-1 block text-[20px] text-[#36454F]">
+            Grading Term
+          </span>
+          <select
+            value={selectedTerm}
+            onChange={(event) => setSelectedTerm(event.target.value)}
+            className="bento-select truncate rounded-[12px] border-0 bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
+          >
+            <option value="1">Term 1</option>
+            <option value="2">Term 2</option>
+            <option value="3">Term 3</option>
+          </select>
+        </label>
       </section>
 
       <section className="p-3 rounded-[22px] bg-white/70 backdrop-blur-[20px] grid grid-cols-2 place-items-stretch gap-3 lg:col-span-3">
         <BentoMetric
           label="Class Average"
-          value={`${classAverage.toFixed(1)}%`}
-          detail={`${currentSectionLabel} · ${currentSubjectLabel}`}
+          value={classAverage.toFixed(1)}
+          detail={`${currentSectionLabel} · ${currentSubjectLabel} · Term ${selectedTerm}`}
           tone="yellow"
         />
         <BentoMetric
@@ -1858,7 +1957,7 @@ function DashboardView({
         <BentoMetric
           label="Students At Risk"
           value={atRiskStudents.length}
-          detail="Below 75% average"
+          detail={`Below 75 in Term ${selectedTerm}`}
           tone="red"
         />
       </section>
@@ -2082,42 +2181,77 @@ function BentoMetric({ label, value, detail, tone = "blue" }) {
   );
 }
 
-function BentoInsight({ title, student, type, onGenerate, generatingKey }) {
+function BentoInsight({
+  title,
+  student,
+  type,
+  onGenerate,
+  generatingKey,
+  selectedTerm,
+}) {
   const isRisk = type === "risk";
-  const supportType = isRisk ? "intervention" : "enrichment";
-  const requestKey = student ? `${supportType}-${student.id}` : "";
-  const isGenerating = generatingKey === requestKey;
+
+  const supportType = isRisk
+    ? "intervention"
+    : "enrichment";
+
+  const requestKey = student
+    ? `${supportType}-${student.id}`
+    : "";
+
+  const isGenerating =
+    generatingKey === requestKey;
 
   return (
     <div
       className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-white shadow-sm ${
-        isRisk ? "bg-white/20" : "bg-white/20"
+        isRisk
+          ? "bg-white/20"
+          : "bg-white/20"
       }`}
     >
       <div className="min-w-0">
-        <p className="text-[15px] font-semibold tracking-wide text-[#36454F] mb-[15px]">
+        <p className="mb-[15px] text-[15px] font-semibold tracking-wide text-[#36454F]">
           {title}
         </p>
+
         {student ? (
           <>
-            <div className="px-2 py-1 rounded-[12px] bg-white/15">
+            <div className="rounded-[12px] bg-white/15 px-2 py-1">
               <p className="mt-1 truncate text-sm text-[#36454F]">
                 {student.name}
               </p>
+
               <p className="text-[10px] text-[#36454F]/70">
-                {student.section} · {student.averagePercentage.toFixed(1)}%
+                {student.section} · Term {selectedTerm}:{" "}
+                {student.averagePercentage !== null &&
+                student.averagePercentage !== undefined
+                  ? Number(
+                      student.averagePercentage,
+                    ).toFixed(1)
+                  : "N/A"}
               </p>
             </div>
           </>
         ) : (
-          <p className="mt-2 text-xs text-white/70">No student identified.</p>
+          <p className="mt-2 text-xs text-white/70">
+            No student identified.
+          </p>
         )}
       </div>
+
       {student && (
         <button
           type="button"
-          onClick={() => onGenerate(student, supportType)}
-          disabled={Boolean(generatingKey)}
+          onClick={() =>
+            onGenerate(
+              student,
+              supportType,
+            )
+          }
+          disabled={Boolean(
+            generatingKey,
+          )}
           className={`mt-2 rounded-full px-3 py-1.5 text-[10px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
             isRisk
               ? "bg-[#FF3B30] hover:bg-[#D70015]"
@@ -2384,8 +2518,10 @@ function AssessmentsView({
   displayedAssessments,
   selectedSection,
   selectedSubject,
+  selectedTerm,
   setSelectedSection,
   setSelectedSubject,
+  setSelectedTerm,
   currentSubjectLabel,
   onAddAssessment,
   onEditAssessment,
@@ -2424,8 +2560,10 @@ function AssessmentsView({
         assessments={assessments}
         selectedSection={selectedSection}
         selectedSubject={selectedSubject}
+        selectedTerm={selectedTerm}
         setSelectedSection={setSelectedSection}
         setSelectedSubject={setSelectedSubject}
+        setSelectedTerm={setSelectedTerm}
       />
 
       <AssessmentList
@@ -2445,10 +2583,13 @@ function AiInsightsView({
   assessments,
   selectedSection,
   selectedSubject,
+  selectedTerm,
   setSelectedSection,
   setSelectedSubject,
+  setSelectedTerm,
   currentSectionLabel,
   currentSubjectLabel,
+  currentTermLabel,
   atRiskStudents,
   highPotentialStudents,
   generateStudentRecommendation,
@@ -2465,17 +2606,19 @@ function AiInsightsView({
         assessments={assessments}
         selectedSection={selectedSection}
         selectedSubject={selectedSubject}
+        selectedTerm={selectedTerm}
         setSelectedSection={setSelectedSection}
         setSelectedSubject={setSelectedSubject}
+        setSelectedTerm={setSelectedTerm}
       />
 
       <section className="rounded-[28px] bg-white/70 backdrop-blur-[20px] p-6">
         <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
-          {currentSubjectLabel} · {currentSectionLabel}
+          {currentSubjectLabel} · {currentSectionLabel} · {currentTermLabel}
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#636366]">
-          Recommendations use the selected subject, the student's recorded
-          assessments, and their calculated performance classification.
+          Recommendations use the selected subject and the official transmuted
+          Term Grade. Incomplete ECR terms are not treated as official grades.
         </p>
       </section>
 
@@ -2508,10 +2651,13 @@ function RecordsView({
   studentAnalytics,
   selectedSection,
   selectedSubject,
+  selectedTerm,
   setSelectedSection,
   setSelectedSubject,
+  setSelectedTerm,
   currentSectionLabel,
   currentSubjectLabel,
+  currentTermLabel,
   scoreMap,
   editingStudentId,
   editedScores,
@@ -2525,6 +2671,7 @@ function RecordsView({
   onEditStudent,
   handleDeleteStudent,
   assessmentRecords,
+  gradeSummaries,
   expandedStudentId,
   toggleStudentProfile,
   studentInsightsById,
@@ -2546,15 +2693,17 @@ function RecordsView({
         assessments={assessments}
         selectedSection={selectedSection}
         selectedSubject={selectedSubject}
+        selectedTerm={selectedTerm}
         setSelectedSection={setSelectedSection}
         setSelectedSubject={setSelectedSubject}
+        setSelectedTerm={setSelectedTerm}
       />
 
       <section className="overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-[20px]">
         <div className="border-b border-[#E5E5EA] px-6 py-5">
           <h2 className="text-xl font-bold text-[#1C1C1E]">
             Student Assessment Records - {currentSubjectLabel} -{" "}
-            {currentSectionLabel}
+            {currentSectionLabel} - {currentTermLabel}
           </h2>
 
           <p className="mt-1 text-sm text-[#636366]">
@@ -2580,13 +2729,13 @@ function RecordsView({
                     <div>{assessment.name}</div>
 
                     <div className="mt-1 font-normal normal-case text-[#8E8E93]">
-                      {assessment.subject_name} - {assessment.type} -{" "}
-                      {assessment.total_items} items
+                      {assessment.subject_name} - {assessment.slot_label} -{" "}
+                      {assessment.category_label} - HPS {assessment.total_items}
                     </div>
                   </th>
                 ))}
 
-                <TableHeading>Average</TableHeading>
+                <TableHeading>Term Grade</TableHeading>
                 <TableHeading>Performance</TableHeading>
                 <TableHeading align="right">Actions</TableHeading>
               </tr>
@@ -2617,7 +2766,13 @@ function RecordsView({
                       assessment_name: assessment.name,
                       subject_id: assessment.subject_id,
                       subject_name: assessment.subject_name,
-                      type: assessment.type,
+                      type: assessment.category_label ?? assessment.type,
+                      term: assessment.term,
+                      term_label: assessment.term_label,
+                      category: assessment.category,
+                      category_label: assessment.category_label,
+                      sequence: assessment.sequence,
+                      slot_label: assessment.slot_label,
                       date: assessment.date,
                       total_items: assessment.total_items,
                       score: record?.score ?? null,
@@ -2758,7 +2913,7 @@ function RecordsView({
                       <td className="px-5 py-4 font-bold text-[#1C1C1E]">
                         {student.averagePercentage === null
                           ? "-"
-                          : `${student.averagePercentage.toFixed(1)}%`}
+                          : student.averagePercentage.toFixed(1)}
                       </td>
 
                       <td className="px-5 py-4">
@@ -2833,6 +2988,10 @@ function RecordsView({
                             student={student}
                             status={status}
                             assessmentRecords={studentRecords}
+                            gradeSummaries={gradeSummaries.filter(
+                              (summary) =>
+                                summary.student_id === student.id,
+                            )}
                             savedInsights={savedInsights}
                             loadingInsights={isLoadingInsights}
                             insightError={insightError}
@@ -2871,6 +3030,7 @@ function StudentExpandedProfile({
   student,
   status,
   assessmentRecords,
+  gradeSummaries,
   savedInsights,
   loadingInsights,
   insightError,
@@ -2883,15 +3043,6 @@ function StudentExpandedProfile({
       record.score !== undefined &&
       Number(record.total_items) > 0,
   );
-
-  const overallAverage =
-    scoredRecords.length > 0
-      ? scoredRecords.reduce(
-          (total, record) =>
-            total + (Number(record.score) / Number(record.total_items)) * 100,
-          0,
-        ) / scoredRecords.length
-      : null;
 
   return (
     <div className="rounded-[28px] border border-[#D1D1D6] bg-white/50 p-5 sm:p-6">
@@ -2927,11 +3078,11 @@ function StudentExpandedProfile({
         />
 
         <ProfileMetric
-          label="Overall average"
+          label="Completed Final Grades"
           value={
-            overallAverage === null
-              ? "Not assessed"
-              : `${overallAverage.toFixed(1)}%`
+            gradeSummaries.filter(
+              (summary) => summary.final?.isComplete,
+            ).length
           }
           tone="green"
         />
@@ -2941,6 +3092,77 @@ function StudentExpandedProfile({
           value={savedInsights.length}
           tone="red"
         />
+      </div>
+
+      <div className="mt-7">
+        <div className="mb-3">
+          <h4 className="text-base font-bold text-[#1C1C1E]">
+            Official Three-Term Grades
+          </h4>
+          <p className="mt-1 text-sm text-[#636366]">
+            Each Term Grade is transmuted first. The Final Grade is the rounded
+            average of the three transmuted Term Grades.
+          </p>
+        </div>
+
+        <div className="overflow-x-auto rounded-xl border border-[#E5E5EA]">
+          <table className="w-full min-w-[760px]">
+            <thead className="bg-[#F2F2F7]">
+              <tr>
+                <TableHeading>Subject</TableHeading>
+                <TableHeading>Term 1</TableHeading>
+                <TableHeading>Term 2</TableHeading>
+                <TableHeading>Term 3</TableHeading>
+                <TableHeading>Final</TableHeading>
+                <TableHeading>Descriptor</TableHeading>
+                <TableHeading>Remark</TableHeading>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E5E5EA]">
+              {gradeSummaries.map((summary) => (
+                <tr key={summary.subject_id}>
+                  <td className="px-6 py-4 font-medium text-[#1C1C1E] text-center">
+                    {summary.subject_name}
+                  </td>
+                  {[summary.term1, summary.term2, summary.term3].map(
+                    (termResult, index) => (
+                      <td
+                        key={index}
+                        className="px-6 py-4 text-center text-[#3A3A3C]"
+                      >
+                        {termResult?.isComplete
+                          ? termResult.termGrade
+                          : "Incomplete"}
+                      </td>
+                    ),
+                  )}
+                  <td className="px-6 py-4 text-center font-bold text-[#1C1C1E]">
+                    {summary.final?.isComplete
+                      ? summary.final.finalGrade
+                      : "-"}
+                  </td>
+                  <td className="px-6 py-4 text-center text-[#636366]">
+                    {summary.final?.descriptor ?? "-"}
+                  </td>
+                  <td className="px-6 py-4 text-center font-semibold text-[#636366]">
+                    {summary.final?.remark ?? "-"}
+                  </td>
+                </tr>
+              ))}
+
+              {gradeSummaries.length === 0 && (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-6 py-10 text-center text-[#636366]"
+                  >
+                    No official three-term grade summaries are available yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mt-6">
@@ -2984,7 +3206,7 @@ function StudentExpandedProfile({
               <tr>
                 <TableHeading>Assessment</TableHeading>
                 <TableHeading>Subject</TableHeading>
-                <TableHeading>Type</TableHeading>
+                <TableHeading>Term / Component</TableHeading>
                 <TableHeading>Date</TableHeading>
                 <TableHeading>Score</TableHeading>
                 <TableHeading>Percentage</TableHeading>
@@ -3011,7 +3233,7 @@ function StudentExpandedProfile({
                       {record.subject_name}
                     </td>
 
-                    <td className="px-6 py-4 text-[#636366] text-center">{record.type}</td>
+                    <td className="px-6 py-4 text-[#636366] text-center">{record.term_label ?? `Term ${record.term}`} · {record.slot_label ?? record.type}</td>
 
                     <td className="px-6 py-4 text-[#636366] text-center">{record.date}</td>
 
@@ -3077,7 +3299,7 @@ function StudentExpandedProfile({
             Loading saved insights...
           </div>
         ) : (
-          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
             {savedInsights.map((insight) => (
               <article
                 key={insight.id}
@@ -3392,8 +3614,10 @@ function DashboardFilters({
   assessments,
   selectedSection,
   selectedSubject,
+  selectedTerm,
   setSelectedSection,
   setSelectedSubject,
+  setSelectedTerm,
 }) {
   return (
     <section className="rounded-[28px] bg-white/70 px-5 backdrop-blur-[20px] py-4">
@@ -3403,14 +3627,14 @@ function DashboardFilters({
           <h2 className="text-[20px] font-semibold text-[#1C1C1E]">{title}</h2>
 
           <p className="text-xs text-[#636366]">
-            Choose a section and subject to update the view.
+            Choose a section, subject, and grading term to update the view.
           </p>
 
           <p className="sr-only">{description}</p>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
           <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
             Section
@@ -3460,6 +3684,25 @@ function DashboardFilters({
                 title={`${subject.student_count} students, ${subject.assessment_count} assessments`}
                 onClick={() => setSelectedSubject(String(subject.id))}
                 tone="green"
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
+            Grading Term
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3].map((term) => (
+              <FilterPill
+                key={term}
+                active={String(selectedTerm) === String(term)}
+                label={`Term ${term}`}
+                title={`Use official Term ${term} grades`}
+                onClick={() => setSelectedTerm(String(term))}
+                tone="blue"
               />
             ))}
           </div>
@@ -3545,9 +3788,11 @@ function AssessmentList({
             <tr>
               <TableHeading>Assessment</TableHeading>
               <TableHeading>Subject</TableHeading>
-              <TableHeading>Type</TableHeading>
+              <TableHeading>Term</TableHeading>
+              <TableHeading>Slot</TableHeading>
+              <TableHeading>Component</TableHeading>
               <TableHeading>Date</TableHeading>
-              <TableHeading>Total Items</TableHeading>
+              <TableHeading>HPS</TableHeading>
               <TableHeading align="right">Actions</TableHeading>
             </tr>
           </thead>
@@ -3565,7 +3810,17 @@ function AssessmentList({
                   </span>
                 </td>
 
-                <td className="px-6 py-4 text-[#636366] text-center">{assessment.type}</td>
+                <td className="px-6 py-4 text-[#636366] text-center">
+                  {assessment.term_label}
+                </td>
+
+                <td className="px-6 py-4 font-semibold text-[#1C1C1E] text-center">
+                  {assessment.slot_label}
+                </td>
+
+                <td className="px-6 py-4 text-[#636366] text-center">
+                  {assessment.category_label}
+                </td>
 
                 <td className="px-6 py-4 text-[#636366] text-center">{assessment.date}</td>
 
@@ -3596,10 +3851,10 @@ function AssessmentList({
             {displayedAssessments.length === 0 && (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="8"
                   className="px-6 py-12 text-center text-[#636366]"
                 >
-                  No assessments have been added for this subject.
+                  No assessments have been added for this subject and term.
                 </td>
               </tr>
             )}
@@ -3986,7 +4241,7 @@ function InsightList({
                       : "font-bold text-[#248A3D]"
                   }
                 >
-                  {student.averagePercentage.toFixed(1)}%
+                  {student.averagePercentage.toFixed(1)}
                 </span>
               </div>
 
