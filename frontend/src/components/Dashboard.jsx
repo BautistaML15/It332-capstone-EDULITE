@@ -1155,168 +1155,87 @@ export default function Dashboard() {
 
   return (
     <div
-      className=" edulite-ios-corners dashboard-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
+      className="edulite-shell min-h-screen bg-[#F4F7FA] text-[#25313C]"
       style={{
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
       }}
     >
       <style>{`
-        .dashboard-canvas {
-        color-scheme: light;
-        background-image: url("/bg9.png");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        
-      }
-
-        .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
-        .edulite-ios-corners .rounded-lg {
-          corner-shape: squircle;
+        :root {
+          --ed-blue: #36a9e1;
+          --ed-blue-dark: #168cc8;
+          --ed-ink: #25313c;
+          --ed-muted: #71808d;
+          --ed-line: #e3e9ee;
+          --ed-soft: #f4f7fa;
         }
 
-        .edulite-ios-corners button,
-        .edulite-ios-corners [role="button"],
-        .edulite-ios-corners input:not([type="checkbox"]):not([type="radio"]),
-        .edulite-ios-corners select,
-        .edulite-ios-corners textarea {
+        .edulite-shell * {
+          box-sizing: border-box;
+        }
+
+        .edulite-shell button,
+        .edulite-shell input,
+        .edulite-shell select,
+        .edulite-shell textarea {
+          font: inherit;
+        }
+
+        .edulite-shell button,
+        .edulite-shell [role="button"] {
+          transition:
+            background-color 160ms ease,
+            border-color 160ms ease,
+            color 160ms ease,
+            transform 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .edulite-shell button:not(:disabled):active,
+        .edulite-shell [role="button"]:active {
+          transform: scale(0.98);
+        }
+
+        .edulite-shell :where(button, input, select, textarea, a):focus-visible {
+          outline: 3px solid rgba(54, 169, 225, 0.28);
+          outline-offset: 2px;
+        }
+
+        .edulite-shell input,
+        .edulite-shell select,
+        .edulite-shell textarea {
           min-height: 44px;
         }
 
-        .edulite-ios-corners input,
-        .edulite-ios-corners select,
-        .edulite-ios-corners textarea {
-          font-size: 16px;
+        .edulite-shell select option {
+          color: #25313c;
+          background: white;
         }
 
-        .edulite-ios-corners :where(button, [role="button"], input, select, textarea, a):focus-visible {
-          outline: 3px solid rgba(0, 122, 255, 0.52);
-          outline-offset: 3px;
+        .minimal-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #c9d4dc transparent;
         }
 
-        .dashboard-bento > section {
-          border: 1px solid rgba(209, 209, 214, 0.78);
+        .minimal-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
         }
 
-        .dashboard-bento [class~="text-[10px]"],
-        .liquid-glass-sidebar [class~="text-[9px]"],
-        .liquid-glass-sidebar [class~="text-[10px]"] {
-          font-size: 0.75rem !important;
-          line-height: 1rem !important;
-        }
-
-        .dashboard-bento [class~="text-[11px]"],
-        .sidebar-nav-button[class~="text-[12px]"] {
-          font-size: 0.8125rem !important;
-          line-height: 1.125rem !important;
-        }
-
-        .edulite-ios-corners button,
-        .edulite-ios-corners [role="button"] {
-          transition:
-            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-            box-shadow 220ms ease,
-            background-color 220ms ease,
-            color 220ms ease,
-            opacity 220ms ease,
-            filter 220ms ease;
-          will-change: transform;
-        }
-
-        .edulite-ios-corners button:not(.sidebar-nav-button):not(:disabled):hover,
-        .edulite-ios-corners [role="button"]:hover {
-          transform: translateY(-1px) scale(1.01);
-          filter: brightness(1.025);
-        }
-
-        .edulite-ios-corners button:not(.sidebar-nav-button):not(:disabled):active,
-        .edulite-ios-corners [role="button"]:active {
-          transform: translateY(0) scale(0.97);
-          transition-duration: 90ms;
-        }
-
-        .sidebar-nav-button {
-          transform: none !important;
-          transition:
-            background-color 180ms ease,
-            color 180ms ease,
-            box-shadow 180ms ease !important;
-        }
-
-        .sidebar-nav-button:active {
-          background-color: rgba(255, 255, 255, 0.9);
-        }
-
-        .sidebar-nav-button .sidebar-nav-icon {
-          transition:
-            transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-            color 180ms ease;
-        }
-
-        .sidebar-nav-button:hover .sidebar-nav-icon {
-          transform: scale(1.08);
-        }
-
-        .edulite-ios-corners input,
-        .edulite-ios-corners select,
-        .edulite-ios-corners textarea {
-          transition:
-            border-color 220ms ease,
-            box-shadow 220ms ease,
-            background-color 220ms ease,
-            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        .edulite-ios-corners input:focus,
-        .edulite-ios-corners select:focus,
-        .edulite-ios-corners textarea:focus {
-          transform: translateY(-1px);
-        }
-
-        .edulite-ios-corners article {
-          transition:
-            transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
-            box-shadow 280ms ease,
-            filter 280ms ease;
-        }
-
-        .edulite-ios-corners article:hover {
-          transform: translateY(-2px);
-          filter: brightness(1.015);
-        }
-
-        .ui-panel-enter {
-          animation: ios-panel-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-        }
-
-        @keyframes ios-panel-in {
-          from {
-            opacity: 0;
-            transform: translateY(12px) scale(0.99);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+        .minimal-scrollbar::-webkit-scrollbar-thumb {
+          background: #c9d4dc;
+          border-radius: 999px;
         }
 
         @keyframes mac-notification-in {
-          0% {
+          from {
             opacity: 0;
-            transform: translate3d(32px, -8px, 0) scale(0.96);
-            filter: blur(5px);
+            transform: translate3d(28px, -8px, 0) scale(0.97);
           }
-          70% {
-            opacity: 1;
-            transform: translate3d(-2px, 0, 0) scale(1.005);
-            filter: blur(0);
-          }
-          100% {
+          to {
             opacity: 1;
             transform: translate3d(0, 0, 0) scale(1);
-            filter: blur(0);
           }
         }
 
@@ -1324,332 +1243,156 @@ export default function Dashboard() {
           from {
             opacity: 1;
             transform: translate3d(0, 0, 0) scale(1);
-            filter: blur(0);
           }
           to {
             opacity: 0;
-            transform: translate3d(28px, -4px, 0) scale(0.97);
-            filter: blur(4px);
+            transform: translate3d(24px, -4px, 0) scale(0.98);
           }
         }
 
         .mac-notification-card {
-          animation: mac-notification-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
-          transform-origin: top right;
-          -webkit-backdrop-filter: saturate(170%) blur(30px);
-          backdrop-filter: saturate(170%) blur(30px);
+          animation: mac-notification-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          -webkit-backdrop-filter: blur(28px) saturate(170%);
+          backdrop-filter: blur(28px) saturate(170%);
         }
 
         .mac-notification-card[data-closing="true"] {
-          animation: mac-notification-out 280ms cubic-bezier(0.4, 0, 1, 1) both;
+          animation: mac-notification-out 260ms ease both;
           pointer-events: none;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .edulite-ios-corners *,
-          .edulite-ios-corners *::before,
-          .edulite-ios-corners *::after {
-            scroll-behavior: auto !important;
+          .edulite-shell *,
+          .edulite-shell *::before,
+          .edulite-shell *::after {
             animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
           }
-        }
-
-        @media (hover: none), (pointer: coarse) {
-          .edulite-ios-corners button:not(.sidebar-nav-button):not(:disabled):hover,
-          .edulite-ios-corners [role="button"]:hover,
-          .edulite-ios-corners input:focus,
-          .edulite-ios-corners select:focus,
-          .edulite-ios-corners textarea:focus,
-          .edulite-ios-corners article:hover {
-            transform: none;
-          }
-        }
-
-        @media (prefers-contrast: more) {
-          .edulite-ios-corners section,
-          .edulite-ios-corners article,
-          .edulite-ios-corners input,
-          .edulite-ios-corners select,
-          .edulite-ios-corners textarea {
-            border-color: #ffffff !important;
-          }
-        }
-
-        .liquid-glass-sidebar {
-          background: rgba(255, 255, 255, 0.3);
-          -webkit-backdrop-filter: blur(90px);
-          backdrop-filter: blur(20px);
-        }
-
-        @supports (corner-shape: squircle) {
-          .edulite-ios-corners [class*="rounded-["]:not(.rounded-full),
-          .edulite-ios-corners .rounded-lg {
-            corner-shape: squircle;
-          }
-        }
-
-        .bento-select option {
-          background: #ffffff;
-          color: #1C1C1E;
-        }
-
-        .edulite-dark {
-          color-scheme: dark;
-        }
-
-        .edulite-dark [class~="bg-white"] {
-          background-color: #171a17 !important;
-        }
-
-        .edulite-dark [class~="bg-[#F2F2F7]"] {
-          background-color: #0f120f !important;
-        }
-
-        .edulite-dark [class~="bg-[#E5E5EA]"],
-        .edulite-dark [class~="bg-[#E5E5EA]"],
-        .edulite-dark [class~="bg-[#D1D1D6]"] {
-          background-color: #232723 !important;
-        }
-
-        .edulite-dark [class~="bg-white/65"],
-        .edulite-dark [class~="bg-white/70"],
-        .edulite-dark [class~="bg-white/75"],
-        .edulite-dark [class~="bg-white/80"],
-        .edulite-dark [class~="bg-white/85"] {
-          background-color: rgba(30, 34, 30, 0.82) !important;
-        }
-
-        .edulite-dark [class~="text-[#1C1C1E]"],
-        .edulite-dark [class~="text-[#3A3A3C]"],
-        .edulite-dark [class~="text-[#1d1d1f]"] {
-          color: #f5f7f2 !important;
-        }
-
-        .edulite-dark [class~="text-[#636366]"],
-        .edulite-dark [class~="text-[#8E8E93]"] {
-          color: #aeb5ac !important;
-        }
-
-        .edulite-dark [class~="text-[#0051D5]"] {
-          color: #8ab4f8 !important;
-        }
-
-        .edulite-dark [class~="text-[#248A3D]"] {
-          color: #81c995 !important;
-        }
-
-        .edulite-dark [class~="text-[#D70015]"] {
-          color: #ff8a80 !important;
-        }
-
-        .edulite-dark [class~="text-[#8A5A00]"] {
-          color: #fdd663 !important;
-        }
-
-        .edulite-dark [class~="border-[#D1D1D6]"],
-        .edulite-dark [class~="border-[#E5E5EA]"] {
-          border-color: #343a34 !important;
-        }
-
-        .edulite-dark [class~="border-[#1A2CA3]"],
-        .edulite-dark [class~="border-[#007AFF]"],
-        .edulite-dark [class~="border-[#34C759]"],
-        .edulite-dark [class~="border-[#FF3B30]"],
-        .edulite-dark [class~="border-[#FFCC00]"] {
-          border-color: transparent !important;
-        }
-
-        .edulite-dark input,
-        .edulite-dark select,
-        .edulite-dark textarea {
-          caret-color: #f5f7f2;
-        }
-
-        .edulite-dark .dashboard-bento,
-        .edulite-dark .dashboard-bento [class~="text-[#1C1C1E]"] {
-          color: #f5f7f2 !important;
-        }
-
-        .edulite-dark .dashboard-bento [class~="text-[#636366]/75"],
-        .edulite-dark .dashboard-bento [class~="text-[#636366]/70"] {
-          color: rgba(245, 247, 242, 0.72) !important;
         }
       `}</style>
 
       <aside
         aria-label="EduLITE navigation"
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col overflow-visible bg-white/70 backdrop-blur-[50px] transition-[width] duration-300 ${
-          sidebarCollapsed ? "w-14" : "w-52"
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#E3E9EE] bg-white transition-[width] duration-200 ${
+          sidebarCollapsed ? "w-[68px]" : "w-[220px]"
         }`}
       >
-        <div
-          className={`relative flex h-16 items-center ${
-            sidebarCollapsed ? "justify-center px-1.5" : "px-3"
-          }`}
-        >
+        <div className="flex h-[76px] items-center border-b border-[#EEF2F5] px-3">
           <button
             type="button"
             onClick={() => setSidebarCollapsed((current) => !current)}
-            aria-controls="edulite-main-navigation"
-            aria-expanded={!sidebarCollapsed}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`flex min-w-0 items-center ${
-              sidebarCollapsed ? "justify-center" : "gap-2.5"
+            className={`flex w-full items-center rounded-[14px] px-2 py-2 text-left hover:bg-[#F4F7FA] ${
+              sidebarCollapsed ? "justify-center" : "gap-3"
             }`}
+            aria-label={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden">
-              <h1 className="font-black text-[#0068DA] text-[30px]">EL</h1>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#36A9E1] text-lg font-black text-white">
+              EL
             </div>
 
             {!sidebarCollapsed && (
               <div className="min-w-0">
-                <p className="truncate text-[15px] font-bold tracking-tight text-[#1C1C1E]">
+                <p className="truncate text-[16px] font-bold text-[#25313C]">
                   EduLITE
+                </p>
+                <p className="truncate text-[11px] text-[#8A98A5]">
+                  Teacher Suite
                 </p>
               </div>
             )}
           </button>
         </div>
 
-        <nav
-          id="edulite-main-navigation"
-          aria-label="Main navigation"
-          className={`flex-1 overflow-x-hidden overflow-y-auto py-3 ${
-            sidebarCollapsed ? "px-1.5" : "px-2.5"
-          }`}
-        >
-          <div className={`${sidebarCollapsed ? "" : "mt-2"} space-y-1`}>
+        <nav className="minimal-scrollbar flex-1 overflow-y-auto px-2 py-4">
+          <div className="space-y-1.5">
             <SidebarButton
               active={activeView === "dashboard"}
               label="Dashboard"
               icon="dashboard"
-              tone="yellow"
               collapsed={sidebarCollapsed}
               onClick={() => openView("dashboard")}
             />
-
             <SidebarButton
               active={activeView === "sections"}
               label="Sections"
               icon="category"
-              tone="red"
               collapsed={sidebarCollapsed}
               onClick={() => openView("sections")}
             />
-
             <SidebarButton
               active={activeView === "subjects"}
               label="Subjects"
               icon="menu_book"
-              tone="yellow"
               collapsed={sidebarCollapsed}
               onClick={() => openView("subjects")}
             />
-
             <SidebarButton
               active={activeView === "students" || activeView === "studentForm"}
               label="Students"
               icon="groups"
-              tone="blue"
               collapsed={sidebarCollapsed}
               onClick={() => openView("students")}
             />
-
             <SidebarButton
-              active={
-                activeView === "assessments" || activeView === "assessmentForm"
-              }
+              active={activeView === "assessments" || activeView === "assessmentForm"}
               label="Assessments"
               icon="assignment"
-              tone="green"
               collapsed={sidebarCollapsed}
               onClick={() => openView("assessments")}
             />
-
             <SidebarButton
               active={activeView === "records"}
               label="Records"
               icon="table_view"
-              tone="red"
               collapsed={sidebarCollapsed}
               onClick={() => openView("records")}
             />
-
             <SidebarButton
               active={activeView === "aiInsights"}
               label="AI Insights"
               icon="auto_awesome"
-              tone="blue"
               collapsed={sidebarCollapsed}
               onClick={() => openView("aiInsights")}
             />
           </div>
         </nav>
 
-        <div className={`py-3 ${sidebarCollapsed ? "px-1.5" : "px-2.5"}`}>
+        <div className="border-t border-[#EEF2F5] p-2">
           <SidebarButton
             label="Logout"
             icon="logout"
-            tone="red"
             collapsed={sidebarCollapsed}
+            danger
             onClick={handleLogout}
           />
         </div>
       </aside>
 
       <div
-        className={`min-h-screen transition-[padding] duration-300 ${
-          sidebarCollapsed ? "pl-14" : "pl-14 lg:pl-52"
+        className={`min-h-screen transition-[padding] duration-200 ${
+          sidebarCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[220px]"
         }`}
       >
-        <header
-          className={`z-30 px-4 pt-4 sm:px-6 lg:px-8 ${
-            activeView === "dashboard" ? "relative" : "sticky top-0 "
-          }`}
-        >
-          {activeView === "dashboard" ? (
-            //Dashboard Top View
-            <div className="ui-panel-enter border-1 border-white rounded-b-[28px] bg-white/70 backdrop-blur-[20px] px-6 py-7 sm:py-9 mt-[-20px] mb-[-17px]">
-              <h1 className="mt-2 text-xl tracking-tight text-[#36454F] font-bold sm:text-5xl">
-                Dashboard
-              </h1>
-
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#36454F] sm:text-base ">
-                Student performance analytics, learning insights, and subject
-                assessments.
-              </p>
-            </div>
-          ) : (
-            <div className="ui-panel-enter flex min-h-20 items-center justify-between gap-4 rounded-[28px]  backdrop-blur-[10px] bg-white/70 px-5 py-4 sm:px-6">
-              <div className="min-w-0">
-                <h1 className="truncate text-2xl font-bold text-[#36454F]">
-                  {pageDetails.title}
-                </h1>
-
-                <p className="mt-1 text-sm leading-5 text-[#636366]">
-                  {pageDetails.description}
-                </p>
-              </div>
-            </div>
-          )}
+        <header className="px-5 pt-8 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-[1500px]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#36A9E1]">
+              EduLITE
+            </p>
+            <h1 className="mt-2 text-4xl font-extrabold tracking-[-0.04em] text-[#36A9E1] sm:text-5xl">
+              {pageDetails.title}
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#71808D] sm:text-base">
+              {pageDetails.description}
+            </p>
+          </div>
         </header>
 
-        <main
-          className={`w-full p-4 sm:p-6 lg:p-8 ${
-            activeView === "dashboard"
-              ? "min-h-0 overflow-visible"
-              : "space-y-6"
-          }`}
-        >
+        <main className="mx-auto w-full max-w-[1560px] px-5 pb-12 pt-7 sm:px-8 lg:px-10">
           {loading ? (
-            <div
-              role="status"
-              aria-live="polite"
-              className="rounded-[28px] border border-[#D1D1D6] bg-white p-12 text-center text-[#636366]"
-            >
-              Loading EduLITE data...
+            <div className="rounded-[24px] border border-[#E3E9EE] bg-white px-8 py-16 text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-[3px] border-[#DCEAF2] border-t-[#36A9E1]" />
+              <p className="mt-4 text-sm text-[#71808D]">Loading EduLITE...</p>
             </div>
           ) : (
             <>
@@ -1865,10 +1608,7 @@ export default function Dashboard() {
         />
       )}
 
-      <MacNotificationCenter
-        toasts={toasts}
-        onDismiss={dismissToast}
-      />
+      <MacNotificationCenter toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
@@ -1879,63 +1619,47 @@ function MacNotificationCenter({ toasts, onDismiss }) {
   }
 
   return (
-    <div
-      aria-live="polite"
-      aria-relevant="additions removals"
-      className="pointer-events-none fixed right-3 top-3 z-[200] flex w-[min(390px,calc(100vw-24px))] flex-col gap-2.5 sm:right-5 sm:top-5"
-    >
+    <div className="pointer-events-none fixed right-4 top-4 z-[120] flex w-[min(390px,calc(100vw-32px))] flex-col gap-2.5 sm:right-6 sm:top-6">
       {toasts.map((toast) => {
         const isError = toast.type === "error";
-        const isSuccess = toast.type === "success";
 
         return (
           <div
             key={toast.id}
             data-closing={toast.closing ? "true" : "false"}
-            role={isError ? "alert" : "status"}
-            className="mac-notification-card pointer-events-auto overflow-hidden rounded-[18px] border border-white/65 bg-white/82 shadow-[0_18px_55px_rgba(0,0,0,0.20),0_2px_10px_rgba(0,0,0,0.10)]"
+            className="mac-notification-card pointer-events-auto overflow-hidden rounded-[20px] border border-white/70 bg-white/82 shadow-[0_18px_48px_rgba(30,46,58,0.18)]"
           >
-            <div className="flex items-start gap-3 px-3.5 py-3">
+            <div className="flex gap-3 p-4">
               <div
-                aria-hidden="true"
-                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] text-lg font-black text-white shadow-sm ${
-                  isError
-                    ? "bg-gradient-to-b from-[#FF6B63] to-[#FF3B30]"
-                    : isSuccess
-                      ? "bg-gradient-to-b from-[#43D862] to-[#28B748]"
-                      : "bg-gradient-to-b from-[#3AA7FF] to-[#007AFF]"
+                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] text-sm font-bold text-white ${
+                  isError ? "bg-[#FF4D4F]" : "bg-[#36A9E1]"
                 }`}
               >
-                {isError ? "!" : isSuccess ? "✓" : "EL"}
+                {isError ? "!" : "EL"}
               </div>
 
-              <div className="min-w-0 flex-1 pt-0.5">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px] font-semibold leading-4 text-[#1C1C1E]">
+                  <div>
+                    <p className="text-sm font-semibold text-[#25313C]">
                       {toast.title || "EduLITE"}
                     </p>
-
-                    <p className="mt-0.5 text-[12px] font-medium leading-4 text-[#636366]">
-                      {isError
-                        ? "Action could not be completed"
-                        : isSuccess
-                          ? "Update completed"
-                          : "Notification"}
+                    <p className="mt-0.5 text-[11px] text-[#8A98A5]">
+                      {isError ? "Action needs attention" : "Update completed"}
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => onDismiss(toast.id)}
+                    className="flex h-7 w-7 !min-h-0 items-center justify-center rounded-full text-lg leading-none text-[#8A98A5] hover:bg-[#EEF2F5] hover:text-[#25313C]"
                     aria-label="Dismiss notification"
-                    className="-mr-1 -mt-1 flex !min-h-0 h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/5 text-[16px] leading-none text-[#636366] hover:bg-black/10 hover:text-[#1C1C1E]"
                   >
                     ×
                   </button>
                 </div>
 
-                <p className="mt-1.5 break-words text-[13px] leading-[18px] text-[#1C1C1E]">
+                <p className="mt-2 text-sm leading-5 text-[#52616D]">
                   {toast.message}
                 </p>
               </div>
@@ -1980,352 +1704,216 @@ function DashboardView({
   handleRegisterStudent,
   handleAddAssessment,
 }) {
-  const nextStep =
-    sections.length === 0
-      ? {
-          title: "Create your first section",
-          description:
-            "Sections are required before students can be registered.",
-          action: () => openView("sections"),
-          label: "Open Sections",
-        }
-      : subjects.length === 0
-        ? {
-            title: "Create your first subject",
-            description: "Subjects are required when registering students.",
-            action: () => openView("subjects"),
-            label: "Open Subjects",
-          }
-        : students.length === 0
-          ? {
-              title: "Register your first student",
-              description:
-                "Add learners and assign their section and subjects.",
-              action: handleRegisterStudent,
-              label: "Register Student",
-            }
-          : assessments.length === 0
-            ? {
-                title: "Create your first assessment",
-                description: "Record scores to unlock performance analytics.",
-                action: handleAddAssessment,
-                label: "Create Assessment",
-              }
-            : {
-                title: "Review Student Performance",
-                description:
-                  "Your workspace is ready. Review scores and learning needs.",
-                action: () => openView("records"),
-                label: "Open Records",
-              };
-
   const distribution = [
     {
       label: "Advancing",
       count: excellentStudents.length,
       percentage: getPercentage(excellentStudents.length),
-      color: "bg-[#008000]",
     },
     {
       label: "Benchmarking",
       count: verySatisfactoryStudents.length,
       percentage: getPercentage(verySatisfactoryStudents.length),
-      color: "bg-[#0088FF]",
     },
     {
       label: "Connecting",
       count: satisfactoryStudents.length,
       percentage: getPercentage(satisfactoryStudents.length),
-      color: "bg-[#9A7B0C]",
     },
     {
       label: "Developing / Emerging",
       count: atRiskStudents.length,
       percentage: getPercentage(atRiskStudents.length),
-      color: "bg-[#FF0000]",
     },
   ];
 
   const recentAssessments = [...displayedAssessments]
-    .sort((first, second) =>
-      String(second.date).localeCompare(String(first.date)),
-    )
-    .slice(0, 3);
+    .sort((first, second) => String(second.date).localeCompare(String(first.date)))
+    .slice(0, 5);
 
   return (
-    //Dashboard view
-    <div className="dashboard-bento grid auto-rows-auto gap-3 lg:grid-flow-dense lg:grid-cols-12">
-      <section className="rounded-[22px] bg-white/70 p-4 text-[#36454F] backdrop-blur-[20px] lg:col-span-9">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="mt-1 text-[20px] text-[#36454F] font-bold">
-              {nextStep.title}
-            </h2>
-            <p className="mt-1 text-sm  text-[#36454F]">
-              {nextStep.description}
-            </p>
-          </div>
+    <div className="space-y-6">
+      <DashboardFilters
+        students={students}
+        sections={sections}
+        subjects={subjects}
+        assessments={assessments}
+        selectedSection={selectedSection}
+        selectedSubject={selectedSubject}
+        selectedTerm={selectedTerm}
+        setSelectedSection={setSelectedSection}
+        setSelectedSubject={setSelectedSubject}
+        setSelectedTerm={setSelectedTerm}
+      />
 
-          <button
-            type="button"
-            onClick={nextStep.action}
-            className="shrink-0 rounded-[10px] bg-[#0091FF] px-3 py-1 text-xs text-white hover:bg-[#0066D6]"
-          >
-            {nextStep.label}
-          </button>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 gap-2 rounded-[22px] bg-white/70 p-3 text-[#FFFFFF] backdrop-blur-[20px] sm:grid-cols-3 lg:col-span-3">
-        <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#36454F]">
-            Sort By Section
-          </span>
-          <select
-            value={selectedSection}
-            onChange={(event) => setSelectedSection(event.target.value)}
-            className="bento-select  truncate rounded-[12px] bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
-          >
-            <option value="ALL">All Sections</option>
-            {sections.map((section) => (
-              <option key={section.id} value={section.name}>
-                {section.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#36454F]">
-            Sort by Subject
-          </span>
-          <select
-            value={selectedSubject}
-            onChange={(event) => setSelectedSubject(event.target.value)}
-            className="bento-select  truncate rounded-[12px] border-0 bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
-          >
-            <option value="ALL">All Subjects</option>
-            {subjects.map((subject) => (
-              <option key={subject.id} value={String(subject.id)}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="min-w-0">
-          <span className="mb-1 block text-[20px] text-[#36454F]">
-            Grading Term
-          </span>
-          <select
-            value={selectedTerm}
-            onChange={(event) => setSelectedTerm(event.target.value)}
-            className="bento-select truncate rounded-[12px] border-0 bg-[#0091FF] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/25"
-          >
-            <option value="1">Term 1</option>
-            <option value="2">Term 2</option>
-            <option value="3">Term 3</option>
-          </select>
-        </label>
-      </section>
-
-      <section className="p-3 rounded-[22px] bg-white/70 backdrop-blur-[20px] grid grid-cols-2 place-items-stretch gap-3 lg:col-span-3">
-        <BentoMetric
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MinimalMetric
           label="Class Average"
           value={classAverage.toFixed(1)}
           detail={`${currentSectionLabel} · ${currentSubjectLabel} · Term ${selectedTerm}`}
-          tone="yellow"
         />
-        <BentoMetric
-          label="Class Passing Rate"
+        <MinimalMetric
+          label="Passing Rate"
           value={`${passingRate.toFixed(1)}%`}
-          detail={`${passingStudents.length} passing`}
-          tone="green"
+          detail={`${passingStudents.length} of ${assessedStudents.length} assessed learners`}
         />
-        <BentoMetric
+        <MinimalMetric
           label="Students Assessed"
           value={assessedStudents.length}
-          detail={`${displayedStudents.length} matching students`}
-          tone="blue"
+          detail={`${displayedStudents.length} students match the filters`}
         />
-        <BentoMetric
-          label="Students At Risk"
+        <MinimalMetric
+          label="Needs Support"
           value={atRiskStudents.length}
           detail={`Below 75 in Term ${selectedTerm}`}
-          tone="red"
+          attention={atRiskStudents.length > 0}
         />
       </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-6">
-        <div className="flex items-center justify-between gap-2">
-          <div className="px-5 py-3 rounded-[12px]">
-            <p className="text-[20px] font-semibold text-text-[#36454F]/50">
-              Your Student's Performance
-            </p>
-            <span className="text-l text-text-[#36454F]/50">
-              {assessedStudents.length} Assessed
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_.85fr]">
+        <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+                Performance
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-[#25313C]">
+                Student Distribution
+              </h2>
+            </div>
+            <span className="text-sm text-[#8A98A5]">
+              {assessedStudents.length} assessed
             </span>
           </div>
-        </div>
-        <div className="mt-3 flex flex-col grid flex-1 grid-cols-2 gap-2 justify-around gap-2 ">
-          {distribution.map((item) => (
-            <div
-              key={item.label}
-              className="bg-white/20 px-3 py-2 rounded-[10px]"
-            >
-              <div className="mb-1 flex items-center justify-between text-[11px] ">
-                <span className="font-medium text-[#36454F]/75">
-                  {item.label}
-                </span>
-                <span className="text-text-[#36454F]/75">
-                  {item.count} · {item.percentage.toFixed(0)}%
-                </span>
+
+          <div className="mt-6 space-y-5">
+            {distribution.map((item) => (
+              <div key={item.label}>
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium text-[#52616D]">{item.label}</span>
+                  <span className="text-[#8A98A5]">
+                    {item.count} · {item.percentage.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#EDF2F5]">
+                  <div
+                    className="h-full rounded-full bg-[#36A9E1]"
+                    style={{ width: `${item.percentage}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-black/10">
-                <div
-                  role="progressbar"
-                  aria-label={`${item.label}: ${item.percentage.toFixed(0)} percent`}
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  aria-valuenow={Math.round(item.percentage)}
-                  className={`h-full rounded-full ${item.color}`}
-                  style={{ width: `${item.percentage}%` }}
-                />
-              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+                Priorities
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-[#25313C]">
+                Learning Support
+              </h2>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-white backdrop-blur-[20px] lg:col-span-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[20px] font-semibold text-[#36454F]">Setup</p>
-            <h3 className="text-bold text-[#36454F]">Workspace</h3>
+            <button
+              type="button"
+              onClick={() => openView("aiInsights")}
+              className="text-sm font-semibold text-[#168CC8] hover:text-[#0F77AA]"
+            >
+              View all
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => openView("records")}
-            className="bg-[#0091FF] px-4 py-2 rounded-[10px] text-xs  text-white"
-          >
-            Records
-          </button>
-        </div>
 
-        <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
-          <WorkflowStep
-            label="Sections"
-            value={sections.length}
-            onClick={() => openView("sections")}
-            compact
-          />
-          <WorkflowStep
-            label="Subjects"
-            value={subjects.length}
-            onClick={() => openView("subjects")}
-            compact
-          />
-          <WorkflowStep
-            label="Students"
-            value={students.length}
-            onClick={() => openView("students")}
-            compact
-          />
-          <WorkflowStep
-            label="Assessments"
-            value={assessments.length}
-            onClick={() => openView("assessments")}
-            compact
-          />
-        </div>
-      </section>
+          <div className="mt-6 space-y-3">
+            <PriorityStudent
+              label="Needs intervention"
+              student={atRiskStudents[0]}
+              term={selectedTerm}
+              supportType="intervention"
+              onGenerate={generateStudentRecommendation}
+              generatingKey={generatingRecommendationKey}
+            />
+            <PriorityStudent
+              label="Ready for enrichment"
+              student={highPotentialStudents[0]}
+              term={selectedTerm}
+              supportType="enrichment"
+              onGenerate={generateStudentRecommendation}
+              generatingKey={generatingRecommendationKey}
+            />
+          </div>
+        </section>
+      </div>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-7">
-        <div className="flex items-center justify-between gap-3">
+      <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[20px] font-semibold text-[#36454F]">
-              Learning support
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+              Recent Activity
             </p>
-            <h3 className="text-base text-[#36454F]/75">Priority Insights</h3>
+            <h2 className="mt-2 text-2xl font-bold text-[#25313C]">
+              Assessments
+            </h2>
           </div>
-          <button
-            type="button"
-            onClick={() => openView("aiInsights")}
-            className="rounded-[10px] bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white"
-          >
-            Open AI Insights
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => openView("assessments")}
+              className="rounded-[12px] border border-[#D8E1E7] bg-white px-4 py-2.5 text-sm font-semibold text-[#52616D] hover:border-[#36A9E1] hover:text-[#168CC8]"
+            >
+              View library
+            </button>
+            <button
+              type="button"
+              onClick={handleAddAssessment}
+              className="rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8]"
+            >
+              New assessment
+            </button>
+          </div>
         </div>
-        <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
-          <BentoInsight
-            title="Needs Intervention"
-            student={atRiskStudents[0]}
-            type="risk"
-            selectedTerm={selectedTerm}
-            onGenerate={generateStudentRecommendation}
-            generatingKey={generatingRecommendationKey}
-          />
-          <BentoInsight
-            title="Ready for Enrichment"
-            student={highPotentialStudents[0]}
-            type="potential"
-            selectedTerm={selectedTerm}
-            onGenerate={generateStudentRecommendation}
-            generatingKey={generatingRecommendationKey}
-          />
-        </div>
-      </section>
 
-      <section className="flex min-h-0 flex-col rounded-[22px] bg-white/70 p-4 text-[#1C1C1E] backdrop-blur-[20px] lg:col-span-5">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[20px] font-semibold  text-[#36454F]">
-              Latest Activity
-            </p>
-            <h3 className="text-base text-[#36454F]/75">Assessments</h3>
-          </div>
-          <button
-            type="button"
-            onClick={handleAddAssessment}
-            className="text-xs bg-[#0091FF] px-4 rounded-[12px] font-semibold text-white"
-          >
-            Create
-          </button>
-        </div>
-        <div className="mt-2 min-h-0 flex-1 space-y-1.5">
+        <div className="mt-5 divide-y divide-[#EEF2F5]">
           {recentAssessments.map((assessment) => (
             <div
               key={assessment.id}
-              className="flex items-center gap-2 rounded-[13px] bg-white/20 px-3 py-2"
+              className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-l font-semibold text-[#36454F]">
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-[#25313C]">
                   {assessment.name}
                 </p>
-                <p className="truncate text-[10px] text-[#36454F]/75">
-                  {assessment.subject_name} · {assessment.date}
+                <p className="mt-1 text-sm text-[#8A98A5]">
+                  {assessment.subject_name} · {assessment.slot_label ?? assessment.category_label ?? assessment.type} · {assessment.date}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditAssessment(assessment.id)}
-                className="text-[11px] font-semibold text-[#0091FF]"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteAssessment(assessment.id)}
-                className="text-[11px] font-semibold text-[#FF4245]"
-              >
-                Delete
-              </button>
+              <div className="flex shrink-0 gap-3 text-sm font-semibold">
+                <button
+                  type="button"
+                  onClick={() => onEditAssessment(assessment.id)}
+                  className="text-[#168CC8] hover:text-[#0F77AA]"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAssessment(assessment.id)}
+                  className="text-[#D94141] hover:text-[#B82E2E]"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
+
           {recentAssessments.length === 0 && (
-            <div className="flex h-full items-center justify-center rounded-[14px] bg-white/10 text-center text-xs text-white/70">
-              No assessments yet.
-            </div>
+            <EmptyState
+              title="No assessments yet"
+              description="Create an assessment to begin recording student performance."
+              actionLabel="Create assessment"
+              onAction={handleAddAssessment}
+            />
           )}
         </div>
       </section>
@@ -2333,105 +1921,59 @@ function DashboardView({
   );
 }
 
-function WorkflowStep({ label, value, onClick, compact = false }) {
+function MinimalMetric({ label, value, detail, attention = false }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-[14px] bg-white/30 text-left text-white transition hover:bg-[#E5E5EA]/50 ${
-        compact ? "p-2.5" : "p-4"
-      }`}
-    >
-      <span
-        className={`block font-medium text-[#36454F] ${compact ? "text-[11px]" : "mt-1 text-sm"}`}
-      >
+    <div className="rounded-[22px] border border-[#E3E9EE] bg-white p-5 sm:p-6">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8A98A5]">
         {label}
-      </span>
-      <span
-        className={`block shrink-0 font-bold text-[#36454F] ${compact ? "text-[50px]" : "text-2xl"}`}
+      </p>
+      <p
+        className={`mt-4 text-4xl font-extrabold tracking-[-0.04em] ${
+          attention ? "text-[#D94141]" : "text-[#36A9E1]"
+        }`}
       >
         {value}
-      </span>
-    </button>
-  );
-}
-
-function BentoMetric({ label, value, detail, tone = "blue" }) {
-  const tones = {
-    blue: "text-[#0088FF] bg-white/10 backdrop-blur-[5px]",
-    red: " text-[#FF0000] bg-white/10 backdrop-blur-[5px]",
-    green: " text-[#008000] bg-white/10 backdrop-blur-[5px]",
-    yellow: " text-[#9A7B0C] bg-white/10 backdrop-blur-[5px]",
-  };
-
-  return (
-    <div
-      className={`relative flex min-h-[108px] w-full flex-col justify-between overflow-hidden rounded-[18px] p-4 ${
-        tones[tone] ?? tones.blue
-      }`}
-    >
-      <p className="my-1 text-5xl font-bold tracking-tight">{value}</p>
-      <p className="text-[11px] font-semibold text-[#36454F]/75">{label}</p>
-      <p className="text-xs leading-4 text-[#36454F]/50">{detail}</p>
+      </p>
+      <p className="mt-2 text-sm leading-5 text-[#71808D]">{detail}</p>
     </div>
   );
 }
 
-function BentoInsight({
-  title,
+function PriorityStudent({
+  label,
   student,
-  type,
-  selectedTerm,
+  term,
+  supportType,
   onGenerate,
   generatingKey,
 }) {
-  const isRisk = type === "risk";
-  const supportType = isRisk ? "intervention" : "enrichment";
   const requestKey = student ? `${supportType}-${student.id}` : "";
   const isGenerating = generatingKey === requestKey;
 
   return (
-    <div
-      className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-white shadow-sm ${
-        isRisk ? "bg-white/20" : "bg-white/20"
-      }`}
-    >
-      <div className="min-w-0">
-        <p className="text-[15px] font-semibold tracking-wide text-[#36454F] mb-[15px]">
-          {title}
-        </p>
-        {student ? (
-          <>
-            <div className="px-2 py-1 rounded-[12px] bg-white/15">
-              <p className="mt-1 truncate text-sm text-[#36454F]">
-                {student.name}
-              </p>
-              <p className="text-[10px] text-[#36454F]/70">
-                {student.section} · Term {selectedTerm}: {student.averagePercentage.toFixed(1)}
-              </p>
-            </div>
-          </>
-        ) : (
-          <p className="mt-2 text-xs text-white/70">No student identified.</p>
-        )}
-      </div>
-      {student && (
-        <button
-          type="button"
-          onClick={() => onGenerate(student, supportType)}
-          disabled={Boolean(generatingKey)}
-          className={`mt-2 rounded-full px-3 py-1.5 text-[10px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
-            isRisk
-              ? "bg-[#FF3B30] hover:bg-[#D70015]"
-              : "bg-[#34C759] hover:bg-[#248A3D]"
-          }`}
-        >
-          {isGenerating
-            ? "Generating..."
-            : isRisk
-              ? "Generate Intervention"
-              : "Generate Enrichment"}
-        </button>
+    <div className="rounded-[18px] border border-[#E7EDF1] bg-[#F8FAFB] p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8A98A5]">
+        {label}
+      </p>
+      {student ? (
+        <div className="mt-2 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-[#25313C]">{student.name}</p>
+            <p className="mt-1 text-sm text-[#71808D]">
+              Term {term}: {student.averagePercentage.toFixed(1)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onGenerate(student, supportType)}
+            disabled={Boolean(generatingKey)}
+            className="shrink-0 rounded-[11px] bg-[#36A9E1] px-3 py-2 text-xs font-semibold text-white hover:bg-[#168CC8] disabled:opacity-50"
+          >
+            {isGenerating ? "Generating..." : "Generate"}
+          </button>
+        </div>
+      ) : (
+        <p className="mt-2 text-sm text-[#8A98A5]">No student identified.</p>
       )}
     </div>
   );
@@ -2468,213 +2010,137 @@ function StudentsView({
   }, [students, search, sectionFilter]);
 
   return (
-    <>
-      <section className="rounded-[28px]  bg-white/70 backdrop-blur-[20px] p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-6">
+      <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
-              {students.length} registered student
-              {students.length === 1 ? "" : "s"}
-            </h2>
-            <p className="mt-1 text-sm text-[#636366]">
-              Search, register, edit, and open student assessment records.
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+              Student Directory
             </p>
+            <h2 className="mt-2 text-2xl font-bold text-[#25313C]">
+              {students.length} registered student{students.length === 1 ? "" : "s"}
+            </h2>
           </div>
 
           <button
             type="button"
             onClick={onAddStudent}
-            className="rounded-[12px] bg-[#0088FF] px-5 py-3 font-semibold text-white hover:bg-[#0066D6]"
+            className="rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8]"
           >
-            Register Student
+            Register student
           </button>
         </div>
 
-        <div className="mt-6 bg-white/30 p-3 rounded-[14px] grid gap-4 md:grid-cols-[1fr_240px]">
-          <label>
-            <span className="mb-2 block text-xs font-semibold text-[#636366]/75">
-              Search students
-            </span>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Name, grade, section, or subject"
-              className="w-full rounded-[9px] bg-white/50 px-4 py-3 focus:border-[#007AFF] focus:outline-none focus:ring-4 focus:ring-[#007AFF]/15"
-            />
-          </label>
-
-          <label>
-            <span className="mb- block text-xs font-semibold text-[#636366]">
-              Sort by Section
-            </span>
-            <select
-              value={sectionFilter}
-              onChange={(event) => setSectionFilter(event.target.value)}
-              className="h-[30px] mt-[10px] rounded-[12px] border border-[#D1D1D6] bg-[#0088FF] text-white px-4 py-3 focus:border-[#007AFF] focus:outline-none"
-            >
-              <option value="ALL">All Sections</option>
-              {sections.map((section) => (
-                <option key={section.id} value={section.name}>
-                  {section.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="mt-6 grid gap-3 md:grid-cols-[1fr_240px]">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name, grade, section, or subject"
+            className="rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
+          />
+          <select
+            value={sectionFilter}
+            onChange={(event) => setSectionFilter(event.target.value)}
+            className="rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
+          >
+            <option value="ALL">All Sections</option>
+            {sections.map((section) => (
+              <option key={section.id} value={section.name}>
+                {section.name}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[28px] bg-white/70 ">
-      <div className="backdrop-blur-[20px]">
-  <div className="relative flex w-full items-start overflow-x-auto p-2">
-    {/* Sticky student names */}
-    <div
-      className="
-        sticky left-2 z-20
-        w-[clamp(180px,30vw,300px)]
-        shrink-0
-        rounded-[20px]
-        bg-white/50
-        p-2
-        backdrop-blur-[20px]
-      "
-    >
-      <div className="overflow-hidden">
-        <table className="w-full table-fixed">
-          <thead>
-            <tr className="h-10">
-              <TableHeadingA>Student</TableHeadingA>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-[#E5E5EA]/20">
-            {filteredStudents.map((student) => (
-              <tr
-                key={student.id}
-                className="h-10 hover:bg-[#F2F2F7]/20"
-              >
-                <td className="h-10 truncate whitespace-nowrap px-2 text-sm text-[#1C1C1E]">
-                  {student.name}
-                </td>
+      <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
+        <div className="minimal-scrollbar overflow-x-auto">
+          <table className="w-full min-w-[880px]">
+            <thead className="bg-[#F8FAFB]">
+              <tr className="border-b border-[#E3E9EE]">
+                <TableHeading>Student</TableHeading>
+                <TableHeading align="center">Grade</TableHeading>
+                <TableHeading align="center">Section</TableHeading>
+                <TableHeading>Subjects</TableHeading>
+                <TableHeading align="right">Actions</TableHeading>
               </tr>
-            ))}
-
-            {filteredStudents.length === 0 && (
-              <tr className="h-10">
-                <td className="h-10 px-3 text-center text-xs text-[#636366]">
-                  {students.length === 0
-                    ? "No students registered yet."
-                    : "No students match the current filters."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* Scrolling student details */}
-    <div className="min-w-max flex-1 shrink-0 overflow-hidden">
-      <div className="rounded-[20px] p-2">
-        <table className="w-max min-w-full table-auto border-separate border-spacing-0">
-          <thead>
-            <tr className="h-10">
-              <TableHeading>Grade</TableHeading>
-              <TableHeading>Section</TableHeading>
-              <TableHeading>Subjects</TableHeading>
-              <TableHeading align="right">Actions</TableHeading>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-[#E5E5EA]/50">
-            {filteredStudents.map((student) => (
-              <tr
-                key={student.id}
-                className="h-10"
-              >
-                <td className="h-10 whitespace-nowrap px-4 text-center text-sm text-[#636366]">
-                  {student.grade}
-                </td>
-
-                <td className="h-10 whitespace-nowrap px-4 text-center text-sm text-[#636366]">
-                  {student.section}
-                </td>
-
-                <td className="h-10 whitespace-nowrap px-3">
-                  <div className="flex w-max flex-nowrap items-center gap-1.5">
-                    {student.subjects?.map((subject) => (
-                      <span
-                        key={subject.id}
-                        className="shrink-0 rounded-full border border-[#007AFF] px-2 py-0.5 text-xs text-[#0051D5]"
+            </thead>
+            <tbody className="divide-y divide-[#EEF2F5]">
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="hover:bg-[#FBFCFD]">
+                  <td className="px-5 py-4 font-semibold text-[#25313C]">
+                    {student.name}
+                  </td>
+                  <td className="px-5 py-4 text-center text-sm text-[#71808D]">
+                    {student.grade}
+                  </td>
+                  <td className="px-5 py-4 text-center text-sm text-[#71808D]">
+                    {student.section}
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap gap-1.5">
+                      {student.subjects?.map((subject) => (
+                        <span
+                          key={subject.id}
+                          className="rounded-full bg-[#EAF6FC] px-2.5 py-1 text-xs font-medium text-[#168CC8]"
+                        >
+                          {subject.name}
+                        </span>
+                      ))}
+                      {!student.subjects?.length && (
+                        <span className="text-sm text-[#A0ABB4]">No subjects</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-3 text-sm font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => onOpenRecords(student)}
+                        className="text-[#168CC8] hover:text-[#0F77AA]"
                       >
-                        {subject.name}
-                      </span>
-                    ))}
+                        Records
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onEditStudent(student.id)}
+                        className="text-[#52616D] hover:text-[#25313C]"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteStudent(student.id)}
+                        className="text-[#D94141] hover:text-[#B82E2E]"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
 
-                    {!student.subjects?.length && (
-                      <span className="whitespace-nowrap text-xs text-[#8E8E93]">
-                        No subjects assigned
-                      </span>
-                    )}
-                  </div>
-                </td>
-
-                <td className="h-10 whitespace-nowrap px-3 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => onOpenRecords(student)}
-                      className="h-8 !min-h-0 rounded-[12px] px-3 py-0 text-xs text-[#248A3D] hover:bg-[#34C759] hover:text-white"
-                    >
-                      Records
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onEditStudent(student.id)}
-                      className="h-8 !min-h-0 rounded-[12px] px-3 py-0 text-xs text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onDeleteStudent(student.id)}
-                      className="h-8 !min-h-0 rounded-[12px] px-3 py-0 text-xs text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-
-            {filteredStudents.length === 0 && (
-              <tr className="h-10">
-                <td
-                  colSpan="4"
-                  className="h-10 px-3 text-center text-xs text-[#636366]"
-                >
-                  {students.length === 0
-                    ? "No students registered yet."
-                    : "No students match the current filters."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  </div>
-</section>
+              {filteredStudents.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-16 text-center text-sm text-[#8A98A5]">
+                    {students.length === 0
+                      ? "No students registered yet."
+                      : "No students match the current filters."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {subjects.length === 0 && students.length > 0 && (
-        <p className="rounded-[18px] border border-[#FFCC00] bg-white p-4 text-sm text-[#8A5A00]">
+        <p className="rounded-[16px] border border-[#F1D58B] bg-[#FFF9E8] p-4 text-sm text-[#8A6A12]">
           Create at least one subject to complete student enrollment.
         </p>
       )}
-    </>
+    </div>
   );
 }
 
@@ -2696,32 +2162,28 @@ function AssessmentsView({
   onDeleteAssessment,
 }) {
   return (
-    <>
-    
-      <section className="rounded-[28px] bg-white/70 backdrop-blur-[20px] p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="mt-1 text-2xl font-bold text-[#636366]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
               Assessment Library
-            </h2>
-            <p className="mt-1 text-sm text-[#636366]/75">
-              Create an assessment, enter scores, then review results in
-              Records.
             </p>
+            <h2 className="mt-2 text-2xl font-bold text-[#25313C]">
+              {displayedAssessments.length} assessment{displayedAssessments.length === 1 ? "" : "s"}
+            </h2>
           </div>
           <button
             type="button"
             onClick={onAddAssessment}
-            className="rounded-[12px] bg-[#0088FF] px-5 py-3 text-white hover:bg-[#0091FF]"
+            className="rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8]"
           >
-            + Create Assessment
+            Create assessment
           </button>
         </div>
       </section>
 
       <DashboardFilters
-        title="Assessment Filters"
-        description="Filter the assessment library by subject."
         students={students}
         sections={sections}
         subjects={subjects}
@@ -2740,7 +2202,7 @@ function AssessmentsView({
         onEditAssessment={onEditAssessment}
         handleDeleteAssessment={onDeleteAssessment}
       />
-    </>
+    </div>
   );
 }
 
@@ -2764,10 +2226,8 @@ function AiInsightsView({
   generatingRecommendationKey,
 }) {
   return (
-    <>
+    <div className="space-y-6">
       <DashboardFilters
-        title="Insight Filters"
-        description="Select the evidence set used for learning-support recommendations."
         students={students}
         sections={sections}
         subjects={subjects}
@@ -2780,33 +2240,37 @@ function AiInsightsView({
         setSelectedTerm={setSelectedTerm}
       />
 
-      <section className="rounded-[28px] bg-white/70 backdrop-blur-[20px] p-6">
-        <h2 className="mt-1 text-2xl font-bold text-[#1C1C1E]">
+      <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+          Current Evidence Set
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-[#25313C]">
           {currentSubjectLabel} · {currentSectionLabel} · {currentTermLabel}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-[#636366]">
-          Recommendations use the selected subject and the official transmuted
-          Term Grade. Incomplete ECR terms are not treated as official grades.
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-[#71808D]">
+          Generate teacher-reviewed interventions for learners below 75 and enrichment recommendations for learners at 90 or above.
         </p>
       </section>
 
-      <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <InsightList
-          title="Students Needing Intervention"
+          title="Needs Intervention"
+          description="Students currently below the expected range."
           students={atRiskStudents}
           type="risk"
           onGenerateRecommendation={generateStudentRecommendation}
           generatingRecommendationKey={generatingRecommendationKey}
         />
         <InsightList
-          title="Students Ready for Enrichment"
+          title="Ready for Enrichment"
+          description="Students currently performing at 90 or above."
           students={highPotentialStudents}
           type="potential"
           onGenerateRecommendation={generateStudentRecommendation}
           generatingRecommendationKey={generatingRecommendationKey}
         />
-      </section>
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -2849,6 +2313,7 @@ function RecordsView({
   reloadStudentInsights,
 }) {
   const [studentSearch, setStudentSearch] = useState("");
+  const [detailTab, setDetailTab] = useState("current");
 
   const filteredStudents = useMemo(() => {
     const query = studentSearch.trim().toLowerCase();
@@ -2904,9 +2369,7 @@ function RecordsView({
           );
 
           return {
-            id:
-              record?.id ??
-              `missing-${selectedStudent.id}-${assessment.id}`,
+            id: record?.id ?? `missing-${selectedStudent.id}-${assessment.id}`,
             student_id: selectedStudent.id,
             assessment_id: assessment.id,
             assessment_name: assessment.name,
@@ -2926,28 +2389,13 @@ function RecordsView({
         })
         .sort((first, second) => {
           const termComparison = Number(first.term ?? 99) - Number(second.term ?? 99);
-
-          if (termComparison !== 0) {
-            return termComparison;
-          }
-
-          const dateComparison = String(second.date).localeCompare(
-            String(first.date),
-          );
-
-          return (
-            dateComparison ||
-            String(first.assessment_name).localeCompare(
-              String(second.assessment_name),
-            )
-          );
+          if (termComparison !== 0) return termComparison;
+          return String(second.date).localeCompare(String(first.date));
         })
     : [];
 
   const selectedGradeSummaries = selectedStudent
-    ? gradeSummaries.filter(
-        (summary) => summary.student_id === selectedStudent.id,
-      )
+    ? gradeSummaries.filter((summary) => summary.student_id === selectedStudent.id)
     : [];
 
   const selectedInsights = selectedStudent
@@ -2966,173 +2414,88 @@ function RecordsView({
     ? editingStudentId === selectedStudent.id
     : false;
 
-  const selectedRecordedAssessmentCount = selectedStudentAssessments.filter(
-    (assessment) => {
-      const score = scoreMap[selectedStudent?.id]?.[assessment.id];
-      return score !== undefined && score !== null;
-    },
-  ).length;
-
-  const termMetricLabel =
-    selectedSubject === "ALL" ? `${currentTermLabel} Average` : `${currentTermLabel} Grade`;
-
   const handleSelectStudent = async (student) => {
+    if (expandedStudentId === student.id) return;
     if (editingStudentId && editingStudentId !== student.id) {
       cancelEditingScores();
     }
-
+    setDetailTab("current");
     await toggleStudentProfile(student);
   };
 
   return (
-    <div className="grid min-h-[calc(100vh-150px)] grid-cols-1 gap-4 xl:grid-cols-[285px_minmax(0,1fr)]">
-      {/* =====================================================
-          LEFT — STUDENT LIST
-          ===================================================== */}
-      <aside className="xl:sticky xl:top-[104px] xl:self-start">
-        <section className="overflow-hidden rounded-[24px] border border-white/55 bg-white/70 shadow-[0_18px_50px_rgba(17,74,132,0.12)] backdrop-blur-[24px]">
-          <div className="border-b border-white/50 px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0091FF]">
-                  Student Records
-                </p>
-                <h2 className="mt-1 text-lg font-bold text-[#36454F]">
-                  Students
-                </h2>
-              </div>
+    <div className="grid min-h-[calc(100vh-210px)] grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <aside className="xl:sticky xl:top-6 xl:self-start">
+        <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
+          <div className="border-b border-[#EEF2F5] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+              Learners
+            </p>
+            <h2 className="mt-2 text-xl font-bold text-[#25313C]">Student List</h2>
 
-              <span className="rounded-full bg-[#0091FF] px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-                {studentAnalytics.length}
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-2.5">
-              <label className="block">
-                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]">
-                  Section
-                </span>
-                <select
-                  value={selectedSection}
-                  onChange={(event) => setSelectedSection(event.target.value)}
-                  className="bento-select w-full rounded-[12px] border border-white/70 bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white shadow-sm outline-none focus:ring-4 focus:ring-[#0091FF]/20"
-                >
-                  <option value="ALL">All Sections</option>
-                  {sections.map((section) => (
-                    <option key={section.id} value={section.name}>
-                      {section.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]">
-                  Subject
-                </span>
-                <select
-                  value={selectedSubject}
-                  onChange={(event) => setSelectedSubject(event.target.value)}
-                  className="bento-select w-full rounded-[12px] border border-white/70 bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white shadow-sm outline-none focus:ring-4 focus:ring-[#0091FF]/20"
-                >
-                  <option value="ALL">All Subjects</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={String(subject.id)}>
-                      {subject.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]">
-                  Grading Term
-                </span>
-                <select
-                  value={selectedTerm}
-                  onChange={(event) => setSelectedTerm(event.target.value)}
-                  className="bento-select w-full rounded-[12px] border border-white/70 bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white shadow-sm outline-none focus:ring-4 focus:ring-[#0091FF]/20"
-                >
-                  <option value="1">Term 1</option>
-                  <option value="2">Term 2</option>
-                  <option value="3">Term 3</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="relative mt-3">
+            <div className="mt-5 space-y-2.5">
+              <select
+                value={selectedSection}
+                onChange={(event) => setSelectedSection(event.target.value)}
+                className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
+              >
+                <option value="ALL">All Sections</option>
+                {sections.map((section) => (
+                  <option key={section.id} value={section.name}>{section.name}</option>
+                ))}
+              </select>
+              <select
+                value={selectedSubject}
+                onChange={(event) => setSelectedSubject(event.target.value)}
+                className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
+              >
+                <option value="ALL">All Subjects</option>
+                {subjects.map((subject) => (
+                  <option key={subject.id} value={String(subject.id)}>{subject.name}</option>
+                ))}
+              </select>
+              <select
+                value={selectedTerm}
+                onChange={(event) => setSelectedTerm(event.target.value)}
+                className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
+              >
+                <option value="1">Term 1</option>
+                <option value="2">Term 2</option>
+                <option value="3">Term 3</option>
+              </select>
               <input
                 type="search"
                 value={studentSearch}
                 onChange={(event) => setStudentSearch(event.target.value)}
                 placeholder="Search students"
-                className="w-full rounded-[13px] border border-[#D1D1D6]/80 bg-white/80 px-3 py-2.5 pr-9 text-sm text-[#1C1C1E] placeholder-[#8E8E93] outline-none focus:border-[#0091FF] focus:ring-4 focus:ring-[#0091FF]/15"
+                className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
               />
-              <span className="material-symbols-rounded pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-[#8E8E93]">
-                search
-              </span>
             </div>
           </div>
 
-          <div className="max-h-[calc(100vh-430px)] min-h-[280px] space-y-1.5 overflow-y-auto p-2">
+          <div className="minimal-scrollbar max-h-[calc(100vh-520px)] min-h-[300px] space-y-1 overflow-y-auto p-2.5">
             {filteredStudents.map((student) => {
               const isSelected = selectedStudent?.id === student.id;
-              const status = getPerformanceStatus(student.averagePercentage);
-
               return (
                 <button
                   key={student.id}
                   type="button"
                   onClick={() => handleSelectStudent(student)}
-                  className={`w-full rounded-[15px] border px-3 py-3 text-left transition ${
+                  className={`w-full rounded-[16px] px-3.5 py-3.5 text-left ${
                     isSelected
-                      ? "border-[#0091FF] bg-[#0091FF] text-white shadow-[0_8px_22px_rgba(0,145,255,0.24)]"
-                      : "border-transparent bg-white/35 text-[#36454F] hover:border-white/70 hover:bg-white/75"
+                      ? "bg-[#36A9E1] text-white"
+                      : "text-[#25313C] hover:bg-[#F4F7FA]"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold">
-                        {student.name}
-                      </p>
-                      <p
-                        className={`mt-0.5 truncate text-[11px] ${
-                          isSelected ? "text-white/80" : "text-[#636366]"
-                        }`}
-                      >
+                      <p className="truncate text-sm font-semibold">{student.name}</p>
+                      <p className={`mt-1 text-[11px] ${isSelected ? "text-white/80" : "text-[#8A98A5]"}`}>
                         Grade {student.grade} · {student.section}
                       </p>
                     </div>
-
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${
-                        isSelected
-                          ? "bg-white/20 text-white"
-                          : student.averagePercentage === null
-                            ? "bg-[#E5E5EA] text-[#636366]"
-                            : "bg-[#0091FF]/10 text-[#007AFF]"
-                      }`}
-                    >
-                      {student.averagePercentage === null
-                        ? "—"
-                        : student.averagePercentage.toFixed(1)}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <span
-                      className={`truncate text-[10px] ${
-                        isSelected ? "text-white/75" : "text-[#8E8E93]"
-                      }`}
-                    >
-                      {currentTermLabel}
-                    </span>
-                    <span
-                      className={`truncate text-[10px] font-semibold ${
-                        isSelected ? "text-white" : "text-[#636366]"
-                      }`}
-                    >
-                      {status.label}
+                    <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-[#36A9E1]"}`}>
+                      {student.averagePercentage === null ? "—" : student.averagePercentage.toFixed(0)}
                     </span>
                   </div>
                 </button>
@@ -3140,7 +2503,7 @@ function RecordsView({
             })}
 
             {filteredStudents.length === 0 && (
-              <div className="rounded-[15px] border border-dashed border-[#D1D1D6] bg-white/35 px-4 py-10 text-center text-xs text-[#636366]">
+              <div className="px-4 py-12 text-center text-sm text-[#8A98A5]">
                 No students match the current filters.
               </div>
             )}
@@ -3148,267 +2511,131 @@ function RecordsView({
         </section>
       </aside>
 
-      {/* =====================================================
-          RIGHT — SELECTED STUDENT RECORD
-          ===================================================== */}
-      <section className="min-w-0 overflow-hidden rounded-[28px] border border-white/55 bg-white/70 shadow-[0_18px_50px_rgba(17,74,132,0.12)] backdrop-blur-[24px]">
+      <section className="min-w-0 overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
         {!selectedStudent ? (
-          <div className="flex min-h-[620px] items-center justify-center p-8 text-center">
-            <div className="max-w-sm">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-[#0091FF]/10 text-[#0091FF]">
-                <span className="material-symbols-rounded text-[34px]">
-                  table_view
-                </span>
-              </div>
-              <h2 className="mt-4 text-xl font-bold text-[#36454F]">
-                Select a student
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#636366]">
-                Choose a learner from the student list to open their assessment
-                scores, term grade, performance, complete record, and saved AI
-                insights.
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            title="Select a student"
+            description="Choose a learner from the list to open their assessment record."
+          />
         ) : (
-          <div className="p-4 sm:p-5 lg:p-6">
-            {/* Student header */}
-            <div className="flex flex-col gap-4 border-b border-white/60 pb-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0091FF]">
-                  Selected Student
-                </p>
-                <h2 className="mt-1 truncate text-2xl font-bold tracking-tight text-[#36454F] sm:text-3xl">
-                  {selectedStudent.name}
-                </h2>
-                <p className="mt-1 text-sm text-[#636366]">
-                  Grade {selectedStudent.grade} · {selectedStudent.section} · {currentSubjectLabel} · {currentTermLabel}
-                </p>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {selectedStudent.subjects?.map((subject) => (
-                    <span
-                      key={subject.id}
-                      className="rounded-full border border-[#0091FF]/25 bg-[#0091FF]/10 px-2.5 py-1 text-[11px] font-semibold text-[#007AFF]"
-                    >
-                      {subject.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {selectedIsEditing ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => saveStudentScores(selectedStudent)}
-                      disabled={savingScores}
-                      className="rounded-[12px] bg-[#0091FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {savingScores ? "Saving..." : "Save Scores"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelEditingScores}
-                      disabled={savingScores}
-                      className="rounded-[12px] border border-[#D1D1D6] bg-white/75 px-4 py-2 text-sm font-semibold text-[#36454F] hover:bg-white disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => onEditStudent(selectedStudent.id)}
-                      className="rounded-[12px] border border-[#0091FF]/20 bg-white/75 px-4 py-2 text-sm font-semibold text-[#007AFF] hover:bg-[#0091FF] hover:text-white"
-                    >
-                      Edit Info
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => startEditingScores(selectedStudent)}
-                      disabled={selectedStudentAssessments.length === 0}
-                      className="rounded-[12px] bg-[#0091FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-[#D1D1D6]"
-                    >
-                      Edit Scores
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteStudent(selectedStudent.id)}
-                      className="rounded-[12px] border border-[#FF3B30]/15 bg-white/75 px-4 py-2 text-sm font-semibold text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Dashboard-style summary cards */}
-            <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-              <RecordSummaryMetric
-                label={termMetricLabel}
-                value={
-                  selectedStudent.averagePercentage === null
-                    ? "—"
-                    : selectedStudent.averagePercentage.toFixed(1)
-                }
-                detail={`${currentSubjectLabel} · ${currentTermLabel}`}
-                tone="blue"
-              />
-              <RecordSummaryMetric
-                label="Performance"
-                value={selectedStatus.label}
-                detail="Based on current term grade"
-                tone={
-                  selectedStudent.averagePercentage === null
-                    ? "gray"
-                    : selectedStudent.averagePercentage >= 90
-                      ? "green"
-                      : selectedStudent.averagePercentage >= 75
-                        ? "blue"
-                        : "red"
-                }
-                compact
-              />
-              <RecordSummaryMetric
-                label="Recorded Assessments"
-                value={`${selectedRecordedAssessmentCount}/${selectedStudentAssessments.length}`}
-                detail="Current filters"
-                tone="yellow"
-              />
-              <RecordSummaryMetric
-                label="Enrolled Subjects"
-                value={selectedStudent.subject_names?.length ?? 0}
-                detail="Student enrollment"
-                tone="green"
-              />
-            </div>
-
-            {/* Current term assessment scores */}
-            <div className="mt-5 overflow-hidden rounded-[22px] border border-white/70 bg-white/45">
-              <div className="flex flex-col gap-2 border-b border-[#D1D1D6]/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0091FF]">
-                    Assessment Scores
+          <div>
+            <div className="border-b border-[#EEF2F5] p-6 sm:p-8">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">
+                    Selected Student
                   </p>
-                  <h3 className="mt-1 text-lg font-bold text-[#36454F]">
-                    {currentTermLabel} · {currentSubjectLabel}
-                  </h3>
+                  <h2 className="mt-2 truncate text-4xl font-extrabold tracking-[-0.04em] text-[#36A9E1] sm:text-5xl">
+                    {selectedStudent.name}
+                  </h2>
+                  <p className="mt-2 text-sm text-[#71808D]">
+                    Grade {selectedStudent.grade} · {selectedStudent.section} · {currentSubjectLabel} · {currentTermLabel}
+                  </p>
                 </div>
-                <span className="rounded-full bg-[#0091FF]/10 px-3 py-1.5 text-xs font-semibold text-[#007AFF]">
-                  {selectedStudentAssessments.length} assessment{selectedStudentAssessments.length === 1 ? "" : "s"}
-                </span>
+
+                <div className="flex flex-wrap gap-2">
+                  {selectedIsEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => saveStudentScores(selectedStudent)}
+                        disabled={savingScores}
+                        className="rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8] disabled:opacity-50"
+                      >
+                        {savingScores ? "Saving..." : "Save scores"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditingScores}
+                        disabled={savingScores}
+                        className="rounded-[12px] border border-[#D8E1E7] bg-white px-4 py-2.5 text-sm font-semibold text-[#52616D] hover:bg-[#F4F7FA]"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => startEditingScores(selectedStudent)}
+                        disabled={selectedStudentAssessments.length === 0}
+                        className="rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8] disabled:bg-[#C8D1D8]"
+                      >
+                        Edit scores
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onEditStudent(selectedStudent.id)}
+                        className="rounded-[12px] border border-[#D8E1E7] bg-white px-4 py-2.5 text-sm font-semibold text-[#52616D] hover:border-[#36A9E1] hover:text-[#168CC8]"
+                      >
+                        Edit info
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px]">
-                  <thead className="bg-white/40">
-                    <tr className="border-b border-[#D1D1D6]/60">
-                      <RecordTableHeading>Assessment</RecordTableHeading>
-                      <RecordTableHeading>Subject</RecordTableHeading>
-                      <RecordTableHeading>Component</RecordTableHeading>
-                      <RecordTableHeading>HPS</RecordTableHeading>
-                      <RecordTableHeading>Score</RecordTableHeading>
-                      <RecordTableHeading>Percentage</RecordTableHeading>
-                    </tr>
-                  </thead>
+              <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <MinimalMetric
+                  label={selectedSubject === "ALL" ? `${currentTermLabel} Average` : `${currentTermLabel} Grade`}
+                  value={selectedStudent.averagePercentage === null ? "—" : selectedStudent.averagePercentage.toFixed(1)}
+                  detail={`${currentSubjectLabel} · current result`}
+                />
+                <MinimalMetric
+                  label="Performance"
+                  value={selectedStatus.label}
+                  detail="Based on the current official term result"
+                  attention={selectedStudent.averagePercentage !== null && selectedStudent.averagePercentage < 75}
+                />
+              </div>
 
-                  <tbody className="divide-y divide-[#D1D1D6]/45">
-                    {selectedStudentAssessments.map((assessment) => {
-                      const score = scoreMap[selectedStudent.id]?.[assessment.id];
-                      const hasScore = score !== undefined && score !== null;
-                      const percentage =
-                        hasScore && Number(assessment.total_items) > 0
-                          ? (Number(score) / Number(assessment.total_items)) * 100
-                          : null;
-
-                      return (
-                        <tr key={assessment.id} className="hover:bg-white/45">
-                          <td className="px-4 py-3.5 font-semibold text-[#36454F]">
-                            <div>{assessment.name}</div>
-                            <div className="mt-0.5 text-[11px] font-normal text-[#8E8E93]">
-                              {assessment.date}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5 text-center text-sm text-[#636366]">
-                            {assessment.subject_name}
-                          </td>
-                          <td className="px-4 py-3.5 text-center">
-                            <span className="rounded-full bg-[#0091FF]/10 px-2.5 py-1 text-xs font-semibold text-[#007AFF]">
-                              {assessment.slot_label ?? assessment.category_label ?? assessment.type}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-center font-semibold text-[#36454F]">
-                            {assessment.total_items}
-                          </td>
-                          <td className="px-4 py-3.5 text-center">
-                            {selectedIsEditing ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max={assessment.total_items}
-                                  step="1"
-                                  value={editedScores[assessment.id] ?? ""}
-                                  onChange={(event) =>
-                                    handleEditedScoreChange(
-                                      assessment.id,
-                                      event.target.value,
-                                    )
-                                  }
-                                  placeholder="—"
-                                  disabled={savingScores}
-                                  className="w-20 rounded-[11px] border border-[#D1D1D6] bg-white/90 px-2 py-2 text-center font-semibold text-[#36454F] outline-none focus:border-[#0091FF] focus:ring-4 focus:ring-[#0091FF]/15"
-                                />
-                                <span className="text-xs text-[#8E8E93]">
-                                  / {assessment.total_items}
-                                </span>
-                              </div>
-                            ) : hasScore ? (
-                              <span className="font-bold text-[#36454F]">
-                                {score} / {assessment.total_items}
-                              </span>
-                            ) : (
-                              <span className="text-[#8E8E93]">—</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3.5 text-center font-semibold text-[#36454F]">
-                            {percentage === null ? "—" : `${percentage.toFixed(1)}%`}
-                          </td>
-                        </tr>
-                      );
-                    })}
-
-                    {selectedStudentAssessments.length === 0 && (
-                      <tr>
-                        <td colSpan="6" className="px-6 py-12 text-center text-sm text-[#636366]">
-                          No assessments are available for {currentSubjectLabel} in {currentTermLabel}.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="mt-7 flex flex-wrap gap-2">
+                <DetailTabButton active={detailTab === "current"} onClick={() => setDetailTab("current")}>
+                  Current Term
+                </DetailTabButton>
+                <DetailTabButton active={detailTab === "grades"} onClick={() => setDetailTab("grades")}>
+                  Term Grades
+                </DetailTabButton>
+                <DetailTabButton active={detailTab === "history"} onClick={() => setDetailTab("history")}>
+                  Assessment History
+                </DetailTabButton>
+                <DetailTabButton active={detailTab === "insights"} onClick={() => setDetailTab("insights")}>
+                  AI Insights
+                </DetailTabButton>
               </div>
             </div>
 
-            {/* Complete record inside the selected-student workspace */}
-            <div className="mt-5">
-              <StudentExpandedProfile
-                student={selectedStudent}
-                status={selectedStatus}
-                assessmentRecords={selectedStudentRecords}
-                gradeSummaries={selectedGradeSummaries}
-                savedInsights={selectedInsights}
-                loadingInsights={selectedInsightsLoading}
-                insightError={selectedInsightError}
-                openSavedInsight={openSavedInsight}
-                reloadInsights={() =>
-                  reloadStudentInsights(selectedStudent.id, true)
-                }
-              />
+            <div className="p-6 sm:p-8">
+              {detailTab === "current" && (
+                <CurrentTermScores
+                  student={selectedStudent}
+                  assessments={selectedStudentAssessments}
+                  scoreMap={scoreMap}
+                  editing={selectedIsEditing}
+                  editedScores={editedScores}
+                  savingScores={savingScores}
+                  handleEditedScoreChange={handleEditedScoreChange}
+                />
+              )}
+
+              {detailTab === "grades" && (
+                <OfficialGradesTable gradeSummaries={selectedGradeSummaries} />
+              )}
+
+              {detailTab === "history" && (
+                <AssessmentHistoryTable records={selectedStudentRecords} />
+              )}
+
+              {detailTab === "insights" && (
+                <SavedInsightsPanel
+                  student={selectedStudent}
+                  insights={selectedInsights}
+                  loading={selectedInsightsLoading}
+                  error={selectedInsightError}
+                  openSavedInsight={openSavedInsight}
+                  reload={() => reloadStudentInsights(selectedStudent.id, true)}
+                />
+              )}
             </div>
           </div>
         )}
@@ -3417,426 +2644,277 @@ function RecordsView({
   );
 }
 
-function RecordSummaryMetric({
-  label,
-  value,
-  detail,
-  tone = "blue",
-  compact = false,
-}) {
-  const tones = {
-    blue: "text-[#007AFF] bg-[#0091FF]/10 border-[#0091FF]/15",
-    red: "text-[#D70015] bg-[#FF3B30]/10 border-[#FF3B30]/15",
-    green: "text-[#248A3D] bg-[#34C759]/10 border-[#34C759]/15",
-    yellow: "text-[#8A5A00] bg-[#FFCC00]/15 border-[#FFCC00]/20",
-    gray: "text-[#636366] bg-[#8E8E93]/10 border-[#8E8E93]/15",
-  };
-
+function DetailTabButton({ active, onClick, children }) {
   return (
-    <div
-      className={`min-h-[118px] rounded-[18px] border p-4 backdrop-blur-[10px] ${tones[tone] ?? tones.blue}`}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-4 py-2 text-sm font-semibold ${
+        active
+          ? "bg-[#36A9E1] text-white"
+          : "bg-[#F1F5F7] text-[#71808D] hover:bg-[#E8EFF3] hover:text-[#25313C]"
+      }`}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#636366]">
-        {label}
-      </p>
-      <p
-        className={`mt-2 font-bold tracking-tight ${
-          compact ? "text-lg leading-6" : "text-3xl"
-        }`}
-      >
-        {value}
-      </p>
-      <p className="mt-1 text-[11px] leading-4 text-[#636366]">{detail}</p>
-    </div>
-  );
-}
-
-function RecordTableHeading({ children }) {
-  return (
-    <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.1em] text-[#636366] first:text-left">
       {children}
-    </th>
+    </button>
   );
 }
 
-
-function StudentExpandedProfile({
+function CurrentTermScores({
   student,
-  status,
-  assessmentRecords,
-  gradeSummaries,
-  savedInsights,
-  loadingInsights,
-  insightError,
-  openSavedInsight,
-  reloadInsights,
+  assessments,
+  scoreMap,
+  editing,
+  editedScores,
+  savingScores,
+  handleEditedScoreChange,
 }) {
-  const scoredRecords = assessmentRecords.filter(
-    (record) =>
-      record.score !== null &&
-      record.score !== undefined &&
-      Number(record.total_items) > 0,
-  );
-
   return (
-    <div className="rounded-[28px] border border-[#D1D1D6] bg-white/50 p-5 sm:p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase text-[#3A3A3C]">
-            Student Profile
-          </p>
+    <div>
+      <SectionTitle
+        eyebrow="Assessment Scores"
+        title="Current Term"
+        description="Scores for assessments that match the current subject and term filters."
+      />
 
-          <h3 className="mt-1 text-sm font-bold tracking-tight text-[#1C1C1E]">
-            {student.name} - Grade {student.grade} - {student.section}
-          </h3>
-        </div>
+      <div className="mt-5 minimal-scrollbar overflow-x-auto rounded-[18px] border border-[#E3E9EE]">
+        <table className="w-full min-w-[760px]">
+          <thead className="bg-[#F8FAFB]">
+            <tr className="border-b border-[#E3E9EE]">
+              <TableHeading>Assessment</TableHeading>
+              <TableHeading align="center">Component</TableHeading>
+              <TableHeading align="center">HPS</TableHeading>
+              <TableHeading align="center">Score</TableHeading>
+              <TableHeading align="center">Percentage</TableHeading>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#EEF2F5]">
+            {assessments.map((assessment) => {
+              const score = scoreMap[student.id]?.[assessment.id];
+              const hasScore = score !== undefined && score !== null;
+              const percentage =
+                hasScore && Number(assessment.total_items) > 0
+                  ? (Number(score) / Number(assessment.total_items)) * 100
+                  : null;
 
-        <span
-          className={`inline-flex w-fit rounded-[6px] border px-3 py-1 text-sm font-semibold ${status.className}`}
-        >
-          {status.label}
-        </span>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ProfileMetric
-          label="Subjects"
-          value={student.subject_names?.length ?? 0}
-          tone="yellow"
-        />
-
-        <ProfileMetric
-          label="Recorded assessments"
-          value={scoredRecords.length}
-          tone="blue"
-        />
-
-        <ProfileMetric
-          label="Completed Final Grades"
-          value={
-            gradeSummaries.filter(
-              (summary) => summary.final?.isComplete,
-            ).length
-          }
-          tone="green"
-        />
-
-        <ProfileMetric
-          label="Saved AI insights"
-          value={savedInsights.length}
-          tone="red"
-        />
-      </div>
-
-      <div className="mt-7">
-        <div className="mb-3">
-          <h4 className="text-base font-bold text-[#1C1C1E]">
-            Official Three-Term Grades
-          </h4>
-          <p className="mt-1 text-sm text-[#636366]">
-            Each Term Grade is transmuted first. The Final Grade is the rounded
-            average of the three transmuted Term Grades.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-[#E5E5EA]">
-          <table className="w-full min-w-[760px]">
-            <thead className="bg-[#F2F2F7]">
-              <tr>
-                <TableHeading>Subject</TableHeading>
-                <TableHeading>Term 1</TableHeading>
-                <TableHeading>Term 2</TableHeading>
-                <TableHeading>Term 3</TableHeading>
-                <TableHeading>Final</TableHeading>
-                <TableHeading>Descriptor</TableHeading>
-                <TableHeading>Remark</TableHeading>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E5E5EA]">
-              {gradeSummaries.map((summary) => (
-                <tr key={summary.subject_id}>
-                  <td className="px-6 py-4 font-medium text-[#1C1C1E] text-center">
-                    {summary.subject_name}
+              return (
+                <tr key={assessment.id} className="hover:bg-[#FBFCFD]">
+                  <td className="px-5 py-4">
+                    <p className="font-semibold text-[#25313C]">{assessment.name}</p>
+                    <p className="mt-1 text-xs text-[#8A98A5]">
+                      {assessment.subject_name} · {assessment.date}
+                    </p>
                   </td>
-                  {[summary.term1, summary.term2, summary.term3].map(
-                    (termResult, index) => (
-                      <td
-                        key={index}
-                        className="px-6 py-4 text-center text-[#3A3A3C]"
-                      >
-                        {termResult?.isComplete
-                          ? termResult.termGrade
-                          : "Incomplete"}
-                      </td>
-                    ),
-                  )}
-                  <td className="px-6 py-4 text-center font-bold text-[#1C1C1E]">
-                    {summary.final?.isComplete
-                      ? summary.final.finalGrade
-                      : "-"}
-                  </td>
-                  <td className="px-6 py-4 text-center text-[#636366]">
-                    {summary.final?.descriptor ?? "-"}
-                  </td>
-                  <td className="px-6 py-4 text-center font-semibold text-[#636366]">
-                    {summary.final?.remark ?? "-"}
-                  </td>
-                </tr>
-              ))}
-
-              {gradeSummaries.length === 0 && (
-                <tr>
-                  <td
-                    colSpan="7"
-                    className="px-6 py-10 text-center text-[#636366]"
-                  >
-                    No official three-term grade summaries are available yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <h4 className="text-base font-bold text-[#1C1C1E]">
-          Enrolled Subjects
-        </h4>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {student.subject_names?.map((subjectName) => (
-            <span
-              key={subjectName}
-              className="rounded-[6px] border border-[#007AFF] bg-white px-3 py-1 text-sm font-medium text-[#0051D5]"
-            >
-              {subjectName}
-            </span>
-          ))}
-
-          {!student.subject_names?.length && (
-            <span className="text-sm text-[#636366]">
-              No enrolled subjects found.
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-7">
-        <div className="mb-3">
-          <h4 className="text-base font-bold text-[#1C1C1E]">
-            Complete Assessment History
-          </h4>
-
-          <p className="mt-1 text-sm text-[#636366]">
-            All saved scores for this student, regardless of the current record
-            filters.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-[#E5E5EA]">
-          <table className="w-full min-w-[760px]">
-            <thead className="bg-[#F2F2F7]">
-              <tr>
-                <TableHeading>Assessment</TableHeading>
-                <TableHeading>Subject</TableHeading>
-                <TableHeading>Term / Component</TableHeading>
-                <TableHeading>Date</TableHeading>
-                <TableHeading>Score</TableHeading>
-                <TableHeading>Percentage</TableHeading>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-[#E5E5EA]">
-              {assessmentRecords.map((record) => {
-                const hasScore =
-                  record.score !== null && record.score !== undefined;
-
-                const percentage =
-                  hasScore && Number(record.total_items) > 0
-                    ? (Number(record.score) / Number(record.total_items)) * 100
-                    : null;
-
-                return (
-                  <tr key={`${record.assessment_id}-${record.id}`}>
-                    <td className="px-6 py-4 font-medium text-[#1C1C1E] text-center">
-                      {record.assessment_name}
-                    </td>
-
-                    <td className="px-6 py-4 text-[#636366] text-center">
-                      {record.subject_name}
-                    </td>
-
-                    <td className="px-6 py-4 text-[#636366] text-center">{record.term_label ?? `Term ${record.term}`} · {record.slot_label ?? record.type}</td>
-
-                    <td className="px-6 py-4 text-[#636366] text-center">{record.date}</td>
-
-                    <td className="px-6 py-4 text-[#3A3A3C] text-center">
-                      {hasScore
-                        ? `${record.score} / ${record.total_items}`
-                        : "Missing"}
-                    </td>
-
-                    <td className="px-6 py-4 font-semibold text-[#1C1C1E] text-center">
-                      {percentage === null ? "-" : `${percentage.toFixed(1)}%`}
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {assessmentRecords.length === 0 && (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-10 text-center text-[#636366]"
-                  >
-                    No assessment records have been saved for this student.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="mt-7">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h4 className="text-base font-bold text-[#1C1C1E]">
-              Saved Gemini Learning Insights
-            </h4>
-
-            <p className="mt-1 text-sm text-[#636366]">
-              Every generated intervention or enrichment plan is stored in the
-              database with a downloadable PDF.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={reloadInsights}
-            disabled={loadingInsights}
-            className="rounded-[12px] border border-[#D1D1D6] bg-white px-4 py-2 text-sm font-medium text-[#3A3A3C] hover:bg-[#007AFF] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loadingInsights ? "Refreshing..." : "Refresh insights"}
-          </button>
-        </div>
-
-        {insightError && (
-          <div className="mt-4 rounded-[18px] border border-[#FF3B30] bg-white p-4 text-sm text-[#D70015]">
-            {insightError}
-          </div>
-        )}
-
-        {loadingInsights && savedInsights.length === 0 ? (
-          <div className="mt-4 rounded-[18px] border border-[#E5E5EA] bg-white p-6 text-center text-[#636366]">
-            Loading saved insights...
-          </div>
-        ) : (
-          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
-            {savedInsights.map((insight) => (
-              <article
-                key={insight.id}
-                className="rounded-[20px] border border-[#E5E5EA] bg-white p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        insight.supportType === "intervention"
-                          ? "bg-[#FF3B30] text-white"
-                          : "bg-[#34C759] text-white"
-                      }`}
-                    >
-                      {insight.supportType === "intervention"
-                        ? "Intervention"
-                        : "Enrichment"}
+                  <td className="px-5 py-4 text-center">
+                    <span className="rounded-full bg-[#EAF6FC] px-2.5 py-1 text-xs font-semibold text-[#168CC8]">
+                      {assessment.slot_label ?? assessment.category_label ?? assessment.type}
                     </span>
+                  </td>
+                  <td className="px-5 py-4 text-center font-semibold text-[#52616D]">
+                    {assessment.total_items}
+                  </td>
+                  <td className="px-5 py-4 text-center">
+                    {editing ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max={assessment.total_items}
+                          step="1"
+                          value={editedScores[assessment.id] ?? ""}
+                          onChange={(event) => handleEditedScoreChange(assessment.id, event.target.value)}
+                          disabled={savingScores}
+                          className="w-20 rounded-[10px] border border-[#D8E1E7] bg-white px-2 py-2 text-center font-semibold text-[#25313C] outline-none focus:border-[#36A9E1]"
+                        />
+                        <span className="text-xs text-[#8A98A5]">/ {assessment.total_items}</span>
+                      </div>
+                    ) : hasScore ? (
+                      <span className="font-semibold text-[#25313C]">{score} / {assessment.total_items}</span>
+                    ) : (
+                      <span className="text-[#A0ABB4]">—</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-center font-semibold text-[#52616D]">
+                    {percentage === null ? "—" : `${percentage.toFixed(1)}%`}
+                  </td>
+                </tr>
+              );
+            })}
 
-                    <h5 className="mt-2 font-bold text-[#1C1C1E]">
-                      {insight.title}
-                    </h5>
-                  </div>
-
-                  <span className="text-xs text-[#8E8E93]">#{insight.id}</span>
-                </div>
-
-                <dl className="mt-3 space-y-1 text-sm text-[#636366]">
-                  <div>
-                    <dt className="inline font-semibold text-[#3A3A3C]">
-                      Focus:{" "}
-                    </dt>
-                    <dd className="inline">{insight.focusLabel}</dd>
-                  </div>
-
-                  <div>
-                    <dt className="inline font-semibold text-[#3A3A3C]">
-                      Classification:{" "}
-                    </dt>
-                    <dd className="inline">{insight.classification}</dd>
-                  </div>
-
-                  <div>
-                    <dt className="inline font-semibold text-[#3A3A3C]">
-                      Saved:{" "}
-                    </dt>
-                    <dd className="inline">
-                      {formatSavedDate(insight.createdAt)}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openSavedInsight(insight)}
-                    className="rounded-full bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066D6]"
-                  >
-                    View insight
-                  </button>
-
-                  <a
-                    href={`${API_URL}${insight.pdfUrl}`}
-                    className="rounded-full border border-[#D1D1D6] bg-white px-4 py-2 text-sm font-semibold text-[#3A3A3C] hover:bg-[#F2F2F7]"
-                  >
-                    Download PDF
-                  </a>
-                </div>
-              </article>
-            ))}
-
-            {savedInsights.length === 0 && !insightError && (
-              <div className="rounded-[20px] border border-dashed border-[#D1D1D6] bg-[#F2F2F7] p-8 text-center text-[#636366] xl:col-span-2">
-                No Gemini insights have been generated for this student yet.
-              </div>
+            {assessments.length === 0 && (
+              <tr>
+                <td colSpan="5" className="px-6 py-14 text-center text-sm text-[#8A98A5]">
+                  No assessments match the current filters.
+                </td>
+              </tr>
             )}
-          </div>
-        )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-function ProfileMetric({ label, value, tone = "blue" }) {
-  const tones = {
-    blue: "border-[#007AFF] bg-[#007AFF] text-white",
-    red: "border-[#FF3B30] bg-[#FF3B30] text-white",
-    green: "border-[#34C759] bg-[#34C759] text-white",
-    yellow: "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
-  };
-
-  const selectedTone = tones[tone] ?? tones.blue;
-
+function OfficialGradesTable({ gradeSummaries }) {
   return (
-    <div className={`rounded-[20px] border p-4 ${selectedTone}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
-        {label}
-      </p>
-      <p className="mt-2 text-xl font-bold tracking-tight">{value}</p>
+    <div>
+      <SectionTitle
+        eyebrow="Official Grades"
+        title="Three-Term Summary"
+        description="Term Grades are transmuted individually before the final subject grade is calculated."
+      />
+      <div className="mt-5 minimal-scrollbar overflow-x-auto rounded-[18px] border border-[#E3E9EE]">
+        <table className="w-full min-w-[760px]">
+          <thead className="bg-[#F8FAFB]">
+            <tr className="border-b border-[#E3E9EE]">
+              <TableHeading>Subject</TableHeading>
+              <TableHeading align="center">Term 1</TableHeading>
+              <TableHeading align="center">Term 2</TableHeading>
+              <TableHeading align="center">Term 3</TableHeading>
+              <TableHeading align="center">Final</TableHeading>
+              <TableHeading align="center">Descriptor</TableHeading>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#EEF2F5]">
+            {gradeSummaries.map((summary) => (
+              <tr key={summary.subject_id}>
+                <td className="px-5 py-4 font-semibold text-[#25313C]">{summary.subject_name}</td>
+                <GradeCell value={summary.term1?.termGrade} />
+                <GradeCell value={summary.term2?.termGrade} />
+                <GradeCell value={summary.term3?.termGrade} />
+                <GradeCell value={summary.final?.finalGrade} accent />
+                <td className="px-5 py-4 text-center text-sm text-[#71808D]">
+                  {summary.final?.descriptor ?? "—"}
+                </td>
+              </tr>
+            ))}
+            {gradeSummaries.length === 0 && (
+              <tr>
+                <td colSpan="6" className="px-6 py-14 text-center text-sm text-[#8A98A5]">
+                  No official grade summaries are available yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
-//Sections view
+
+function GradeCell({ value, accent = false }) {
+  return (
+    <td className={`px-5 py-4 text-center font-bold ${accent ? "text-[#36A9E1]" : "text-[#52616D]"}`}>
+      {value ?? "—"}
+    </td>
+  );
+}
+
+function AssessmentHistoryTable({ records }) {
+  return (
+    <div>
+      <SectionTitle
+        eyebrow="Assessment History"
+        title="Complete Record"
+        description="All created assessments for the selected learner across subjects and terms."
+      />
+      <div className="mt-5 minimal-scrollbar overflow-x-auto rounded-[18px] border border-[#E3E9EE]">
+        <table className="w-full min-w-[900px]">
+          <thead className="bg-[#F8FAFB]">
+            <tr className="border-b border-[#E3E9EE]">
+              <TableHeading>Assessment</TableHeading>
+              <TableHeading>Subject</TableHeading>
+              <TableHeading align="center">Term</TableHeading>
+              <TableHeading align="center">Component</TableHeading>
+              <TableHeading align="center">Score</TableHeading>
+              <TableHeading align="center">%</TableHeading>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#EEF2F5]">
+            {records.map((record) => {
+              const hasScore =
+                record.score !== null &&
+                record.score !== undefined &&
+                Number(record.total_items) > 0;
+              const percentage = hasScore
+                ? (Number(record.score) / Number(record.total_items)) * 100
+                : null;
+
+              return (
+                <tr key={record.id}>
+                  <td className="px-5 py-4">
+                    <p className="font-semibold text-[#25313C]">{record.assessment_name}</p>
+                    <p className="mt-1 text-xs text-[#8A98A5]">{record.date}</p>
+                  </td>
+                  <td className="px-5 py-4 text-sm text-[#71808D]">{record.subject_name}</td>
+                  <td className="px-5 py-4 text-center text-sm text-[#71808D]">{record.term_label ?? `Term ${record.term}`}</td>
+                  <td className="px-5 py-4 text-center text-sm font-medium text-[#168CC8]">{record.slot_label ?? record.category_label ?? record.type}</td>
+                  <td className="px-5 py-4 text-center font-semibold text-[#52616D]">{hasScore ? `${record.score}/${record.total_items}` : "—"}</td>
+                  <td className="px-5 py-4 text-center font-semibold text-[#52616D]">{percentage === null ? "—" : `${percentage.toFixed(1)}%`}</td>
+                </tr>
+              );
+            })}
+            {records.length === 0 && (
+              <tr>
+                <td colSpan="6" className="px-6 py-14 text-center text-sm text-[#8A98A5]">
+                  No assessment history is available yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SavedInsightsPanel({ student, insights, loading, error, openSavedInsight, reload }) {
+  return (
+    <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <SectionTitle
+          eyebrow="AI Insights"
+          title="Saved Recommendations"
+          description={`Intervention and enrichment recommendations saved for ${student.name}.`}
+        />
+        <button
+          type="button"
+          onClick={reload}
+          className="rounded-[11px] border border-[#D8E1E7] bg-white px-4 py-2.5 text-sm font-semibold text-[#52616D] hover:border-[#36A9E1] hover:text-[#168CC8]"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="mt-6 rounded-[16px] bg-[#F8FAFB] p-8 text-center text-sm text-[#8A98A5]">Loading insights...</p>
+      ) : error ? (
+        <p className="mt-6 rounded-[16px] bg-[#FFF1F1] p-5 text-sm text-[#C53939]">{error}</p>
+      ) : insights.length === 0 ? (
+        <p className="mt-6 rounded-[16px] bg-[#F8FAFB] p-8 text-center text-sm text-[#8A98A5]">No saved AI insights yet.</p>
+      ) : (
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          {insights.map((insight) => (
+            <button
+              key={insight.id}
+              type="button"
+              onClick={() => openSavedInsight(insight)}
+              className="rounded-[18px] border border-[#E3E9EE] bg-white p-5 text-left hover:border-[#B8DDEC] hover:bg-[#FBFDFF]"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#36A9E1]">
+                {insight.supportType === "intervention" ? "Intervention" : "Enrichment"}
+              </p>
+              <h4 className="mt-2 text-lg font-bold text-[#25313C]">{insight.title || "Saved Recommendation"}</h4>
+              <p className="mt-2 text-sm text-[#71808D]">{insight.focusLabel || "General learning support"}</p>
+              <p className="mt-4 text-xs text-[#A0ABB4]">{formatSavedDate(insight.createdAt)}</p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SectionManagementView({
   sections,
   newSection,
@@ -3847,127 +2925,69 @@ function SectionManagementView({
   openDashboardForSection,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] bg-white/70 p-3 backdrop-blur-[20px]">
-      <div className="flex flex-col gap-4 rounded-[24px] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="mt-1 text-xl font-bold text-[#36454F]">
-            Section Management
-          </h2>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+      <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-8">
+        <SectionTitle
+          eyebrow="New Section"
+          title="Add a Section"
+          description="Create a section that can be assigned when registering students."
+        />
+        <form onSubmit={handleAddSection} className="mt-7 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-[#52616D]">Section name</span>
+            <input
+              type="text"
+              value={newSection}
+              onChange={(event) => setNewSection(event.target.value)}
+              placeholder="e.g. Section 1"
+              className="w-full rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-[#25313C] outline-none focus:border-[#36A9E1]"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={addingSection || !newSection.trim()}
+            className="w-full rounded-[12px] bg-[#36A9E1] px-4 py-3 text-sm font-semibold text-white hover:bg-[#168CC8] disabled:bg-[#C8D1D8]"
+          >
+            {addingSection ? "Adding..." : "Add section"}
+          </button>
+        </form>
+      </section>
 
-          <p className="mt-1 text-sm text-[#36454F]">
-            Add a new section on the left and review all existing sections on
-            the right.
-          </p>
+      <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
+        <div className="flex items-end justify-between gap-4 border-b border-[#EEF2F5] p-6 sm:p-8">
+          <SectionTitle
+            eyebrow="Existing Sections"
+            title="Section List"
+            description="Open a section on the dashboard or remove it when it is no longer needed."
+          />
+          <span className="text-3xl font-bold text-[#36A9E1]">{sections.length}</span>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 p-6 md:grid-cols-2 md:items-start">
-        {/* LEFT COLUMN — ADD SECTION FORM */}
-        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
-          <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
-              New Section
-            </p>
-
-            <h3 className="mt-1 text-lg font-bold text-[#36454F]">
-              Add a Section
-            </h3>
-
-            <p className="mt-1 text-sm leading-5 text-[#636366]">
-              Enter the section name below. Once added, it will immediately
-              appear in the section list.
-            </p>
-          </div>
-
-          <form onSubmit={handleAddSection} className="space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#36454F]">
-                Section Name
-              </span>
-
-              <input
-                type="text"
-                value={newSection}
-                onChange={(event) => setNewSection(event.target.value)}
-                placeholder="e.g. Section 1"
-                className="w-full rounded-[14px] border border-[#D1D1D6] bg-white/60 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#0088FF] focus:outline-none focus:ring-4 focus:ring-[#0088FF]/20"
-              />
-            </label>
-
-            <button
-              type="submit"
-              disabled={addingSection || !newSection.trim()}
-              className="w-full rounded-[14px] bg-[#0088FF] px-6 py-3 font-semibold text-white transition hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
-            >
-              {addingSection ? "Adding..." : "+ Add Section"}
-            </button>
-          </form>
+        <div className="minimal-scrollbar max-h-[600px] divide-y divide-[#EEF2F5] overflow-y-auto">
+          {sections.map((section) => (
+            <div key={section.id} className="flex items-center justify-between gap-4 px-6 py-4 sm:px-8">
+              <button
+                type="button"
+                onClick={() => openDashboardForSection(section.name)}
+                className="min-w-0 text-left"
+              >
+                <p className="truncate font-semibold text-[#25313C] hover:text-[#168CC8]">{section.name}</p>
+                <p className="mt-1 text-sm text-[#8A98A5]">{section.student_count} students</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveSection(section)}
+                className="text-sm font-semibold text-[#D94141] hover:text-[#B82E2E]"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {sections.length === 0 && (
+            <EmptyState title="No sections yet" description="Add your first section using the form." />
+          )}
         </div>
-
-        {/* RIGHT COLUMN — EXISTING SECTIONS */}
-        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
-                Existing Sections
-              </p>
-
-              <h3 className="mt-1 text-lg font-bold text-[#36454F]">
-                Added Sections
-              </h3>
-            </div>
-
-            <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm font-semibold text-white">
-              {sections.length}
-            </span>
-          </div>
-
-          <div className="overflow-hidden rounded-[18px] border border-[#E5E5EA] bg-white/20">
-            <div className="grid grid-cols-[1fr_auto_auto] gap-3 bg-white/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
-              <span>Section</span>
-              <span>Students</span>
-              <span>Action</span>
-            </div>
-
-            <div className="max-h-[520px] overflow-y-auto divide-y divide-[#E5E5EA]">
-              {sections.map((section) => (
-                <div
-                  key={section.id}
-                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 transition hover:bg-white/45"
-                >
-                  <button
-                    type="button"
-                    onClick={() => openDashboardForSection(section.name)}
-                    className="min-w-0 truncate text-left font-semibold text-[#36454F] hover:text-[#0088FF]"
-                    title={section.name}
-                  >
-                    {section.name}
-                  </button>
-
-                  <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm text-white">
-                    {section.student_count}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSection(section)}
-                    className="rounded-[9px] bg-white/55 px-3 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              {sections.length === 0 && (
-                <div className="px-6 py-12 text-center text-sm text-[#636366]">
-                  No sections have been added yet.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -3982,145 +3002,74 @@ function SubjectManagementView({
   openDashboardForSubject,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] bg-white/70 p-3 backdrop-blur-[20px]">
-      <div className="flex flex-col gap-4 rounded-[24px] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="mt-1 text-xl font-bold text-[#36454F]">
-            Subject Management
-          </h2>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+      <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-8">
+        <SectionTitle
+          eyebrow="New Subject"
+          title="Add a Subject"
+          description="Create a subject, then choose the students who should be enrolled."
+        />
+        <form onSubmit={openSubjectStudentPrompt} className="mt-7 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-[#52616D]">Subject name</span>
+            <input
+              type="text"
+              value={newSubject}
+              onChange={(event) => setNewSubject(event.target.value)}
+              placeholder="e.g. Mathematics"
+              className="w-full rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-[#25313C] outline-none focus:border-[#36A9E1]"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={addingSubject || !newSubject.trim()}
+            className="w-full rounded-[12px] bg-[#36A9E1] px-4 py-3 text-sm font-semibold text-white hover:bg-[#168CC8] disabled:bg-[#C8D1D8]"
+          >
+            {addingSubject ? "Adding..." : "Choose students"}
+          </button>
+        </form>
+      </section>
 
-          <p className="mt-1 text-sm text-[#636366]">
-            Add a new subject on the left and review all existing subjects on
-            the right.
-          </p>
+      <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
+        <div className="flex items-end justify-between gap-4 border-b border-[#EEF2F5] p-6 sm:p-8">
+          <SectionTitle
+            eyebrow="Existing Subjects"
+            title="Subject List"
+            description="Open, rename, or remove subjects from the workspace."
+          />
+          <span className="text-3xl font-bold text-[#36A9E1]">{subjects.length}</span>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 p-6 md:grid-cols-2 md:items-start">
-        {/* LEFT COLUMN — ADD SUBJECT FORM */}
-        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
-          <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
-              New Subject
-            </p>
-
-            <h3 className="mt-1 text-lg font-bold text-[#36454F]">
-              Add a Subject
-            </h3>
-
-            <p className="mt-1 text-sm leading-5 text-[#636366]">
-              Enter the subject name first, then choose which students should
-              be enrolled in it.
-            </p>
-          </div>
-
-          <form onSubmit={openSubjectStudentPrompt} className="space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#36454F]">
-                Subject Name
-              </span>
-
-              <input
-                type="text"
-                value={newSubject}
-                onChange={(event) => setNewSubject(event.target.value)}
-                placeholder="e.g. Mathematics"
-                className="w-full rounded-[14px] border border-[#D1D1D6] bg-white/60 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#0088FF] focus:outline-none focus:ring-4 focus:ring-[#0088FF]/20"
-              />
-            </label>
-
-            <button
-              type="submit"
-              disabled={addingSubject || !newSubject.trim()}
-              className="w-full rounded-[14px] bg-[#0088FF] px-6 py-3 font-semibold text-white transition hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
-            >
-              {addingSubject ? "Adding..." : "Choose Students"}
-            </button>
-          </form>
-
-          <div className="mt-4 rounded-[16px] bg-white/35 p-4 text-sm leading-5 text-[#636366]">
-            Student enrollment is selected after clicking <b>Choose Students</b>.
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN — EXISTING SUBJECTS */}
-        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
-                Existing Subjects
-              </p>
-
-              <h3 className="mt-1 text-lg font-bold text-[#36454F]">
-                Added Subjects
-              </h3>
-            </div>
-
-            <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm font-semibold text-white">
-              {subjects.length}
-            </span>
-          </div>
-
-          <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
-            {subjects.map((subject) => (
-              <div
-                key={subject.id}
-                className="flex flex-col gap-3 rounded-[18px] border border-[#E5E5EA] bg-white/35 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+        <div className="minimal-scrollbar max-h-[600px] divide-y divide-[#EEF2F5] overflow-y-auto">
+          {subjects.map((subject) => (
+            <div key={subject.id} className="flex items-center justify-between gap-4 px-6 py-4 sm:px-8">
+              <button
+                type="button"
+                onClick={() => openDashboardForSubject(subject.id)}
+                className="min-w-0 text-left"
               >
-                <button
-                  type="button"
-                  onClick={() => openDashboardForSubject(subject.id)}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <span className="block truncate font-semibold text-[#1C1C1E] hover:text-[#0088FF]">
-                    {subject.name}
-                  </span>
-
-                  <span className="mt-1 block text-sm text-[#636366]">
-                    {subject.student_count} students · {subject.assessment_count}{" "}
-                    assessments
-                  </span>
-                </button>
-
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleRenameSubject(subject)}
-                    className="rounded-[10px] bg-[#0088FF] px-3.5 py-2 text-sm font-medium text-white hover:bg-[#007AFF]"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSubject(subject)}
-                    className="rounded-[10px] bg-[#FF3B30] px-3.5 py-2 text-sm font-medium text-white hover:bg-[#D70015]"
-                  >
-                    Delete
-                  </button>
-                </div>
+                <p className="truncate font-semibold text-[#25313C] hover:text-[#168CC8]">{subject.name}</p>
+                <p className="mt-1 text-sm text-[#8A98A5]">
+                  {subject.student_count} students · {subject.assessment_count} assessments
+                </p>
+              </button>
+              <div className="flex shrink-0 gap-3 text-sm font-semibold">
+                <button type="button" onClick={() => handleRenameSubject(subject)} className="text-[#168CC8] hover:text-[#0F77AA]">Rename</button>
+                <button type="button" onClick={() => handleRemoveSubject(subject)} className="text-[#D94141] hover:text-[#B82E2E]">Delete</button>
               </div>
-            ))}
-
-            {subjects.length === 0 && (
-              <div className="rounded-[18px] border border-dashed border-[#D1D1D6] bg-white/20 px-6 py-12 text-center text-sm text-[#636366]">
-                No subjects have been added yet.
-              </div>
-            )}
-          </div>
+            </div>
+          ))}
+          {subjects.length === 0 && (
+            <EmptyState title="No subjects yet" description="Add your first subject using the form." />
+          )}
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
 function DashboardFilters({
-  title,
-  description,
-  students,
   sections,
   subjects,
-  assessments,
   selectedSection,
   selectedSubject,
   selectedTerm,
@@ -4129,142 +3078,55 @@ function DashboardFilters({
   setSelectedTerm,
 }) {
   return (
-    <section className="rounded-[28px] bg-white/70 px-5 backdrop-blur-[20px] py-4">
-      <div className="flex items-center gap-3">
-
-        <div>
-          <h2 className="text-[20px] font-semibold text-[#1C1C1E]">{title}</h2>
-
-          <p className="text-xs text-[#636366]">
-            Choose a section, subject, and grading term to update the view.
-          </p>
-
-          <p className="sr-only">{description}</p>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
-            Section
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            <FilterPill
-              active={selectedSection === "ALL"}
-              label="All"
-              title={`${students.length} students`}
-              onClick={() => setSelectedSection("ALL")}
-              tone="yellow"
-            />
-
-            {sections.map((section) => (
-              <FilterPill
-                key={section.id}
-                active={selectedSection === section.name}
-                label={section.name}
-                title={`${section.student_count} students`}
-                onClick={() => setSelectedSection(section.name)}
-                tone="yellow"
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
-            Subject
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            <FilterPill
-              active={selectedSubject === "ALL"}
-              label="All"
-              title={`${assessments.length} assessments`}
-              onClick={() => setSelectedSubject("ALL")}
-              tone="green"
-            />
-
-            {subjects.map((subject) => (
-              <FilterPill
-                key={subject.id}
-                active={String(selectedSubject) === String(subject.id)}
-                label={subject.name}
-                title={`${subject.student_count} students, ${subject.assessment_count} assessments`}
-                onClick={() => setSelectedSubject(String(subject.id))}
-                tone="green"
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-[20px] bg-white/50 p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase text-[#636366]">
-            Grading Term
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {[1, 2, 3].map((term) => (
-              <FilterPill
-                key={term}
-                active={String(selectedTerm) === String(term)}
-                label={`Term ${term}`}
-                title={`Use official Term ${term} grades`}
-                onClick={() => setSelectedTerm(String(term))}
-                tone="blue"
-              />
-            ))}
-          </div>
-        </div>
+    <section className="rounded-[20px] border border-[#E3E9EE] bg-white p-4 sm:p-5">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <FilterSelect
+          label="Section"
+          value={selectedSection}
+          onChange={setSelectedSection}
+          options={[
+            { value: "ALL", label: "All Sections" },
+            ...sections.map((section) => ({ value: section.name, label: section.name })),
+          ]}
+        />
+        <FilterSelect
+          label="Subject"
+          value={selectedSubject}
+          onChange={setSelectedSubject}
+          options={[
+            { value: "ALL", label: "All Subjects" },
+            ...subjects.map((subject) => ({ value: String(subject.id), label: subject.name })),
+          ]}
+        />
+        <FilterSelect
+          label="Term"
+          value={selectedTerm}
+          onChange={setSelectedTerm}
+          options={[
+            { value: "1", label: "Term 1" },
+            { value: "2", label: "Term 2" },
+            { value: "3", label: "Term 3" },
+          ]}
+        />
       </div>
     </section>
   );
 }
 
-function FilterPill({ active, label, title, tone = "blue", onClick }) {
-  const tones = {
-    blue: {
-      active: " bg-[#0088FF] text-white",
-      inactive:
-        " bg-white text-[#0088FF]",
-      check: "text-white",
-    },
-    green: {
-      active: "bg-[#0088FF] text-white",
-      inactive:
-        " bg-white text-[#0088FF]",
-      check: "text-white",
-    },
-    yellow: {
-      active: " bg-[#0088FF] text-white",
-      inactive:
-        " bg-white text-[#0088FF]",
-      check: "text-white",
-    },
-  };
-
-  const selectedTone = tones[tone] ?? tones.blue;
-
+function FilterSelect({ label, value, onChange, options }) {
   return (
-    <button
-      type="button"
-      aria-pressed={active}
-      title={title}
-      onClick={onClick}
-      className={`inline-flex min-h-9 items-center gap-1.5 rounded-[12px] px-3 py-1.5 text-xs transition focus:outline-none focus:ring-4 focus:ring-[#007AFF]/20 ${
-        active ? selectedTone.active : selectedTone.inactive
-      }`}
-    >
-      {active && (
-        <span
-          className={`flex h-2 w-2 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${selectedTone.check}`}
-        >
-          ✓
-        </span>
-      )}
-
-      <span className="whitespace-nowrap">{label}</span>
-    </button>
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8A98A5]">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
+      >
+        {options.map((option) => (
+          <option key={`${label}-${option.value}`} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -4275,96 +3137,45 @@ function AssessmentList({
   handleDeleteAssessment,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-[20px]">
-      <div className="m-4 rounded-[12px] flex flex-col gap-3 bg-white/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-
-          <h2 className="mt-1 text-xl font-bold text-[#1C1C1E]">
-            Assessments — {currentSubjectLabel}
-          </h2>
-
-          <p className="mt-1 text-sm text-[#636366]">
-            {displayedAssessments.length} assessment
-            {displayedAssessments.length === 1 ? "" : "s"}
-          </p>
-        </div>
-
+    <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
+      <div className="border-b border-[#EEF2F5] p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">Assessments</p>
+        <h2 className="mt-2 text-2xl font-bold text-[#25313C]">{currentSubjectLabel}</h2>
       </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[850px]">
-          <thead className="bg-[#F2F2F7]/20 ">
-            <tr>
+      <div className="minimal-scrollbar overflow-x-auto">
+        <table className="w-full min-w-[820px]">
+          <thead className="bg-[#F8FAFB]">
+            <tr className="border-b border-[#E3E9EE]">
               <TableHeading>Assessment</TableHeading>
               <TableHeading>Subject</TableHeading>
-              <TableHeading>Term</TableHeading>
-              <TableHeading>Slot</TableHeading>
-              <TableHeading>Component</TableHeading>
-              <TableHeading>Date</TableHeading>
-              <TableHeading>HPS</TableHeading>
+              <TableHeading align="center">Term</TableHeading>
+              <TableHeading align="center">Slot</TableHeading>
+              <TableHeading align="center">HPS</TableHeading>
               <TableHeading align="right">Actions</TableHeading>
             </tr>
           </thead>
-
-          <tbody className="divide-y divide-[#E5E5EA]">
+          <tbody className="divide-y divide-[#EEF2F5]">
             {displayedAssessments.map((assessment) => (
-              <tr key={assessment.id} className="transition hover:bg-[#F2F2F7]/30">
-                <td className="px-6 py-4 font-medium text-[#1C1C1E] text-center">
-                  {assessment.name}
+              <tr key={assessment.id} className="hover:bg-[#FBFCFD]">
+                <td className="px-5 py-4">
+                  <p className="font-semibold text-[#25313C]">{assessment.name}</p>
+                  <p className="mt-1 text-xs text-[#8A98A5]">{assessment.date}</p>
                 </td>
-
-                <td className="px-6 py-4 text-center text-[#636366]">
-                  <span className="rounded-[5px] bg-[#0088FF]/90 px-3 py-1 text-sm  text-white">
-                    {assessment.subject_name}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 text-[#636366] text-center">
-                  {assessment.term_label}
-                </td>
-
-                <td className="px-6 py-4 font-semibold text-[#1C1C1E] text-center">
-                  {assessment.slot_label}
-                </td>
-
-                <td className="px-6 py-4 text-[#636366] text-center">
-                  {assessment.category_label}
-                </td>
-
-                <td className="px-6 py-4 text-[#636366] text-center">{assessment.date}</td>
-
-                <td className="px-6 py-4 text-[#636366] text-center">
-                  {assessment.total_items}
-                </td>
-
-                <td className="whitespace-nowrap px-6 py-4 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onEditAssessment(assessment.id)}
-                    className="mr-2 rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteAssessment(assessment.id)}
-                    className="rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
-                  >
-                    Delete
-                  </button>
+                <td className="px-5 py-4 text-sm text-[#71808D]">{assessment.subject_name}</td>
+                <td className="px-5 py-4 text-center text-sm text-[#71808D]">{assessment.term_label ?? `Term ${assessment.term}`}</td>
+                <td className="px-5 py-4 text-center text-sm font-semibold text-[#168CC8]">{assessment.slot_label ?? assessment.category_label ?? assessment.type}</td>
+                <td className="px-5 py-4 text-center font-semibold text-[#52616D]">{assessment.total_items}</td>
+                <td className="px-5 py-4">
+                  <div className="flex justify-end gap-3 text-sm font-semibold">
+                    <button type="button" onClick={() => onEditAssessment(assessment.id)} className="text-[#168CC8] hover:text-[#0F77AA]">Edit</button>
+                    <button type="button" onClick={() => handleDeleteAssessment(assessment.id)} className="text-[#D94141] hover:text-[#B82E2E]">Delete</button>
+                  </div>
                 </td>
               </tr>
             ))}
-
             {displayedAssessments.length === 0 && (
               <tr>
-                <td
-                  colSpan="8"
-                  className="px-6 py-12 text-center text-[#636366]"
-                >
-                  No assessments have been added for this subject and term.
-                </td>
+                <td colSpan="6" className="px-6 py-16 text-center text-sm text-[#8A98A5]">No assessments match the current filters.</td>
               </tr>
             )}
           </tbody>
@@ -4387,407 +3198,141 @@ function SubjectEnrollmentModal({
   closeModal,
   createSubject,
 }) {
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1C1C1E]/55 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="subject-enrollment-title"
-        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-[30px] backdrop-blur-[20px] bg-white/50 shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
-      >
-        <div className="flex items-start justify-between gap-4  px-6 py-5">
-          <div>
-            <h2
-              id="subject-enrollment-title"
-              className="mt-1 text-[20px] font-bold tracking-tight text-[#1C1C1E]"
-            >
-              {subjectName}
-            </h2>
+  const allSelected = students.length > 0 && selectedIds.length === students.length;
 
-            <p className="mt-1 text-sm text-[#636366]">
-              Select every student who is enrolled in this subject.
-            </p>
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#25313C]/35 p-4 backdrop-blur-[4px]">
+      <div className="w-full max-w-3xl overflow-hidden rounded-[26px] border border-white bg-white shadow-[0_24px_70px_rgba(37,49,60,0.24)]">
+        <div className="flex items-start justify-between gap-4 border-b border-[#EEF2F5] p-6">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">Subject Enrollment</p>
+            <h2 className="mt-2 text-2xl font-bold text-[#25313C]">{subjectName}</h2>
+            <p className="mt-1 text-sm text-[#71808D]">Choose the students who should be enrolled.</p>
           </div>
+          <button type="button" onClick={closeModal} className="flex h-9 w-9 !min-h-0 items-center justify-center rounded-full text-xl text-[#8A98A5] hover:bg-[#F4F7FA]">×</button>
         </div>
 
-        <div className="space-y-3 px-6 py-4">
-          <label htmlFor="subject-student-search" className="sr-only">
-            Search students
-          </label>
-          <input
-            id="subject-student-search"
-            type="text"
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Search students by name, grade, or section"
-            className="w-full rounded-[12px] border border-[#D1D1D6] bg-[#F2F2F7]/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#007AFF] focus:bg-white/70 focus:outline-none  focus:ring-[#007AFF]/20"
-          />
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p
-              role="status"
-              aria-live="polite"
-              className="text-sm text-[#636366]"
+        <div className="p-6">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="search"
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder="Search students"
+              className="flex-1 rounded-[12px] border border-[#D8E1E7] px-4 py-2.5 text-sm outline-none focus:border-[#36A9E1]"
+            />
+            <button
+              type="button"
+              onClick={() => setSelectedIds(allSelected ? [] : students.map((student) => student.id))}
+              className="rounded-[12px] border border-[#D8E1E7] px-4 py-2.5 text-sm font-semibold text-[#52616D] hover:border-[#36A9E1] hover:text-[#168CC8]"
             >
-              {selectedIds.length} of {students.length} students selected
-            </p>
+              {allSelected ? "Clear all" : "Select all"}
+            </button>
+          </div>
 
+          <div className="minimal-scrollbar mt-4 max-h-[440px] divide-y divide-[#EEF2F5] overflow-y-auto rounded-[16px] border border-[#E3E9EE]">
+            {filteredStudents.map((student) => {
+              const selected = selectedIds.includes(student.id);
+              return (
+                <label key={student.id} className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FBFCFD]">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() => toggleStudent(student.id)}
+                    className="h-4 w-4 accent-[#36A9E1]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#25313C]">{student.name}</p>
+                    <p className="mt-0.5 text-xs text-[#8A98A5]">Grade {student.grade} · {student.section}</p>
+                  </div>
+                </label>
+              );
+            })}
+            {filteredStudents.length === 0 && (
+              <p className="px-4 py-12 text-center text-sm text-[#8A98A5]">No students found.</p>
+            )}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between gap-4">
+            <p className="text-sm text-[#71808D]">{selectedIds.length} selected</p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedIds(students.map((student) => student.id))
-                }
-                disabled={students.length === 0 || addingSubject}
-                className="rounded-[12px] bg-white/50 border-1 border-[#0088FF] px-3.5 py-2 text-sm font-medium text-[#0088FF] hover:bg-[#0091FF] hover:text-white disabled:opacity-50"
-              >
-                Select All
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedIds([])}
-                disabled={selectedIds.length === 0 || addingSubject}
-                className="rounded-[12px] bg-white/50 border-1 border-[#D70015] px-3.5 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white disabled:opacity-50"
-              >
-                Clear
+              <button type="button" onClick={closeModal} disabled={addingSubject} className="rounded-[12px] border border-[#D8E1E7] px-4 py-2.5 text-sm font-semibold text-[#52616D]">Cancel</button>
+              <button type="button" onClick={createSubject} disabled={addingSubject} className="rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8] disabled:opacity-50">
+                {addingSubject ? "Creating..." : "Create subject"}
               </button>
             </div>
           </div>
-        </div>
-
-        <div className="max-h-[45vh] overflow-y-auto px-6 py-4">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {filteredStudents.map((student) => (
-              <label
-                key={student.id}
-                className={`flex cursor-pointer items-start gap-3 rounded-[20px] border px-4 py-3 transition ${
-                  selectedIds.includes(student.id)
-                    ? "border-1 border-white/70 bg-white/50"
-                    : "border-1 border-white/70 bg-white hover:bg-[#F2F2F7]"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(student.id)}
-                  onChange={() => toggleStudent(student.id)}
-                  disabled={addingSubject}
-                  className="mt-1 h-4 w-4 accent-[#007AFF]"
-                />
-
-                <span className="min-w-0">
-                  <span className="block font-semibold text-[#1C1C1E]">
-                    {student.name}
-                  </span>
-
-                  <span className="mt-0.5 block text-sm text-[#636366]">
-                    Grade {student.grade} · {student.section}
-                  </span>
-
-                  {student.subject_names?.length > 0 && (
-                    <span className="mt-1 block text-xs text-[#8E8E93]">
-                      Current subjects: {student.subject_names.join(", ")}
-                    </span>
-                  )}
-                </span>
-              </label>
-            ))}
-
-            {filteredStudents.length === 0 && (
-              <div className="rounded-[20px] border border-dashed border-[#D1D1D6] bg-[#F2F2F7] px-4 py-10 text-center text-[#636366] sm:col-span-2">
-                {students.length === 0
-                  ? "No students are registered yet. You can still create the subject with no enrolled students."
-                  : "No students match the search."}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col-reverse gap-3 px-6 py-5 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={closeModal}
-            disabled={addingSubject}
-            className="rounded-[12px] border border-[#D1D1D6] bg-white px-5 py-2.5 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={createSubject}
-            disabled={addingSubject}
-            className="rounded-[12px] bg-[#007AFF] px-5 py-2.5 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
-          >
-            {addingSubject
-              ? "Creating Subject..."
-              : `Create Subject (${selectedIds.length} Students)`}
-          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function SidebarButton({
-  active = false,
-  label,
-  icon,
-  collapsed = false,
-  tone = "blue",
-  onClick,
-}) {
-  const tones = {
-    blue: {
-      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
-      icon: "text-[#007AFF]",
-      hover: "hover:bg-[#0091FF]/50 hover:text-white",
-    },
-    red: {
-      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
-      icon: "text-[#D70015]",
-      hover: "hover:bg-[#0091FF]/50 hover:text-white",
-    },
-    green: {
-      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
-      icon: "text-[#248A3D]",
-      hover: "hover:bg-[#0091FF]/50 hover:text-white",
-    },
-    yellow: {
-      active: "bg-[#0091FF]/80 text-white border-1 border-white/50",
-      icon: "text-[#9A6700]",
-      hover: "hover:bg-[#0091FF]/50 hover:text-white",
-    },
-  };
-
-  const selectedTone = tones[tone] ?? tones.blue;
-
+function SidebarButton({ active = false, label, icon, collapsed, danger = false, onClick }) {
   return (
     <button
       type="button"
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        onClick?.();
-      }}
+      onClick={onClick}
       title={collapsed ? label : undefined}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-      className={`sidebar-nav-button group flex w-full touch-manipulation items-center rounded-[13px] py-1.5 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/45 ${
-        collapsed ? "justify-center px-1" : "gap-2.5 px-2 text-left"
+      className={`flex w-full items-center rounded-[12px] px-3 py-2.5 text-sm font-semibold ${
+        collapsed ? "justify-center" : "gap-3"
       } ${
-        active ? selectedTone.active : `text-[#636366] ${selectedTone.hover}`
+        active
+          ? "bg-[#EAF6FC] text-[#168CC8]"
+          : danger
+            ? "text-[#D94141] hover:bg-[#FFF1F1]"
+            : "text-[#71808D] hover:bg-[#F4F7FA] hover:text-[#25313C]"
       }`}
     >
-      <span
-        className={`sidebar-nav-icon flex h-7 w-7 shrink-0 items-center justify-center ${
-          active
-            ? selectedTone.icon
-            : `${selectedTone.icon} group-hover:scale-105`
-        }`}
-      >
-        <span
-          className="material-symbols-rounded text-[18px] leading-none"
-          style={{
-            fontVariationSettings: active
-              ? "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24"
-              : "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
-          }}
-          aria-hidden="true"
-        >
-          {icon}
-        </span>
-      </span>
-
+      <span className="material-symbols-rounded shrink-0 text-[21px]" aria-hidden="true">{icon}</span>
       {!collapsed && <span className="truncate">{label}</span>}
     </button>
   );
 }
 
-function AnalyticsCard({ title, value, description, tone = "blue" }) {
-  const tones = {
-    blue: {
-      surface: "border-[#007AFF] border-2 bg-white",
-      icon: "bg-[#007AFF] text-white",
-      text: "text-[#0051D5]",
-      symbol: "●",
-    },
-    red: {
-      surface: "border-[#FF3B30] border-2 bg-white",
-      icon: "bg-[#FF3B30] text-white",
-      text: "text-[#D70015]",
-      symbol: "◆",
-    },
-    green: {
-      surface: "border-[#34C759] border-2 bg-white",
-      icon: "bg-[#34C759] text-white",
-      text: "text-[#248A3D]",
-      symbol: "▲",
-    },
-    yellow: {
-      surface: "border-[#FFCC00] border-2 bg-white",
-      icon: "bg-[#FFCC00] text-[#1C1C1E]",
-      text: "text-[#8A5A00]",
-      symbol: "■",
-    },
-  };
-
-  const selectedTone = tones[tone] ?? tones.blue;
-
-  return (
-    <div
-      className={`relative overflow-hidden rounded-[28px] border p-5 ${selectedTone.surface}`}
-    >
-      <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-[#E5E5EA]" />
-
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-[#636366]">{title}</p>
-
-          <p
-            className={`mt-3 text-3xl font-bold tracking-tight ${selectedTone.text}`}
-          >
-            {value}
-          </p>
-        </div>
-
-        <span
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg ${selectedTone.icon}`}
-          aria-hidden="true"
-        >
-          {selectedTone.symbol}
-        </span>
-      </div>
-
-      <p className="relative mt-3 text-sm leading-6 text-[#636366]">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function PerformanceBar({ label, range, count, percentage, barClass }) {
-  return (
-    <div className="rounded-[18px] border border-[#D1D1D6] bg-white p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <span className="font-medium text-[#3A3A3C]">{label}</span>
-          <span className="ml-2 text-sm text-[#8E8E93]">{range}</span>
-        </div>
-
-        <span className="rounded-full bg-white px-3 py-1 text-sm text-[#636366]">
-          {count} student
-          {count === 1 ? "" : "s"} · {percentage.toFixed(1)}%
-        </span>
-      </div>
-
-      <div className="h-3.5 w-full overflow-hidden rounded-full bg-[#E5E5EA]">
-        <div
-          role="progressbar"
-          aria-label={`${label}: ${percentage.toFixed(1)} percent`}
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow={Math.round(percentage)}
-          className={`h-full rounded-full transition-[width] duration-500 ${barClass}`}
-          style={{
-            width: `${percentage}%`,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function InsightList({
   title,
+  description,
   students,
   type,
   onGenerateRecommendation,
   generatingRecommendationKey,
 }) {
-  const isRisk = type === "risk";
-  const supportType = isRisk ? "intervention" : "enrichment";
+  const supportType = type === "risk" ? "intervention" : "enrichment";
 
   return (
-    <div
-      className={`rounded-[24px] border-1 bg-white/70 backdrop-blur-[20px] p-4 ${
-        isRisk ? "border-[#FF3B30]" : "border-[#34C759]"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h4 className="font-bold text-[#1C1C1E]">{title}</h4>
-
-          <p className="mt-1 text-sm text-[#636366]">
-            {students.length} student
-            {students.length === 1 ? "" : "s"}
-          </p>
-        </div>
-
+    <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
+      <div className="border-b border-[#EEF2F5] p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">Learning Support</p>
+        <h2 className="mt-2 text-2xl font-bold text-[#25313C]">{title}</h2>
+        {description && <p className="mt-2 text-sm text-[#71808D]">{description}</p>}
       </div>
-
-      <div className="mt-4 space-y-3">
+      <div className="divide-y divide-[#EEF2F5]">
         {students.map((student) => {
           const requestKey = `${supportType}-${student.id}`;
           const isGenerating = generatingRecommendationKey === requestKey;
-          const anotherRequestIsRunning =
-            Boolean(generatingRecommendationKey) && !isGenerating;
-
           return (
-            <div
-              key={student.id}
-              className="rounded-[18px] border border-[#D1D1D6] bg-white/30 p-4"
-            >
-              <div className="flex justify-between gap-3">
-                <span className="font-medium text-[#1C1C1E]">
-                  {student.name}
-                </span>
-
-                <span
-                  className={
-                    isRisk
-                      ? "font-bold text-[#D70015]"
-                      : "font-bold text-[#248A3D]"
-                  }
-                >
-                  {student.averagePercentage.toFixed(1)}
-                </span>
+            <div key={student.id} className="flex items-center justify-between gap-4 px-6 py-4">
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-[#25313C]">{student.name}</p>
+                <p className="mt-1 text-sm text-[#71808D]">{student.section} · {student.averagePercentage.toFixed(1)}</p>
               </div>
-
-              <p className="mt-1 text-xs text-[#636366]">
-                {student.section} · {student.assessmentCount} assessment
-                {student.assessmentCount === 1 ? "" : "s"}
-              </p>
-
               <button
                 type="button"
                 onClick={() => onGenerateRecommendation(student, supportType)}
                 disabled={Boolean(generatingRecommendationKey)}
-                className={`mt-3 w-full rounded-[12px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  isRisk
-                    ? "bg-[#FF3B30] text-white hover:bg-[#D70015]"
-                    : "bg-[#34C759] text-white hover:bg-[#248A3D]"
-                }`}
+                className="shrink-0 rounded-[11px] bg-[#36A9E1] px-3 py-2 text-xs font-semibold text-white hover:bg-[#168CC8] disabled:opacity-50"
               >
-                {isGenerating
-                  ? "Generating with Gemini..."
-                  : anotherRequestIsRunning
-                    ? "Gemini is processing another student..."
-                    : isRisk
-                      ? "Generate Targeted Intervention"
-                      : "Generate Enrichment Activities"}
+                {isGenerating ? "Generating..." : "Generate"}
               </button>
             </div>
           );
         })}
-
         {students.length === 0 && (
-          <div className="rounded-[18px] border border-dashed border-[#D1D1D6] bg-white p-5 text-center text-sm text-[#636366]">
-            No students identified.
-          </div>
+          <EmptyState title="No students in this group" description="Adjust the filters or wait for more assessment data." />
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -4796,153 +3341,56 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
   const isIntervention = recommendation?.supportType === "intervention";
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1C1C1E]/55 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="recommendation-title"
-        className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-[#E5E5EA] bg-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
-      >
-        <div
-          className={`flex items-start justify-between gap-4 px-6 py-5 ${
-            isIntervention ? "bg-[#FF3B30]/10" : "bg-[#34C759]/12"
-          }`}
-        >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#25313C]/40 p-4 backdrop-blur-[4px]">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_24px_80px_rgba(37,49,60,0.28)]">
+        <div className="flex items-start justify-between gap-4 border-b border-[#EEF2F5] p-6">
           <div>
-            <div className="flex items-center gap-3">
-              <span
-                className={`flex h-11 w-11 items-center justify-center rounded-[16px] text-xl font-bold text-white ${
-                  isIntervention ? "bg-[#FF3B30]" : "bg-[#34C759]"
-                }`}
-                aria-hidden="true"
-              >
-                {isIntervention ? "!" : "★"}
-              </span>
-
-              <div>
-                <p
-                  className={`text-sm font-semibold uppercase tracking-[0.16em] ${
-                    isIntervention ? "text-[#D70015]" : "text-[#248A3D]"
-                  }`}
-                >
-                  Gemini Learning Support
-                </p>
-
-                <h2
-                  id="recommendation-title"
-                  className="mt-1 text-2xl font-bold tracking-tight text-[#1C1C1E]"
-                >
-                  {plan?.title || "Learning-Support Recommendation"}
-                </h2>
-              </div>
-            </div>
-
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">Gemini Learning Support</p>
+            <h2 className="mt-2 text-2xl font-bold text-[#25313C]">{plan?.title || "Learning-Support Recommendation"}</h2>
             {recommendation?.student && (
-              <p className="mt-3 text-sm text-[#636366]">
-                {recommendation.student.name} · Grade{" "}
-                {recommendation.student.grade} ·{" "}
-                {recommendation.student.section} · {recommendation.focusLabel}
+              <p className="mt-2 text-sm text-[#71808D]">
+                {recommendation.student.name} · Grade {recommendation.student.grade} · {recommendation.student.section} · {recommendation.focusLabel}
               </p>
             )}
           </div>
-
           <div className="flex shrink-0 items-center gap-2">
             {recommendation?.savedInsight?.pdfUrl && (
               <a
                 href={`${API_URL}${recommendation.savedInsight.pdfUrl}`}
-                className="inline-flex min-h-11 items-center rounded-full bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066D6]"
+                className="inline-flex min-h-11 items-center rounded-[12px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8]"
               >
                 Download PDF
               </a>
             )}
-
-            <button
-              type="button"
-              onClick={closeModal}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-2xl leading-none text-[#636366] transition hover:bg-[#F2F2F7] hover:text-[#1C1C1E]"
-              aria-label="Close recommendation"
-            >
-              ×
-            </button>
+            <button type="button" onClick={closeModal} className="flex h-10 w-10 !min-h-0 items-center justify-center rounded-full text-2xl text-[#8A98A5] hover:bg-[#F4F7FA]">×</button>
           </div>
         </div>
 
-        <div className="max-h-[calc(92vh-112px)] overflow-y-auto px-6 py-6">
+        <div className="minimal-scrollbar max-h-[calc(92vh-105px)] overflow-y-auto p-6 sm:p-8">
           {error ? (
-            <div
-              role="alert"
-              className="rounded-[22px] border border-[#FF3B30] bg-white p-5 text-[#D70015]"
-            >
-              <h3 className="font-bold">
-                Recommendation could not be generated
-              </h3>
-
-              <p className="mt-2 text-sm">{error}</p>
-            </div>
+            <div className="rounded-[18px] bg-[#FFF1F1] p-5 text-sm text-[#C53939]">{error}</div>
           ) : (
-            <div className="space-y-6">
-              {recommendation?.savedInsight && (
-                <div className="rounded-[20px] bg-[#FF9500]/12 p-4 text-sm text-[#8A5A00]">
-                  This insight was saved automatically on{" "}
-                  {formatSavedDate(recommendation.savedInsight.createdAt)}. Use
-                  the Download PDF button to save a copy outside EduLITE.
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <RecommendationMetric
-                  label="Classification"
-                  value={recommendation?.classification || "—"}
-                  tone={isIntervention ? "red" : "green"}
-                />
-
-                <RecommendationMetric
-                  label="Focus Average"
-                  value={formatPercentage(
-                    recommendation?.analytics?.focusAveragePercentage,
-                  )}
-                  tone="yellow"
-                />
-
-                <RecommendationMetric
-                  label="Section Average"
-                  value={formatPercentage(
-                    recommendation?.analytics?.sectionComparison
-                      ?.sectionAveragePercentage,
-                  )}
-                  tone="blue"
-                />
-
-                <RecommendationMetric
-                  label="Recent Trend"
-                  value={recommendation?.analytics?.recentTrend?.label || "—"}
-                  tone="green"
-                />
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <MinimalInfo label="Classification" value={recommendation?.classification || "—"} />
+                <MinimalInfo label="Focus Average" value={formatPercentage(recommendation?.analytics?.focusAveragePercentage)} />
+                <MinimalInfo label="Section Average" value={formatPercentage(recommendation?.analytics?.sectionComparison?.sectionAveragePercentage)} />
+                <MinimalInfo label="Recent Trend" value={recommendation?.analytics?.recentTrend?.label || "—"} />
               </div>
 
               {plan?.overview && (
                 <RecommendationSection title="Overview">
-                  <div className="rounded-[22px] border border-[#E5E5EA] bg-[#F2F2F7] p-5">
-                    <p className="leading-7 text-[#3A3A3C]">{plan.overview}</p>
-                  </div>
+                  <p className="max-w-4xl leading-7 text-[#52616D]">{plan.overview}</p>
                 </RecommendationSection>
               )}
 
               {plan?.evidence?.length > 0 && (
                 <RecommendationSection title="Evidence Used">
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="grid gap-3 md:grid-cols-2">
                     {plan.evidence.map((item, index) => (
-                      <div
-                        key={`${item.observation}-${index}`}
-                        className="rounded-[22px] bg-[#007AFF]/10 p-4"
-                      >
-                        <p className="font-semibold text-[#0051D5]">
-                          {item.observation}
-                        </p>
-
-                        <p className="mt-2 text-sm text-[#636366]">
-                          {item.dataPoint}
-                        </p>
+                      <div key={`${item.observation}-${index}`} className="rounded-[16px] border border-[#E3E9EE] p-4">
+                        <p className="font-semibold text-[#25313C]">{item.observation}</p>
+                        <p className="mt-2 text-sm text-[#71808D]">{item.dataPoint}</p>
                       </div>
                     ))}
                   </div>
@@ -4950,90 +3398,35 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
               )}
 
               {plan?.targetedInterventions?.length > 0 && (
-                <RecommendationSection title="Suggested Targeted Interventions">
+                <RecommendationSection title="Targeted Interventions">
                   <div className="space-y-4">
-                    {plan.targetedInterventions.map((intervention, index) => (
-                      <div
-                        key={`${intervention.title}-${index}`}
-                        className="rounded-[24px] bg-[#FF3B30]/10 p-5"
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF3B30] font-bold text-white">
-                            {index + 1}
-                          </span>
-
-                          <div>
-                            <h4 className="text-lg font-bold text-[#1C1C1E]">
-                              {intervention.title}
-                            </h4>
-
-                            <p className="mt-2 text-sm leading-6 text-[#3A3A3C]">
-                              {intervention.rationale}
-                            </p>
-                          </div>
-                        </div>
-
-                        {intervention.actions?.length > 0 && (
-                          <ul className="mt-4 list-disc space-y-1 pl-7 text-sm text-[#3A3A3C]">
-                            {intervention.actions.map((action, actionIndex) => (
-                              <li key={`${action}-${actionIndex}`}>{action}</li>
-                            ))}
+                    {plan.targetedInterventions.map((item, index) => (
+                      <RecommendationCard key={`${item.title}-${index}`} index={index + 1} title={item.title} description={item.rationale}>
+                        {item.actions?.length > 0 && (
+                          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#52616D]">
+                            {item.actions.map((action, actionIndex) => <li key={`${action}-${actionIndex}`}>{action}</li>)}
                           </ul>
                         )}
-
-                        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                          <PlanDetail
-                            label="Suggested schedule"
-                            value={intervention.schedule}
-                          />
-
-                          <PlanDetail
-                            label="Success indicator"
-                            value={intervention.successIndicator}
-                          />
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          <PlanDetail label="Schedule" value={item.schedule} />
+                          <PlanDetail label="Success indicator" value={item.successIndicator} />
                         </div>
-                      </div>
+                      </RecommendationCard>
                     ))}
                   </div>
                 </RecommendationSection>
               )}
 
               {plan?.enrichmentActivities?.length > 0 && (
-                <RecommendationSection title="Recommended Enrichment Activities">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {plan.enrichmentActivities.map((activity, index) => (
-                      <div
-                        key={`${activity.title}-${index}`}
-                        className="rounded-[24px] bg-[#34C759]/12 p-5"
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#34C759] font-bold text-white">
-                            {index + 1}
-                          </span>
-
-                          <div>
-                            <h4 className="text-lg font-bold text-[#1C1C1E]">
-                              {activity.title}
-                            </h4>
-
-                            <p className="mt-2 text-sm leading-6 text-[#3A3A3C]">
-                              {activity.description}
-                            </p>
-                          </div>
-                        </div>
-
+                <RecommendationSection title="Enrichment Activities">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {plan.enrichmentActivities.map((item, index) => (
+                      <RecommendationCard key={`${item.title}-${index}`} index={index + 1} title={item.title} description={item.description}>
                         <div className="mt-4 space-y-3">
-                          <PlanDetail
-                            label="Implementation"
-                            value={activity.implementation}
-                          />
-
-                          <PlanDetail
-                            label="Expected outcome"
-                            value={activity.expectedOutcome}
-                          />
+                          <PlanDetail label="Implementation" value={item.implementation} />
+                          <PlanDetail label="Expected outcome" value={item.expectedOutcome} />
                         </div>
-                      </div>
+                      </RecommendationCard>
                     ))}
                   </div>
                 </RecommendationSection>
@@ -5041,30 +3434,17 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
               {plan?.monitoringPlan?.length > 0 && (
                 <RecommendationSection title="Progress Monitoring">
-                  <div className="overflow-x-auto rounded-[22px] bg-[#FF9500]/12">
-                    <table className="w-full min-w-[700px]">
-                      <thead className="border-b border-[#FFCC00] bg-white/55">
-                        <tr>
-                          <TableHeading>Metric</TableHeading>
-                          <TableHeading>Frequency</TableHeading>
-                          <TableHeading>Target</TableHeading>
-                        </tr>
+                  <div className="minimal-scrollbar overflow-x-auto rounded-[16px] border border-[#E3E9EE]">
+                    <table className="w-full min-w-[650px]">
+                      <thead className="bg-[#F8FAFB]">
+                        <tr><TableHeading>Metric</TableHeading><TableHeading>Frequency</TableHeading><TableHeading>Target</TableHeading></tr>
                       </thead>
-
-                      <tbody className="divide-y divide-[#FFCC00]">
+                      <tbody className="divide-y divide-[#EEF2F5]">
                         {plan.monitoringPlan.map((item, index) => (
                           <tr key={`${item.metric}-${index}`}>
-                            <td className="px-6 py-4 text-[#3A3A3C]">
-                              {item.metric}
-                            </td>
-
-                            <td className="px-6 py-4 text-[#3A3A3C]">
-                              {item.frequency}
-                            </td>
-
-                            <td className="px-6 py-4 text-[#3A3A3C]">
-                              {item.target}
-                            </td>
+                            <td className="px-5 py-4 text-sm text-[#52616D]">{item.metric}</td>
+                            <td className="px-5 py-4 text-sm text-[#52616D]">{item.frequency}</td>
+                            <td className="px-5 py-4 text-sm text-[#52616D]">{item.target}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -5075,21 +3455,15 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
 
               {plan?.teacherNotes?.length > 0 && (
                 <RecommendationSection title="Teacher Notes">
-                  <div className="rounded-[22px] bg-[#007AFF]/10 p-5">
-                    <ul className="list-disc space-y-2 pl-5 text-[#3A3A3C]">
-                      {plan.teacherNotes.map((note, index) => (
-                        <li key={`${note}-${index}`}>{note}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <ul className="list-disc space-y-2 pl-5 text-[#52616D]">
+                    {plan.teacherNotes.map((note, index) => <li key={`${note}-${index}`}>{note}</li>)}
+                  </ul>
                 </RecommendationSection>
               )}
 
-              <div className="rounded-[22px] border border-[#D1D1D6] bg-[#E5E5EA] p-4 text-sm leading-6 text-[#3A3A3C]">
-                Gemini recommendations are generated from recorded academic data
-                only. Review them using your professional judgment and knowledge
-                of the learner before applying them.
-              </div>
+              <p className="border-t border-[#EEF2F5] pt-5 text-sm leading-6 text-[#8A98A5]">
+                Review AI recommendations using professional judgment and your knowledge of the learner before applying them.
+              </p>
             </div>
           )}
         </div>
@@ -5098,23 +3472,11 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
   );
 }
 
-function RecommendationMetric({ label, value, tone = "blue" }) {
-  const tones = {
-    blue: "border-[#007AFF] bg-[#007AFF] text-white",
-    red: "border-[#FF3B30] bg-[#FF3B30] text-white",
-    green: "border-[#34C759] bg-[#34C759] text-white",
-    yellow: "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
-  };
-
-  const selectedTone = tones[tone] ?? tones.blue;
-
+function MinimalInfo({ label, value }) {
   return (
-    <div className={`rounded-[22px] border p-4 ${selectedTone}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
-        {label}
-      </p>
-
-      <p className="mt-2 text-lg font-bold tracking-tight">{value}</p>
+    <div className="rounded-[16px] bg-[#F4F7FA] p-4">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8A98A5]">{label}</p>
+      <p className="mt-2 font-bold text-[#25313C]">{value}</p>
     </div>
   );
 }
@@ -5122,65 +3484,81 @@ function RecommendationMetric({ label, value, tone = "blue" }) {
 function RecommendationSection({ title, children }) {
   return (
     <section>
-      <h3 className="mb-3 text-xl font-bold text-[#1C1C1E]">{title}</h3>
+      <h3 className="mb-4 text-xl font-bold text-[#25313C]">{title}</h3>
       {children}
     </section>
   );
 }
 
+function RecommendationCard({ index, title, description, children }) {
+  return (
+    <div className="rounded-[18px] border border-[#E3E9EE] p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#36A9E1] text-sm font-bold text-white">{index}</span>
+        <div className="min-w-0">
+          <h4 className="font-bold text-[#25313C]">{title}</h4>
+          {description && <p className="mt-2 text-sm leading-6 text-[#52616D]">{description}</p>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function PlanDetail({ label, value }) {
   return (
-    <div className="rounded-[16px] border border-[#D1D1D6] bg-white p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#636366]">
-        {label}
-      </p>
+    <div className="rounded-[14px] bg-[#F8FAFB] p-3.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#8A98A5]">{label}</p>
+      <p className="mt-1.5 text-sm leading-5 text-[#52616D]">{value || "—"}</p>
+    </div>
+  );
+}
 
-      <p className="mt-1 text-sm leading-6 text-[#3A3A3C]">{value || "—"}</p>
+function SectionTitle({ eyebrow, title, description }) {
+  return (
+    <div>
+      {eyebrow && <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#36A9E1]">{eyebrow}</p>}
+      <h2 className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[#25313C]">{title}</h2>
+      {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-[#71808D]">{description}</p>}
+    </div>
+  );
+}
+
+function EmptyState({ title, description, actionLabel, onAction }) {
+  return (
+    <div className="px-6 py-14 text-center">
+      <h3 className="text-lg font-semibold text-[#52616D]">{title}</h3>
+      {description && <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#8A98A5]">{description}</p>}
+      {actionLabel && onAction && (
+        <button type="button" onClick={onAction} className="mt-4 rounded-[11px] bg-[#36A9E1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#168CC8]">{actionLabel}</button>
+      )}
     </div>
   );
 }
 
 function formatPercentage(value) {
-  return value === null || value === undefined
-    ? "—"
-    : `${Number(value).toFixed(1)}%`;
+  return value === null || value === undefined ? "—" : `${Number(value).toFixed(1)}%`;
 }
 
 function formatSavedDate(value) {
+  if (!value) return "Unknown date";
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value || "Unknown date";
-  }
-
-  return date.toLocaleString(undefined, {
+  if (Number.isNaN(date.getTime())) return "Unknown date";
+  return new Intl.DateTimeFormat(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  });
+  }).format(date);
 }
 
 function TableHeading({ children, align = "left" }) {
   return (
     <th
       scope="col"
-      className={`px-1 py-1 first:rounded-l-[12px] last:rounded-r-[12px] text-[20px] bg-white/30 font-semibold text-[#636366] ${
-        align === "right" ? "text-center" : "text-center"
-      }`}
-    >
-      {children}
-    </th>
-  );
-}
-
-function TableHeadingA({ children, align = "left" }) {
-  return (
-    <th
-      scope="col"
-      className={`px-1 py-1 first:rounded-l-[12px] last:rounded-r-[12px] text-[20px] bg-white/30 font-semibold text-[#636366] ${
-        align === "center" ? "text-center" : "text-center"
+      className={`px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8A98A5] ${
+        align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"
       }`}
     >
       {children}

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const API_URL = "http://localhost:3000";
+
 const APPLE_FONT =
   '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif';
 
@@ -12,9 +13,40 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [errorVisible, setErrorVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!error) {
+      setErrorVisible(false);
+      return undefined;
+    }
+
+    setErrorVisible(true);
+
+    const hideTimer = window.setTimeout(() => {
+      setErrorVisible(false);
+    }, 4800);
+
+    const clearTimer = window.setTimeout(() => {
+      setError("");
+    }, 5150);
+
+    return () => {
+      window.clearTimeout(hideTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [error]);
+
+  const showError = (message) => {
+    setError("");
+
+    window.requestAnimationFrame(() => {
+      setError(message);
+    });
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -24,34 +56,61 @@ export default function Login() {
     setError("");
 
     if (!trimmedName) {
-      setError("Enter your username.");
+      showError("Enter your username.");
       return;
     }
 
     if (!password) {
-      setError("Enter your password.");
+      showError("Enter your password.");
       return;
     }
 
     setSubmitting(true);
 
-    const endpoint = isLoginMode ? "/login" : "/register";
+    const endpoint = isLoginMode
+      ? "/login"
+      : "/register";
 
     try {
-      const response = await axios.post(`${API_URL}${endpoint}`, {
-        name: trimmedName,
-        password,
-      });
+      const response = await axios.post(
+        `${API_URL}${endpoint}`,
+        {
+          name: trimmedName,
+          password,
+        },
+      );
 
-      const user = response.data.user || {
-        name: trimmedName,
-      };
+      const user =
+        response.data.user || {
+          name: trimmedName,
+        };
 
-      localStorage.setItem("user", JSON.stringify(user));
+      /*
+        Keep compatibility with the current EduLITE dashboard.
+
+        If the backend returns a token, store it.
+      */
+      const token =
+        response.data.token ??
+        response.data.accessToken ??
+        response.data.access_token ??
+        null;
+
+      if (token) {
+        localStorage.setItem(
+          "eduliteToken",
+          token,
+        );
+      }
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(user),
+      );
 
       navigate("/dashboard");
     } catch (requestError) {
-      setError(
+      showError(
         requestError.response?.data?.message ||
           "Unable to connect to the server.",
       );
@@ -65,490 +124,479 @@ export default function Login() {
       return;
     }
 
-    setIsLoginMode((currentMode) => !currentMode);
+    setIsLoginMode(
+      (currentMode) => !currentMode,
+    );
+
     setError("");
     setPassword("");
     setShowPassword(false);
   };
 
+  const dismissError = () => {
+    setErrorVisible(false);
+
+    window.setTimeout(() => {
+      setError("");
+    }, 300);
+  };
+
   return (
     <div
-      className="edulite-ios-corners login-canvas min-h-screen bg-[#F2F2F7] text-[#1C1C1E]"
-      style={{ fontFamily: APPLE_FONT }}
+      className="edulite-login min-h-screen bg-white text-[#1C1C1E]"
+      style={{
+        fontFamily: APPLE_FONT,
+      }}
     >
       <style>{`
-        .login-canvas {
+        .edulite-login * {
+          box-sizing: border-box;
+        }
+
+        .edulite-login {
           color-scheme: light;
-          background:
-            radial-gradient(circle at 88% 8%, rgba(0, 122, 255, 0.09), transparent 28rem),
-            radial-gradient(circle at 72% 92%, rgba(52, 199, 89, 0.08), transparent 30rem),
-            #f5f5f7;
+          overflow-x: hidden;
         }
 
-        .edulite-ios-corners [class*="rounded-["]:not(.rounded-full) {
-          corner-shape: squircle;
+        .edulite-login button,
+        .edulite-login input {
+          font: inherit;
         }
 
-        .login-glass {
-          border: 1px solid rgba(209, 209, 214, 0.82);
-          background: rgba(255, 255, 255, 0.92);
-          -webkit-backdrop-filter: blur(20px) saturate(145%);
-          backdrop-filter: blur(20px) saturate(145%);
-          box-shadow:
-            0 24px 64px rgba(60, 60, 67, 0.13),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-
-        .edulite-ios-corners button,
-        .edulite-ios-corners input {
-          min-height: 44px;
-        }
-
-        .edulite-ios-corners input {
-          font-size: 16px;
-        }
-
-        .edulite-ios-corners :where(button, input):focus-visible {
-          outline: 3px solid rgba(0, 122, 255, 0.5);
-          outline-offset: 3px;
-        }
-
-        .edulite-ios-corners button {
+        .edulite-login button {
           transition:
-            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-            box-shadow 220ms ease,
-            background-color 220ms ease,
-            color 220ms ease,
-            opacity 220ms ease,
-            filter 220ms ease;
-          will-change: transform;
+            transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            background-color 180ms ease,
+            color 180ms ease,
+            border-color 180ms ease,
+            opacity 180ms ease;
         }
 
-        .edulite-ios-corners button:not(:disabled):hover {
-          transform: translateY(-1px) scale(1.01);
-          filter: brightness(1.025);
+        .edulite-login button:not(:disabled):active {
+          transform: scale(0.98);
         }
 
-        .edulite-ios-corners button:not(:disabled):active {
-          transform: translateY(0) scale(0.97);
-          transition-duration: 90ms;
-        }
-
-        .edulite-ios-corners input {
+        .edulite-login input {
           transition:
-            border-color 220ms ease,
-            box-shadow 220ms ease,
-            background-color 220ms ease,
-            transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            background-color 180ms ease;
         }
 
-        .edulite-ios-corners input:focus {
-          transform: translateY(-1px);
+        .edulite-login :where(button, input):focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 4px rgba(0, 145, 255, 0.16);
         }
 
-        .login-panel-enter {
-          animation: login-panel-in 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        .login-page-enter {
+          animation:
+            login-page-in
+            520ms
+            cubic-bezier(0.2, 0.8, 0.2, 1)
+            both;
         }
 
-        @keyframes login-panel-in {
+        .login-form-enter {
+          animation:
+            login-form-in
+            560ms
+            cubic-bezier(0.2, 0.8, 0.2, 1)
+            both;
+        }
+
+        .login-toast {
+          transform:
+            translateY(-10px)
+            scale(0.98);
+
+          opacity: 0;
+
+          pointer-events: none;
+
+          transition:
+            transform
+              300ms
+              cubic-bezier(0.2, 0.8, 0.2, 1),
+            opacity
+              260ms
+              ease;
+        }
+
+        .login-toast.is-visible {
+          transform:
+            translateY(0)
+            scale(1);
+
+          opacity: 1;
+
+          pointer-events: auto;
+        }
+
+        @keyframes login-page-in {
           from {
             opacity: 0;
-            transform: translateY(16px) scale(0.985);
           }
+
           to {
             opacity: 1;
-            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes login-form-in {
+          from {
+            opacity: 0;
+
+            transform:
+              translateY(14px);
+          }
+
+          to {
+            opacity: 1;
+
+            transform:
+              translateY(0);
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .edulite-ios-corners *,
-          .edulite-ios-corners *::before,
-          .edulite-ios-corners *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
+          .edulite-login *,
+          .edulite-login *::before,
+          .edulite-login *::after {
+            animation-duration:
+              0.01ms !important;
 
-        @media (hover: none), (pointer: coarse) {
-          .edulite-ios-corners button:not(:disabled):hover,
-          .edulite-ios-corners input:focus {
-            transform: none;
-          }
-        }
+            animation-iteration-count:
+              1 !important;
 
-        @media (prefers-contrast: more) {
-          .login-glass,
-          .edulite-ios-corners input {
-            border-color: #636366;
+            transition-duration:
+              0.01ms !important;
           }
         }
       `}</style>
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-        <BrandPanel isLoginMode={isLoginMode} />
 
-        <main className="flex items-center justify-center px-4 py-10 sm:px-8 lg:px-12">
-          <div className="w-full max-w-lg">
-            <div className="mb-6 flex items-center justify-center lg:hidden">
-              <img
-                src="/logo.png"
-                alt="EduLITE logo"
-                className="h-28 w-28 object-contain"
-              />
+      {error && (
+        <div
+          className={`login-toast fixed right-4 top-4 z-50 w-[calc(100%-2rem)] max-w-[380px] rounded-[18px] border border-black/5 bg-white/90 p-4 shadow-[0_18px_50px_rgba(31,41,55,0.16)] backdrop-blur-[24px] sm:right-6 sm:top-6 ${
+            errorVisible
+              ? "is-visible"
+              : ""
+          }`}
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF3B30] text-sm font-bold text-white">
+              !
             </div>
 
-            <section
-              aria-labelledby="account-title"
-              className="login-glass login-panel-enter overflow-hidden rounded-[32px]"
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-[#1C1C1E]">
+                EduLITE
+              </p>
+
+              <p className="mt-0.5 text-sm leading-5 text-[#636366]">
+                {error}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={
+                dismissError
+              }
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg leading-none text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]"
+              aria-label="Dismiss error"
             >
-              <div className="border-b border-[#E5E5EA] px-6 py-6 sm:px-8">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#007AFF]">
-                      EduLITE Account
-                    </p>
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
-                    <h1
-                      id="account-title"
-                      className="mt-2 text-3xl font-bold tracking-tight text-[#1C1C1E]"
-                    >
-                      {isLoginMode ? "Welcome back" : "Create your account"}
-                    </h1>
+      <main className="login-page-enter relative min-h-screen">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-[-180px] top-[-220px] h-[520px] w-[520px] rounded-full bg-[#0091FF]/8 blur-3xl"
+        />
 
-                    <p className="mt-2 max-w-md text-sm leading-6 text-[#636366]">
-                      {isLoginMode
-                        ? "Sign in to manage students, assessments, learning records, and Gemini insights."
-                        : "Register an EduLITE account to begin managing student learning records."}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`hidden h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold sm:flex ${
-                      isLoginMode
-                        ? "bg-[#007AFF] text-white"
-                        : "bg-[#34C759] text-white"
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {isLoginMode ? "L" : "+"}
-                  </span>
-                </div>
-
-                <div
-                  role="tablist"
-                  aria-label="Account access"
-                  className="mt-6 grid grid-cols-2 rounded-full border border-[#E5E5EA] bg-[#f1f3f4] p-1"
-                >
-                  <ModeButton
-                    active={isLoginMode}
-                    label="Sign In"
-                    activeClassName="bg-[#007AFF] text-white"
-                    onClick={() => {
-                      if (!isLoginMode) {
-                        switchMode();
-                      }
-                    }}
-                  />
-
-                  <ModeButton
-                    active={!isLoginMode}
-                    label="Register"
-                    activeClassName="bg-[#34C759] text-white"
-                    onClick={() => {
-                      if (isLoginMode) {
-                        switchMode();
-                      }
-                    }}
-                  />
-                </div>
+        <div className="mx-auto grid min-h-screen w-full max-w-[1500px] grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
+          {/* LEFT SIDE */}
+          <section className="relative flex min-h-[44vh] flex-col justify-between px-6 pb-10 pt-7 sm:px-10 sm:pb-14 sm:pt-10 lg:min-h-screen lg:px-16 lg:py-14 xl:px-24">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-[#E5E5EA] bg-white">
+                <img
+                  src="/logo.png"
+                  alt="EduLITE logo"
+                  className="h-9 w-9 object-contain"
+                />
               </div>
 
-              <div className="px-6 py-6 sm:px-8 sm:py-8">
-                {error && (
-                  <div
-                    role="alert"
-                    className="mb-6 rounded-[18px] bg-[#FF3B30]/10 p-4 text-sm font-medium text-[#D70015]"
-                  >
-                    {error}
-                  </div>
-                )}
+              <div>
+                <p className="text-sm font-bold tracking-tight text-[#36454F]">
+                  EduLITE
+                </p>
 
-                <form
-                  onSubmit={handleSubmit}
-                  aria-busy={submitting}
-                  className="space-y-5"
-                >
-                  <div>
-                    <label
-                      htmlFor="username"
-                      className="mb-2 block text-sm font-semibold text-[#3A3A3C]"
-                    >
-                      Username
-                    </label>
-
-                    <div className="relative">
-                      <span
-                        className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-sm font-bold text-[#007AFF]"
-                        aria-hidden="true"
-                      >
-                        U
-                      </span>
-
-                      <input
-                        id="username"
-                        type="text"
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        placeholder="Enter your username"
-                        autoComplete="username"
-                        disabled={submitting}
-                        className="w-full rounded-[16px] border border-[#E5E5EA] bg-white py-3.5 pl-12 pr-4 text-[#1C1C1E] placeholder-[#8E8E93] outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/20 disabled:cursor-not-allowed disabled:bg-[#f1f3f4]"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="mb-2 block text-sm font-semibold text-[#3A3A3C]"
-                    >
-                      Password
-                    </label>
-
-                    <div className="relative">
-                      <span
-                        className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-sm font-bold text-[#34C759]"
-                        aria-hidden="true"
-                      >
-                        P
-                      </span>
-
-                      <input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Enter your password"
-                        autoComplete={
-                          isLoginMode ? "current-password" : "new-password"
-                        }
-                        disabled={submitting}
-                        className="w-full rounded-[16px] border border-[#E5E5EA] bg-white py-3.5 pl-12 pr-20 text-[#1C1C1E] placeholder-[#8E8E93] outline-none transition focus:border-[#34C759] focus:ring-4 focus:ring-[#34C759]/20 disabled:cursor-not-allowed disabled:bg-[#f1f3f4]"
-                        required
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowPassword((currentValue) => !currentValue)
-                        }
-                        disabled={submitting}
-                        className="absolute inset-y-0 right-0 flex items-center px-4 text-xs font-semibold text-[#0051D5] transition hover:text-[#007AFF] disabled:cursor-not-allowed disabled:text-[#8E8E93]"
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showPassword ? "Hide" : "Show"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {!isLoginMode && (
-                    <div className="rounded-[18px] bg-[#FFCC00]/15 p-4 text-sm leading-6 text-[#8A5A00]">
-                      Your username will be used to sign in to EduLITE. Choose a
-                      password that is difficult for other people to guess.
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className={`w-full rounded-full px-6 py-3.5 font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] ${
-                      isLoginMode
-                        ? "bg-[#007AFF] hover:bg-[#0051D5]"
-                        : "bg-[#34C759] hover:bg-[#248A3D]"
-                    }`}
-                  >
-                    {submitting
-                      ? isLoginMode
-                        ? "Signing in..."
-                        : "Creating account..."
-                      : isLoginMode
-                        ? "Sign In"
-                        : "Create Account"}
-                  </button>
-                </form>
-
-                <div className="my-7 flex items-center gap-4">
-                  <div className="h-px flex-1 bg-[#E5E5EA]" />
-
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8E8E93]">
-                    EduLITE
-                  </span>
-
-                  <div className="h-px flex-1 bg-[#E5E5EA]" />
-                </div>
-
-                <p className="text-center text-sm text-[#636366]">
-                  {isLoginMode
-                    ? "Don't have an account?"
-                    : "Already have an account?"}{" "}
-                  <button
-                    type="button"
-                    onClick={switchMode}
-                    disabled={submitting}
-                    className={`font-semibold transition disabled:cursor-not-allowed disabled:text-[#8E8E93] ${
-                      isLoginMode
-                        ? "text-[#248A3D] hover:text-[#248A3D]"
-                        : "text-[#0051D5] hover:text-[#007AFF]"
-                    }`}
-                  >
-                    {isLoginMode ? "Create one" : "Sign in instead"}
-                  </button>
+                <p className="text-[11px] text-[#8E8E93]">
+                  Teacher Workspace
                 </p>
               </div>
-            </section>
+            </div>
 
-            <p className="mt-5 text-center text-xs leading-5 text-[#8E8E93]">
-              EduLITE student performance analytics and learning-support
-              workspace.
+            <div className="max-w-[720px] py-12 lg:py-0">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#0091FF]">
+                Student Learning Workspace
+              </p>
+
+              <h1 className="mt-5 text-[clamp(3.4rem,7vw,7.5rem)] font-bold leading-[0.84] tracking-[-0.065em] text-[#0091FF]">
+                EduLITE:
+
+                <span className="mt-2 block text-[#3AAAE8]">
+                  The Current
+                  <br />
+                  State.
+                </span>
+              </h1>
+
+              <p className="mt-7 max-w-lg text-base leading-7 text-[#636366] sm:text-lg sm:leading-8">
+                A focused workspace for
+                student records,
+                assessment results,
+                performance review,
+                and learning support.
+              </p>
+            </div>
+
+            <p className="hidden max-w-md text-xs leading-5 text-[#A1A1A6] lg:block">
+              Built for clear academic
+              records and teacher-guided
+              decisions.
             </p>
-          </div>
-        </main>
-      </div>
+          </section>
+
+          {/* RIGHT SIDE */}
+          <section className="flex items-center border-t border-[#ECEFF2] bg-[#FAFBFC] px-6 py-10 sm:px-10 lg:min-h-screen lg:border-l lg:border-t-0 lg:px-14 xl:px-20">
+            <div className="login-form-enter mx-auto w-full max-w-[460px]">
+              <div className="mb-10">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#0091FF]">
+                  {isLoginMode
+                    ? "Welcome Back"
+                    : "Create Account"}
+                </p>
+
+                <h2 className="mt-3 text-4xl font-bold tracking-[-0.04em] text-[#36454F] sm:text-5xl">
+                  {isLoginMode
+                    ? "Sign in."
+                    : "Get started."}
+                </h2>
+
+                <p className="mt-3 max-w-md text-sm leading-6 text-[#7A7A7F]">
+                  {isLoginMode
+                    ? "Enter your EduLITE account details to continue."
+                    : "Create an account to begin using the EduLITE workspace."}
+                </p>
+              </div>
+
+              <div className="mb-7 inline-flex rounded-[13px] bg-[#ECEFF2] p-1">
+                <ModeButton
+                  active={
+                    isLoginMode
+                  }
+                  label="Sign In"
+                  onClick={() => {
+                    if (
+                      !isLoginMode
+                    ) {
+                      switchMode();
+                    }
+                  }}
+                />
+
+                <ModeButton
+                  active={
+                    !isLoginMode
+                  }
+                  label="Register"
+                  onClick={() => {
+                    if (
+                      isLoginMode
+                    ) {
+                      switchMode();
+                    }
+                  }}
+                />
+              </div>
+
+              <form
+                onSubmit={
+                  handleSubmit
+                }
+                className="space-y-5"
+              >
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[#3A3A3C]">
+                    Username
+                  </span>
+
+                  <input
+                    id="username"
+                    type="text"
+                    value={name}
+                    onChange={(
+                      event,
+                    ) =>
+                      setName(
+                        event.target
+                          .value,
+                      )
+                    }
+                    placeholder="Enter your username"
+                    autoComplete="username"
+                    disabled={
+                      submitting
+                    }
+                    className="w-full rounded-[15px] border border-[#D9DDE2] bg-white px-4 py-3.5 text-base text-[#1C1C1E] placeholder-[#A1A1A6] outline-none focus:border-[#0091FF] disabled:cursor-not-allowed disabled:bg-[#F2F2F7]"
+                    required
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[#3A3A3C]">
+                    Password
+                  </span>
+
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      value={password}
+                      onChange={(
+                        event,
+                      ) =>
+                        setPassword(
+                          event.target
+                            .value,
+                        )
+                      }
+                      placeholder="Enter your password"
+                      autoComplete={
+                        isLoginMode
+                          ? "current-password"
+                          : "new-password"
+                      }
+                      disabled={
+                        submitting
+                      }
+                      className="w-full rounded-[15px] border border-[#D9DDE2] bg-white px-4 py-3.5 pr-20 text-base text-[#1C1C1E] placeholder-[#A1A1A6] outline-none focus:border-[#0091FF] disabled:cursor-not-allowed disabled:bg-[#F2F2F7]"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          (
+                            currentValue,
+                          ) =>
+                            !currentValue,
+                        )
+                      }
+                      disabled={
+                        submitting
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center px-4 text-xs font-semibold text-[#007AFF] disabled:cursor-not-allowed disabled:text-[#A1A1A6]"
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                    >
+                      {showPassword
+                        ? "Hide"
+                        : "Show"}
+                    </button>
+                  </div>
+                </label>
+
+                {!isLoginMode && (
+                  <p className="text-xs leading-5 text-[#8E8E93]">
+                    Your username will be
+                    used when signing in.
+                    Use a password that is
+                    difficult for other
+                    people to guess.
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={
+                    submitting
+                  }
+                  className="mt-2 w-full rounded-[15px] bg-[#0091FF] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-[#C7C7CC]"
+                >
+                  {submitting
+                    ? isLoginMode
+                      ? "Signing in..."
+                      : "Creating account..."
+                    : isLoginMode
+                      ? "Sign In"
+                      : "Create Account"}
+                </button>
+              </form>
+
+              <p className="mt-7 text-sm text-[#7A7A7F]">
+                {isLoginMode
+                  ? "New to EduLITE?"
+                  : "Already have an EduLITE account?"}{" "}
+
+                <button
+                  type="button"
+                  onClick={
+                    switchMode
+                  }
+                  disabled={
+                    submitting
+                  }
+                  className="font-semibold text-[#007AFF] hover:text-[#005FCC] disabled:cursor-not-allowed disabled:text-[#A1A1A6]"
+                >
+                  {isLoginMode
+                    ? "Create an account"
+                    : "Sign in"}
+                </button>
+              </p>
+
+              <p className="mt-12 text-[11px] leading-5 text-[#A1A1A6]">
+                EduLITE · Student
+                performance and
+                learning-support
+                workspace
+              </p>
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
   );
 }
 
-function BrandPanel({ isLoginMode }) {
-  return (
-    <aside className="relative hidden min-h-screen overflow-hidden bg-[#1C1C1E] p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
-      <img
-        src="/hero.jpg"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-black/72 via-black/45 to-black/20" />
-
-      <div className="relative">
-        <div className="flex items-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-white/85 shadow-xl backdrop-blur-xl">
-            <img
-              src="/logo.png"
-              alt="EduLITE logo"
-              className="h-16 w-16 object-contain"
-            />
-          </div>
-
-          <div>
-            <p className="text-3xl font-bold tracking-tight text-white">
-              EduLITE
-            </p>
-
-            <p className="mt-1 text-sm font-medium text-white/70">
-              Teacher Workspace
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-16 max-w-xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">
-            Learning Intelligence
-          </p>
-
-          <h2 className="mt-4 text-5xl font-bold leading-[1.08] tracking-tight text-white">
-            Understand progress.
-            <span className="block text-[#007AFF]">Support every learner.</span>
-          </h2>
-
-          <p className="mt-6 max-w-lg text-base leading-8 text-white/75">
-            Manage student profiles, record assessment scores, review class
-            analytics, and generate targeted learning-support recommendations in
-            one workspace.
-          </p>
-        </div>
-
-        <div className="mt-12 grid max-w-xl grid-cols-2 gap-4">
-          <FeatureCard
-            colorClassName="border-[#007AFF]"
-            markerClassName="bg-[#007AFF]"
-            title="Student Records"
-            description="Keep academic information organized and accessible."
-          />
-
-          <FeatureCard
-            colorClassName="border-[#34C759]"
-            markerClassName="bg-[#34C759]"
-            title="Performance Analytics"
-            description="Review averages, passing rates, and learning needs."
-          />
-
-          <FeatureCard
-            colorClassName="border-[#FFCC00]"
-            markerClassName="bg-[#FFCC00]"
-            title="Assessments"
-            description="Create assessments and record student scores."
-          />
-
-          <FeatureCard
-            colorClassName="border-[#FF3B30]"
-            markerClassName="bg-[#FF3B30]"
-            title="Gemini Insights"
-            description="Generate interventions and enrichment activities."
-          />
-        </div>
-      </div>
-
-      <div className="relative flex items-center justify-between gap-4 border-t border-white/20 pt-6">
-        <p className="text-sm text-white/75">
-          {isLoginMode
-            ? "Securely access your EduLITE workspace."
-            : "Create your EduLITE account to get started."}
-        </p>
-
-        <div className="flex gap-2" aria-hidden="true">
-          <span className="h-3 w-3 rounded-full bg-[#007AFF]" />
-          <span className="h-3 w-3 rounded-full bg-[#FF3B30]" />
-          <span className="h-3 w-3 rounded-full bg-[#FFCC00]" />
-          <span className="h-3 w-3 rounded-full bg-[#34C759]" />
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function FeatureCard({ colorClassName, markerClassName, title, description }) {
-  return (
-    <article
-      className={`rounded-[22px] border bg-black/30 p-5 text-white shadow-lg backdrop-blur-xl ${colorClassName}`}
-    >
-      <span
-        className={`block h-3 w-3 rounded-full ${markerClassName}`}
-        aria-hidden="true"
-      />
-
-      <h3 className="mt-4 font-bold text-white">{title}</h3>
-
-      <p className="mt-2 text-sm leading-6 text-white/70">{description}</p>
-    </article>
-  );
-}
-
-function ModeButton({ active, label, activeClassName, onClick }) {
+function ModeButton({
+  active,
+  label,
+  onClick,
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      role="tab"
       aria-pressed={active}
-      aria-selected={active}
-      className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+      className={`rounded-[10px] px-4 py-2 text-sm font-semibold ${
         active
-          ? activeClassName
-          : "text-[#636366] hover:bg-white hover:text-[#1C1C1E]"
+          ? "bg-white text-[#1C1C1E] shadow-[0_1px_4px_rgba(31,41,55,0.08)]"
+          : "text-[#8E8E93] hover:text-[#3A3A3C]"
       }`}
     >
       {label}
