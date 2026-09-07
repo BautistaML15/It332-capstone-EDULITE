@@ -13,9 +13,11 @@ import {
 import loginRoutes from "./login.js";
 import sectionRoutes from "./section.js";
 import studentRoutes from "./student.js";
+import studentImportRoutes from "./studentImport.js";
 import subjectRoutes from "./subject.js";
 import assessmentRoutes from "./assessment.js";
 import geminiRoute from "./geminiRoute.js";
+import { validateRequestInputs } from "./middleware/inputValidation.js";
 
 const app = express();
 
@@ -24,6 +26,7 @@ const PORT =
 
 app.use(cors());
 app.use(express.json());
+app.use(validateRequestInputs);
 
 app.get("/", (req, res) => {
   res.json({
@@ -44,6 +47,7 @@ app.get("/", (req, res) => {
 app.use(loginRoutes);
 app.use(sectionRoutes);
 app.use(studentRoutes);
+app.use(studentImportRoutes);
 app.use(subjectRoutes);
 app.use(assessmentRoutes);
 app.use(geminiRoute);

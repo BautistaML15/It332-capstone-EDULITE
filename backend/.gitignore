@@ -7,3 +7,6 @@ node_modules/
 
 # Ignore Environment Variables (if you use them later)
 .env
+
+# Local workbook authoring runtime and previews
+scripts/.template-tooling/

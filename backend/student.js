@@ -7,6 +7,7 @@ import Subject from "./models/Subject.js";
 import Assessment from "./models/Assessment.js";
 import AssessmentScore from "./models/AssessmentScore.js";
 import StudentAiInsight from "./models/StudentAiInsight.js";
+import { parseWholeNumber } from "../shared/inputValidation.mjs";
 
 import {
   requireAuth,
@@ -111,7 +112,7 @@ async function validateStudent(
   const name =
     normalizeText(body.name);
 
-  const grade = Number(
+  const grade = parseWholeNumber(
     body.grade,
   );
 
@@ -558,6 +559,7 @@ router.put(
         });
       }
 
+      const validatedScores = [];
       for (
         const entry
         of req.body.scores
@@ -603,20 +605,11 @@ router.put(
           entry.score ===
             undefined
         ) {
-          await AssessmentScore.deleteOne(
-            {
-              ownerId,
-              studentId:
-                student._id,
-              assessmentId:
-                assessment._id,
-            },
-          );
-
+          validatedScores.push({ assessmentId: assessment._id, score: null });
           continue;
         }
 
-        const score = Number(
+        const score = parseWholeNumber(
           entry.score,
         );
 
@@ -632,13 +625,21 @@ router.put(
           });
         }
 
+        validatedScores.push({ assessmentId: assessment._id, score });
+      }
+
+      // Check every assessment and range before changing any score.
+      for (const { assessmentId, score } of validatedScores) {
+        if (score === null) {
+          await AssessmentScore.deleteOne({ ownerId, studentId: student._id, assessmentId });
+          continue;
+        }
         await AssessmentScore.findOneAndUpdate(
           {
             ownerId,
             studentId:
               student._id,
-            assessmentId:
-              assessment._id,
+            assessmentId,
           },
           {
             $set: { score },
@@ -646,8 +647,7 @@ router.put(
               ownerId,
               studentId:
                 student._id,
-              assessmentId:
-                assessment._id,
+              assessmentId,
             },
           },
           {
