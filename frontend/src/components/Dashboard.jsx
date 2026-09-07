@@ -898,7 +898,13 @@ export default function Dashboard() {
           (summary) =>
             summary[selectedTermKey]?.termGrade,
         )
-        .filter((grade) => Number.isFinite(Number(grade)))
+        .filter(
+          (grade) =>
+            grade !== null &&
+            grade !== undefined &&
+            grade !== "" &&
+            Number.isFinite(Number(grade)),
+        )
         .map(Number);
 
       const averagePercentage =
@@ -2067,6 +2073,7 @@ function DashboardView({
             title="Needs Intervention"
             student={atRiskStudents[0]}
             type="risk"
+            selectedTerm={selectedTerm}
             onGenerate={generateStudentRecommendation}
             generatingKey={generatingRecommendationKey}
           />
@@ -2074,6 +2081,7 @@ function DashboardView({
             title="Ready for Enrichment"
             student={highPotentialStudents[0]}
             type="potential"
+            selectedTerm={selectedTerm}
             onGenerate={generateStudentRecommendation}
             generatingKey={generatingRecommendationKey}
           />
@@ -2185,73 +2193,45 @@ function BentoInsight({
   title,
   student,
   type,
+  selectedTerm,
   onGenerate,
   generatingKey,
-  selectedTerm,
 }) {
   const isRisk = type === "risk";
-
-  const supportType = isRisk
-    ? "intervention"
-    : "enrichment";
-
-  const requestKey = student
-    ? `${supportType}-${student.id}`
-    : "";
-
-  const isGenerating =
-    generatingKey === requestKey;
+  const supportType = isRisk ? "intervention" : "enrichment";
+  const requestKey = student ? `${supportType}-${student.id}` : "";
+  const isGenerating = generatingKey === requestKey;
 
   return (
     <div
       className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-[16px] p-3 text-white shadow-sm ${
-        isRisk
-          ? "bg-white/20"
-          : "bg-white/20"
+        isRisk ? "bg-white/20" : "bg-white/20"
       }`}
     >
       <div className="min-w-0">
-        <p className="mb-[15px] text-[15px] font-semibold tracking-wide text-[#36454F]">
+        <p className="text-[15px] font-semibold tracking-wide text-[#36454F] mb-[15px]">
           {title}
         </p>
-
         {student ? (
           <>
-            <div className="rounded-[12px] bg-white/15 px-2 py-1">
+            <div className="px-2 py-1 rounded-[12px] bg-white/15">
               <p className="mt-1 truncate text-sm text-[#36454F]">
                 {student.name}
               </p>
-
               <p className="text-[10px] text-[#36454F]/70">
-                {student.section} · Term {selectedTerm}:{" "}
-                {student.averagePercentage !== null &&
-                student.averagePercentage !== undefined
-                  ? Number(
-                      student.averagePercentage,
-                    ).toFixed(1)
-                  : "N/A"}
+                {student.section} · Term {selectedTerm}: {student.averagePercentage.toFixed(1)}
               </p>
             </div>
           </>
         ) : (
-          <p className="mt-2 text-xs text-white/70">
-            No student identified.
-          </p>
+          <p className="mt-2 text-xs text-white/70">No student identified.</p>
         )}
       </div>
-
       {student && (
         <button
           type="button"
-          onClick={() =>
-            onGenerate(
-              student,
-              supportType,
-            )
-          }
-          disabled={Boolean(
-            generatingKey,
-          )}
+          onClick={() => onGenerate(student, supportType)}
+          disabled={Boolean(generatingKey)}
           className={`mt-2 rounded-full px-3 py-1.5 text-[10px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
             isRisk
               ? "bg-[#FF3B30] hover:bg-[#D70015]"
