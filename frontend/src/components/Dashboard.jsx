@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import StudentForm from "./StudentForm";
@@ -76,8 +76,9 @@ export default function Dashboard() {
     [],
   );
   const [subjectStudentSearch, setSubjectStudentSearch] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [toasts, setToasts] = useState([]);
+  const toastCounterRef = useRef(0);
+  const toastTimersRef = useRef(new Map());
   const [editingStudentId, setEditingStudentId] = useState(null);
   const [editedScores, setEditedScores] = useState({});
   const [savingScores, setSavingScores] = useState(false);
@@ -109,6 +110,83 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
 
+  const dismissToast = (toastId) => {
+    const existingTimer = toastTimersRef.current.get(toastId);
+
+    if (existingTimer) {
+      window.clearTimeout(existingTimer);
+      toastTimersRef.current.delete(toastId);
+    }
+
+    setToasts((currentToasts) =>
+      currentToasts.map((toast) =>
+        toast.id === toastId
+          ? {
+              ...toast,
+              closing: true,
+            }
+          : toast,
+      ),
+    );
+
+    window.setTimeout(() => {
+      setToasts((currentToasts) =>
+        currentToasts.filter((toast) => toast.id !== toastId),
+      );
+    }, 280);
+  };
+
+  const showToast = (type, message, options = {}) => {
+    const normalizedMessage = String(message ?? "").trim();
+
+    if (!normalizedMessage) {
+      return;
+    }
+
+    toastCounterRef.current += 1;
+
+    const toastId = `edulite-toast-${Date.now()}-${toastCounterRef.current}`;
+
+    const toast = {
+      id: toastId,
+      type,
+      title:
+        options.title ||
+        (type === "success"
+          ? "EduLITE"
+          : type === "error"
+            ? "EduLITE"
+            : "EduLITE"),
+      message: normalizedMessage,
+      closing: false,
+    };
+
+    setToasts((currentToasts) => [...currentToasts.slice(-2), toast]);
+
+    const duration = Number(options.duration ?? (type === "error" ? 5200 : 4000));
+
+    const timer = window.setTimeout(() => {
+      dismissToast(toastId);
+    }, duration);
+
+    toastTimersRef.current.set(toastId, timer);
+  };
+
+  // Compatibility helpers used throughout the existing Dashboard handlers.
+  // Empty strings simply clear the old inline-banner behavior and do not
+  // create a notification.
+  const setError = (message) => {
+    if (message) {
+      showToast("error", message);
+    }
+  };
+
+  const setSuccess = (message) => {
+    if (message) {
+      showToast("success", message);
+    }
+  };
+
   const pageDetails =
     activeView === "studentForm" && studentFormId
       ? {
@@ -127,6 +205,16 @@ export default function Dashboard() {
   useEffect(() => {
     localStorage.setItem("eduliteSidebarCollapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    return () => {
+      toastTimersRef.current.forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+
+      toastTimersRef.current.clear();
+    };
+  }, []);
 
   useEffect(() => {
     const stylesheets = [
@@ -162,9 +250,10 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [navigate]);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    setError("");
+  const fetchDashboardData = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+    }
 
     try {
       const [
@@ -212,7 +301,9 @@ export default function Dashboard() {
 
       setError(err.response?.data?.message || "Unable to load the dashboard.");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -261,7 +352,7 @@ export default function Dashboard() {
 
       setNewSection("");
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess("Section added successfully.");
     } catch (err) {
@@ -286,7 +377,7 @@ export default function Dashboard() {
         setSelectedSection("ALL");
       }
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess("Section removed successfully.");
     } catch (err) {
@@ -351,7 +442,7 @@ export default function Dashboard() {
       setSelectedSubjectStudentIds([]);
       setSubjectStudentSearch("");
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess(
         `${
@@ -382,7 +473,7 @@ export default function Dashboard() {
         name: nextName,
       });
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess("Subject updated successfully.");
     } catch (err) {
@@ -405,7 +496,7 @@ export default function Dashboard() {
         setSelectedSubject("ALL");
       }
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess("Subject removed successfully.");
     } catch (err) {
@@ -428,7 +519,7 @@ export default function Dashboard() {
     try {
       await axios.delete(`${API_URL}/students/${studentId}`);
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess("Student deleted successfully.");
     } catch (err) {
@@ -447,7 +538,7 @@ export default function Dashboard() {
     try {
       await axios.delete(`${API_URL}/assessments/${assessmentId}`);
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess("Assessment deleted successfully.");
     } catch (err) {
@@ -489,7 +580,7 @@ export default function Dashboard() {
   };
 
   const handleStudentFormSaved = async (_result, details) => {
-    await fetchDashboardData();
+    await fetchDashboardData({ silent: true });
     setStudentFormId(null);
     setActiveView("students");
     setError("");
@@ -526,7 +617,7 @@ export default function Dashboard() {
   };
 
   const handleAssessmentFormSaved = async (_result, details) => {
-    await fetchDashboardData();
+    await fetchDashboardData({ silent: true });
     setAssessmentFormId(null);
     setActiveView("assessments");
     setError("");
@@ -683,11 +774,6 @@ export default function Dashboard() {
   };
 
   const toggleStudentProfile = async (student) => {
-    if (expandedStudentId === student.id) {
-      setExpandedStudentId(null);
-      return;
-    }
-
     setExpandedStudentId(student.id);
     await loadStudentInsights(student.id);
   };
@@ -859,7 +945,7 @@ export default function Dashboard() {
       setEditingStudentId(null);
       setEditedScores({});
 
-      await fetchDashboardData();
+      await fetchDashboardData({ silent: true });
 
       setSuccess(response.data?.message || "Scores updated successfully.");
     } catch (err) {
@@ -1216,6 +1302,49 @@ export default function Dashboard() {
           }
         }
 
+        @keyframes mac-notification-in {
+          0% {
+            opacity: 0;
+            transform: translate3d(32px, -8px, 0) scale(0.96);
+            filter: blur(5px);
+          }
+          70% {
+            opacity: 1;
+            transform: translate3d(-2px, 0, 0) scale(1.005);
+            filter: blur(0);
+          }
+          100% {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+            filter: blur(0);
+          }
+        }
+
+        @keyframes mac-notification-out {
+          from {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+            filter: blur(0);
+          }
+          to {
+            opacity: 0;
+            transform: translate3d(28px, -4px, 0) scale(0.97);
+            filter: blur(4px);
+          }
+        }
+
+        .mac-notification-card {
+          animation: mac-notification-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transform-origin: top right;
+          -webkit-backdrop-filter: saturate(170%) blur(30px);
+          backdrop-filter: saturate(170%) blur(30px);
+        }
+
+        .mac-notification-card[data-closing="true"] {
+          animation: mac-notification-out 280ms cubic-bezier(0.4, 0, 1, 1) both;
+          pointer-events: none;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .edulite-ios-corners *,
           .edulite-ios-corners *::before,
@@ -1514,26 +1643,6 @@ export default function Dashboard() {
               : "space-y-6"
           }`}
         >
-          {error && (
-            <div
-              role="alert"
-              aria-live="assertive"
-              className="rounded-[20px] border border-[#FF3B30]/20 bg-[#FF3B30]/10 p-4 text-[#D70015] shadow-sm"
-            >
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div
-              role="status"
-              aria-live="polite"
-              className="rounded-[20px] border border-[#34C759]/20 bg-[#34C759]/12 p-4 text-[#248A3D] shadow-sm"
-            >
-              {success}
-            </div>
-          )}
-
           {loading ? (
             <div
               role="status"
@@ -1755,6 +1864,85 @@ export default function Dashboard() {
           closeModal={closeAiRecommendation}
         />
       )}
+
+      <MacNotificationCenter
+        toasts={toasts}
+        onDismiss={dismissToast}
+      />
+    </div>
+  );
+}
+
+function MacNotificationCenter({ toasts, onDismiss }) {
+  if (!toasts.length) {
+    return null;
+  }
+
+  return (
+    <div
+      aria-live="polite"
+      aria-relevant="additions removals"
+      className="pointer-events-none fixed right-3 top-3 z-[200] flex w-[min(390px,calc(100vw-24px))] flex-col gap-2.5 sm:right-5 sm:top-5"
+    >
+      {toasts.map((toast) => {
+        const isError = toast.type === "error";
+        const isSuccess = toast.type === "success";
+
+        return (
+          <div
+            key={toast.id}
+            data-closing={toast.closing ? "true" : "false"}
+            role={isError ? "alert" : "status"}
+            className="mac-notification-card pointer-events-auto overflow-hidden rounded-[18px] border border-white/65 bg-white/82 shadow-[0_18px_55px_rgba(0,0,0,0.20),0_2px_10px_rgba(0,0,0,0.10)]"
+          >
+            <div className="flex items-start gap-3 px-3.5 py-3">
+              <div
+                aria-hidden="true"
+                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] text-lg font-black text-white shadow-sm ${
+                  isError
+                    ? "bg-gradient-to-b from-[#FF6B63] to-[#FF3B30]"
+                    : isSuccess
+                      ? "bg-gradient-to-b from-[#43D862] to-[#28B748]"
+                      : "bg-gradient-to-b from-[#3AA7FF] to-[#007AFF]"
+                }`}
+              >
+                {isError ? "!" : isSuccess ? "✓" : "EL"}
+              </div>
+
+              <div className="min-w-0 flex-1 pt-0.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-semibold leading-4 text-[#1C1C1E]">
+                      {toast.title || "EduLITE"}
+                    </p>
+
+                    <p className="mt-0.5 text-[12px] font-medium leading-4 text-[#636366]">
+                      {isError
+                        ? "Action could not be completed"
+                        : isSuccess
+                          ? "Update completed"
+                          : "Notification"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onDismiss(toast.id)}
+                    aria-label="Dismiss notification"
+                    className="-mr-1 -mt-1 flex !min-h-0 h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/5 text-[16px] leading-none text-[#636366] hover:bg-black/10 hover:text-[#1C1C1E]"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <p className="mt-1.5 break-words text-[13px] leading-[18px] text-[#1C1C1E]">
+                  {toast.message}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -2660,197 +2848,504 @@ function RecordsView({
   openSavedInsight,
   reloadStudentInsights,
 }) {
-  const totalColumns = displayedAssessments.length + 7;
+  const [studentSearch, setStudentSearch] = useState("");
+
+  const filteredStudents = useMemo(() => {
+    const query = studentSearch.trim().toLowerCase();
+
+    if (!query) {
+      return studentAnalytics;
+    }
+
+    return studentAnalytics.filter((student) =>
+      `${student.name} ${student.grade} ${student.section} ${student.subject_names?.join(" ") ?? ""}`
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [studentAnalytics, studentSearch]);
+
+  useEffect(() => {
+    if (studentAnalytics.length === 0) {
+      return;
+    }
+
+    const selectedStudentStillExists = studentAnalytics.some(
+      (student) => student.id === expandedStudentId,
+    );
+
+    if (!selectedStudentStillExists) {
+      toggleStudentProfile(studentAnalytics[0]);
+    }
+  }, [studentAnalytics, expandedStudentId]);
+
+  const selectedStudent =
+    studentAnalytics.find((student) => student.id === expandedStudentId) ??
+    studentAnalytics[0] ??
+    null;
+
+  const selectedStatus = selectedStudent
+    ? getPerformanceStatus(selectedStudent.averagePercentage)
+    : getPerformanceStatus(null);
+
+  const selectedStudentAssessments = selectedStudent
+    ? getStudentAssessments(selectedStudent)
+    : [];
+
+  const selectedStudentRecords = selectedStudent
+    ? assessments
+        .filter((assessment) =>
+          selectedStudent.subject_ids?.includes(assessment.subject_id),
+        )
+        .map((assessment) => {
+          const record = assessmentRecords.find(
+            (item) =>
+              item.student_id === selectedStudent.id &&
+              item.assessment_id === assessment.id,
+          );
+
+          return {
+            id:
+              record?.id ??
+              `missing-${selectedStudent.id}-${assessment.id}`,
+            student_id: selectedStudent.id,
+            assessment_id: assessment.id,
+            assessment_name: assessment.name,
+            subject_id: assessment.subject_id,
+            subject_name: assessment.subject_name,
+            type: assessment.category_label ?? assessment.type,
+            term: assessment.term,
+            term_label: assessment.term_label,
+            category: assessment.category,
+            category_label: assessment.category_label,
+            sequence: assessment.sequence,
+            slot_label: assessment.slot_label,
+            date: assessment.date,
+            total_items: assessment.total_items,
+            score: record?.score ?? null,
+          };
+        })
+        .sort((first, second) => {
+          const termComparison = Number(first.term ?? 99) - Number(second.term ?? 99);
+
+          if (termComparison !== 0) {
+            return termComparison;
+          }
+
+          const dateComparison = String(second.date).localeCompare(
+            String(first.date),
+          );
+
+          return (
+            dateComparison ||
+            String(first.assessment_name).localeCompare(
+              String(second.assessment_name),
+            )
+          );
+        })
+    : [];
+
+  const selectedGradeSummaries = selectedStudent
+    ? gradeSummaries.filter(
+        (summary) => summary.student_id === selectedStudent.id,
+      )
+    : [];
+
+  const selectedInsights = selectedStudent
+    ? studentInsightsById[selectedStudent.id] ?? []
+    : [];
+
+  const selectedInsightsLoading = selectedStudent
+    ? loadingStudentInsightsId === selectedStudent.id
+    : false;
+
+  const selectedInsightError = selectedStudent
+    ? studentInsightErrors[selectedStudent.id] || ""
+    : "";
+
+  const selectedIsEditing = selectedStudent
+    ? editingStudentId === selectedStudent.id
+    : false;
+
+  const selectedRecordedAssessmentCount = selectedStudentAssessments.filter(
+    (assessment) => {
+      const score = scoreMap[selectedStudent?.id]?.[assessment.id];
+      return score !== undefined && score !== null;
+    },
+  ).length;
+
+  const termMetricLabel =
+    selectedSubject === "ALL" ? `${currentTermLabel} Average` : `${currentTermLabel} Grade`;
+
+  const handleSelectStudent = async (student) => {
+    if (editingStudentId && editingStudentId !== student.id) {
+      cancelEditingScores();
+    }
+
+    await toggleStudentProfile(student);
+  };
 
   return (
-    <>
-      <DashboardFilters
-        title="Record Filters"
-        description="Choose a section and subject to narrow the student assessment records."
-        students={students}
-        sections={sections}
-        subjects={subjects}
-        assessments={assessments}
-        selectedSection={selectedSection}
-        selectedSubject={selectedSubject}
-        selectedTerm={selectedTerm}
-        setSelectedSection={setSelectedSection}
-        setSelectedSubject={setSelectedSubject}
-        setSelectedTerm={setSelectedTerm}
-      />
+    <div className="grid min-h-[calc(100vh-150px)] grid-cols-1 gap-4 xl:grid-cols-[285px_minmax(0,1fr)]">
+      {/* =====================================================
+          LEFT — STUDENT LIST
+          ===================================================== */}
+      <aside className="xl:sticky xl:top-[104px] xl:self-start">
+        <section className="overflow-hidden rounded-[24px] border border-white/55 bg-white/70 shadow-[0_18px_50px_rgba(17,74,132,0.12)] backdrop-blur-[24px]">
+          <div className="border-b border-white/50 px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0091FF]">
+                  Student Records
+                </p>
+                <h2 className="mt-1 text-lg font-bold text-[#36454F]">
+                  Students
+                </h2>
+              </div>
 
-      <section className="overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-[20px]">
-        <div className="border-b border-[#E5E5EA] px-6 py-5">
-          <h2 className="text-xl font-bold text-[#1C1C1E]">
-            Student Assessment Records - {currentSubjectLabel} -{" "}
-            {currentSectionLabel} - {currentTermLabel}
-          </h2>
+              <span className="rounded-full bg-[#0091FF] px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                {studentAnalytics.length}
+              </span>
+            </div>
 
-          <p className="mt-1 text-sm text-[#636366]">
-            Click a student's name to expand their complete profile, assessment
-            history, and saved Gemini learning insights.
-          </p>
-        </div>
+            <div className="mt-4 space-y-2.5">
+              <label className="block">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]">
+                  Section
+                </span>
+                <select
+                  value={selectedSection}
+                  onChange={(event) => setSelectedSection(event.target.value)}
+                  className="bento-select w-full rounded-[12px] border border-white/70 bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white shadow-sm outline-none focus:ring-4 focus:ring-[#0091FF]/20"
+                >
+                  <option value="ALL">All Sections</option>
+                  {sections.map((section) => (
+                    <option key={section.id} value={section.name}>
+                      {section.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-max">
-            <thead className="border-b border-[#E5E5EA] bg-[#F2F2F7]">
-              <tr>
-                <TableHeading>Student</TableHeading>
-                <TableHeading>Grade</TableHeading>
-                <TableHeading>Section</TableHeading>
-                <TableHeading>Subjects</TableHeading>
+              <label className="block">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]">
+                  Subject
+                </span>
+                <select
+                  value={selectedSubject}
+                  onChange={(event) => setSelectedSubject(event.target.value)}
+                  className="bento-select w-full rounded-[12px] border border-white/70 bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white shadow-sm outline-none focus:ring-4 focus:ring-[#0091FF]/20"
+                >
+                  <option value="ALL">All Subjects</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={String(subject.id)}>
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                {displayedAssessments.map((assessment) => (
-                  <th
-                    key={assessment.id}
-                    className="min-w-[175px] px-5 py-4 text-center text-xs font-semibold uppercase text-[#636366]"
-                  >
-                    <div>{assessment.name}</div>
+              <label className="block">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#636366]">
+                  Grading Term
+                </span>
+                <select
+                  value={selectedTerm}
+                  onChange={(event) => setSelectedTerm(event.target.value)}
+                  className="bento-select w-full rounded-[12px] border border-white/70 bg-[#0091FF] px-3 py-2 text-xs font-semibold text-white shadow-sm outline-none focus:ring-4 focus:ring-[#0091FF]/20"
+                >
+                  <option value="1">Term 1</option>
+                  <option value="2">Term 2</option>
+                  <option value="3">Term 3</option>
+                </select>
+              </label>
+            </div>
 
-                    <div className="mt-1 font-normal normal-case text-[#8E8E93]">
-                      {assessment.subject_name} - {assessment.slot_label} -{" "}
-                      {assessment.category_label} - HPS {assessment.total_items}
+            <div className="relative mt-3">
+              <input
+                type="search"
+                value={studentSearch}
+                onChange={(event) => setStudentSearch(event.target.value)}
+                placeholder="Search students"
+                className="w-full rounded-[13px] border border-[#D1D1D6]/80 bg-white/80 px-3 py-2.5 pr-9 text-sm text-[#1C1C1E] placeholder-[#8E8E93] outline-none focus:border-[#0091FF] focus:ring-4 focus:ring-[#0091FF]/15"
+              />
+              <span className="material-symbols-rounded pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-[#8E8E93]">
+                search
+              </span>
+            </div>
+          </div>
+
+          <div className="max-h-[calc(100vh-430px)] min-h-[280px] space-y-1.5 overflow-y-auto p-2">
+            {filteredStudents.map((student) => {
+              const isSelected = selectedStudent?.id === student.id;
+              const status = getPerformanceStatus(student.averagePercentage);
+
+              return (
+                <button
+                  key={student.id}
+                  type="button"
+                  onClick={() => handleSelectStudent(student)}
+                  className={`w-full rounded-[15px] border px-3 py-3 text-left transition ${
+                    isSelected
+                      ? "border-[#0091FF] bg-[#0091FF] text-white shadow-[0_8px_22px_rgba(0,145,255,0.24)]"
+                      : "border-transparent bg-white/35 text-[#36454F] hover:border-white/70 hover:bg-white/75"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">
+                        {student.name}
+                      </p>
+                      <p
+                        className={`mt-0.5 truncate text-[11px] ${
+                          isSelected ? "text-white/80" : "text-[#636366]"
+                        }`}
+                      >
+                        Grade {student.grade} · {student.section}
+                      </p>
                     </div>
-                  </th>
-                ))}
 
-                <TableHeading>Term Grade</TableHeading>
-                <TableHeading>Performance</TableHeading>
-                <TableHeading align="right">Actions</TableHeading>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-[#E5E5EA]">
-              {studentAnalytics.map((student) => {
-                const status = getPerformanceStatus(student.averagePercentage);
-                const isEditing = editingStudentId === student.id;
-                const isExpanded = expandedStudentId === student.id;
-
-                const studentRecords = assessments
-                  .filter((assessment) =>
-                    student.subject_ids?.includes(assessment.subject_id),
-                  )
-                  .map((assessment) => {
-                    const record = assessmentRecords.find(
-                      (item) =>
-                        item.student_id === student.id &&
-                        item.assessment_id === assessment.id,
-                    );
-
-                    return {
-                      id:
-                        record?.id ?? `missing-${student.id}-${assessment.id}`,
-                      student_id: student.id,
-                      assessment_id: assessment.id,
-                      assessment_name: assessment.name,
-                      subject_id: assessment.subject_id,
-                      subject_name: assessment.subject_name,
-                      type: assessment.category_label ?? assessment.type,
-                      term: assessment.term,
-                      term_label: assessment.term_label,
-                      category: assessment.category,
-                      category_label: assessment.category_label,
-                      sequence: assessment.sequence,
-                      slot_label: assessment.slot_label,
-                      date: assessment.date,
-                      total_items: assessment.total_items,
-                      score: record?.score ?? null,
-                    };
-                  })
-                  .sort((first, second) => {
-                    const dateComparison = String(second.date).localeCompare(
-                      String(first.date),
-                    );
-
-                    return (
-                      dateComparison ||
-                      String(first.assessment_name).localeCompare(
-                        String(second.assessment_name),
-                      )
-                    );
-                  });
-
-                const savedInsights = studentInsightsById[student.id] ?? [];
-                const isLoadingInsights =
-                  loadingStudentInsightsId === student.id;
-                const insightError = studentInsightErrors[student.id] || "";
-
-                return (
-                  <Fragment key={student.id}>
-                    <tr
-                      className={
-                        isEditing
-                          ? "bg-[#F2F2F7]"
-                          : isExpanded
-                            ? "bg-[#F2F2F7]"
-                            : "hover:bg-[#F2F2F7]"
-                      }
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : student.averagePercentage === null
+                            ? "bg-[#E5E5EA] text-[#636366]"
+                            : "bg-[#0091FF]/10 text-[#007AFF]"
+                      }`}
                     >
-                      <td className="px-5 py-4 font-medium text-[#1C1C1E]">
-                        <button
-                          type="button"
-                          onClick={() => toggleStudentProfile(student)}
-                          className="group text-left"
-                          aria-expanded={isExpanded}
-                        >
-                          <span className="block font-semibold text-[#0051D5] group-hover:text-[#007AFF] group-hover:underline">
-                            {student.name}
-                          </span>
+                      {student.averagePercentage === null
+                        ? "—"
+                        : student.averagePercentage.toFixed(1)}
+                    </span>
+                  </div>
 
-                          <span className="mt-1 block text-xs font-normal text-[#636366]">
-                            {isExpanded
-                              ? "Hide profile"
-                              : "View profile and saved insights"}
-                          </span>
-                        </button>
-                      </td>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span
+                      className={`truncate text-[10px] ${
+                        isSelected ? "text-white/75" : "text-[#8E8E93]"
+                      }`}
+                    >
+                      {currentTermLabel}
+                    </span>
+                    <span
+                      className={`truncate text-[10px] font-semibold ${
+                        isSelected ? "text-white" : "text-[#636366]"
+                      }`}
+                    >
+                      {status.label}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
 
-                      <td className="px-5 py-4 text-[#636366]">
-                        {student.grade}
-                      </td>
+            {filteredStudents.length === 0 && (
+              <div className="rounded-[15px] border border-dashed border-[#D1D1D6] bg-white/35 px-4 py-10 text-center text-xs text-[#636366]">
+                No students match the current filters.
+              </div>
+            )}
+          </div>
+        </section>
+      </aside>
 
-                      <td className="px-5 py-4 text-[#636366]">
-                        {student.section}
-                      </td>
+      {/* =====================================================
+          RIGHT — SELECTED STUDENT RECORD
+          ===================================================== */}
+      <section className="min-w-0 overflow-hidden rounded-[28px] border border-white/55 bg-white/70 shadow-[0_18px_50px_rgba(17,74,132,0.12)] backdrop-blur-[24px]">
+        {!selectedStudent ? (
+          <div className="flex min-h-[620px] items-center justify-center p-8 text-center">
+            <div className="max-w-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-[#0091FF]/10 text-[#0091FF]">
+                <span className="material-symbols-rounded text-[34px]">
+                  table_view
+                </span>
+              </div>
+              <h2 className="mt-4 text-xl font-bold text-[#36454F]">
+                Select a student
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[#636366]">
+                Choose a learner from the student list to open their assessment
+                scores, term grade, performance, complete record, and saved AI
+                insights.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 sm:p-5 lg:p-6">
+            {/* Student header */}
+            <div className="flex flex-col gap-4 border-b border-white/60 pb-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0091FF]">
+                  Selected Student
+                </p>
+                <h2 className="mt-1 truncate text-2xl font-bold tracking-tight text-[#36454F] sm:text-3xl">
+                  {selectedStudent.name}
+                </h2>
+                <p className="mt-1 text-sm text-[#636366]">
+                  Grade {selectedStudent.grade} · {selectedStudent.section} · {currentSubjectLabel} · {currentTermLabel}
+                </p>
 
-                      <td className="min-w-[220px] px-5 py-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          {student.subjects?.map((subject) => (
-                            <span
-                              key={subject.id}
-                              className="rounded-full border border-[#007AFF] bg-white px-2.5 py-1 text-xs font-medium text-[#0051D5]"
-                            >
-                              {subject.name}
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {selectedStudent.subjects?.map((subject) => (
+                    <span
+                      key={subject.id}
+                      className="rounded-full border border-[#0091FF]/25 bg-[#0091FF]/10 px-2.5 py-1 text-[11px] font-semibold text-[#007AFF]"
+                    >
+                      {subject.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {selectedIsEditing ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => saveStudentScores(selectedStudent)}
+                      disabled={savingScores}
+                      className="rounded-[12px] bg-[#0091FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {savingScores ? "Saving..." : "Save Scores"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditingScores}
+                      disabled={savingScores}
+                      className="rounded-[12px] border border-[#D1D1D6] bg-white/75 px-4 py-2 text-sm font-semibold text-[#36454F] hover:bg-white disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onEditStudent(selectedStudent.id)}
+                      className="rounded-[12px] border border-[#0091FF]/20 bg-white/75 px-4 py-2 text-sm font-semibold text-[#007AFF] hover:bg-[#0091FF] hover:text-white"
+                    >
+                      Edit Info
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => startEditingScores(selectedStudent)}
+                      disabled={selectedStudentAssessments.length === 0}
+                      className="rounded-[12px] bg-[#0091FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-[#D1D1D6]"
+                    >
+                      Edit Scores
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteStudent(selectedStudent.id)}
+                      className="rounded-[12px] border border-[#FF3B30]/15 bg-white/75 px-4 py-2 text-sm font-semibold text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Dashboard-style summary cards */}
+            <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <RecordSummaryMetric
+                label={termMetricLabel}
+                value={
+                  selectedStudent.averagePercentage === null
+                    ? "—"
+                    : selectedStudent.averagePercentage.toFixed(1)
+                }
+                detail={`${currentSubjectLabel} · ${currentTermLabel}`}
+                tone="blue"
+              />
+              <RecordSummaryMetric
+                label="Performance"
+                value={selectedStatus.label}
+                detail="Based on current term grade"
+                tone={
+                  selectedStudent.averagePercentage === null
+                    ? "gray"
+                    : selectedStudent.averagePercentage >= 90
+                      ? "green"
+                      : selectedStudent.averagePercentage >= 75
+                        ? "blue"
+                        : "red"
+                }
+                compact
+              />
+              <RecordSummaryMetric
+                label="Recorded Assessments"
+                value={`${selectedRecordedAssessmentCount}/${selectedStudentAssessments.length}`}
+                detail="Current filters"
+                tone="yellow"
+              />
+              <RecordSummaryMetric
+                label="Enrolled Subjects"
+                value={selectedStudent.subject_names?.length ?? 0}
+                detail="Student enrollment"
+                tone="green"
+              />
+            </div>
+
+            {/* Current term assessment scores */}
+            <div className="mt-5 overflow-hidden rounded-[22px] border border-white/70 bg-white/45">
+              <div className="flex flex-col gap-2 border-b border-[#D1D1D6]/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0091FF]">
+                    Assessment Scores
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-[#36454F]">
+                    {currentTermLabel} · {currentSubjectLabel}
+                  </h3>
+                </div>
+                <span className="rounded-full bg-[#0091FF]/10 px-3 py-1.5 text-xs font-semibold text-[#007AFF]">
+                  {selectedStudentAssessments.length} assessment{selectedStudentAssessments.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px]">
+                  <thead className="bg-white/40">
+                    <tr className="border-b border-[#D1D1D6]/60">
+                      <RecordTableHeading>Assessment</RecordTableHeading>
+                      <RecordTableHeading>Subject</RecordTableHeading>
+                      <RecordTableHeading>Component</RecordTableHeading>
+                      <RecordTableHeading>HPS</RecordTableHeading>
+                      <RecordTableHeading>Score</RecordTableHeading>
+                      <RecordTableHeading>Percentage</RecordTableHeading>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-[#D1D1D6]/45">
+                    {selectedStudentAssessments.map((assessment) => {
+                      const score = scoreMap[selectedStudent.id]?.[assessment.id];
+                      const hasScore = score !== undefined && score !== null;
+                      const percentage =
+                        hasScore && Number(assessment.total_items) > 0
+                          ? (Number(score) / Number(assessment.total_items)) * 100
+                          : null;
+
+                      return (
+                        <tr key={assessment.id} className="hover:bg-white/45">
+                          <td className="px-4 py-3.5 font-semibold text-[#36454F]">
+                            <div>{assessment.name}</div>
+                            <div className="mt-0.5 text-[11px] font-normal text-[#8E8E93]">
+                              {assessment.date}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-center text-sm text-[#636366]">
+                            {assessment.subject_name}
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <span className="rounded-full bg-[#0091FF]/10 px-2.5 py-1 text-xs font-semibold text-[#007AFF]">
+                              {assessment.slot_label ?? assessment.category_label ?? assessment.type}
                             </span>
-                          ))}
-                        </div>
-                      </td>
-
-                      {displayedAssessments.map((assessment) => {
-                        const isEnrolled = student.subject_ids?.includes(
-                          assessment.subject_id,
-                        );
-
-                        const score = scoreMap[student.id]?.[assessment.id];
-                        const hasScore = score !== undefined && score !== null;
-
-                        const percentage =
-                          hasScore && Number(assessment.total_items) > 0
-                            ? (Number(score) / Number(assessment.total_items)) *
-                              100
-                            : null;
-
-                        return (
-                          <td
-                            key={assessment.id}
-                            className="px-5 py-4 text-center"
-                          >
-                            {!isEnrolled ? (
-                              <span className="text-xs text-[#8E8E93]">
-                                Not enrolled
-                              </span>
-                            ) : isEditing ? (
+                          </td>
+                          <td className="px-4 py-3.5 text-center font-semibold text-[#36454F]">
+                            {assessment.total_items}
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            {selectedIsEditing ? (
                               <div className="flex items-center justify-center gap-2">
                                 <input
                                   type="number"
@@ -2864,147 +3359,106 @@ function RecordsView({
                                       event.target.value,
                                     )
                                   }
-                                  placeholder="-"
+                                  placeholder="—"
                                   disabled={savingScores}
-                                  className="w-20 rounded-[12px] border border-[#D1D1D6] bg-white px-2 py-2 text-center text-[#1C1C1E] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:bg-[#E5E5EA]"
+                                  className="w-20 rounded-[11px] border border-[#D1D1D6] bg-white/90 px-2 py-2 text-center font-semibold text-[#36454F] outline-none focus:border-[#0091FF] focus:ring-4 focus:ring-[#0091FF]/15"
                                 />
-
-                                <span className="text-sm text-[#636366]">
+                                <span className="text-xs text-[#8E8E93]">
                                   / {assessment.total_items}
                                 </span>
                               </div>
                             ) : hasScore ? (
-                              <>
-                                <div className="font-semibold text-[#1C1C1E]">
-                                  {score} / {assessment.total_items}
-                                </div>
-
-                                <div className="mt-1 text-xs text-[#636366]">
-                                  {percentage.toFixed(1)}%
-                                </div>
-                              </>
+                              <span className="font-bold text-[#36454F]">
+                                {score} / {assessment.total_items}
+                              </span>
                             ) : (
-                              <span className="text-[#8E8E93]">-</span>
+                              <span className="text-[#8E8E93]">—</span>
                             )}
                           </td>
-                        );
-                      })}
+                          <td className="px-4 py-3.5 text-center font-semibold text-[#36454F]">
+                            {percentage === null ? "—" : `${percentage.toFixed(1)}%`}
+                          </td>
+                        </tr>
+                      );
+                    })}
 
-                      <td className="px-5 py-4 font-bold text-[#1C1C1E]">
-                        {student.averagePercentage === null
-                          ? "-"
-                          : student.averagePercentage.toFixed(1)}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-[5px] border px-3 py-1 text-xs font-semibold ${status.className}`}
-                        >
-                          {status.label}
-                        </span>
-                      </td>
-
-                      <td className="whitespace-nowrap px-5 py-4 text-right">
-                        {isEditing ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => saveStudentScores(student)}
-                              disabled={savingScores}
-                              className="mr-2 rounded-[12px] bg-[#007AFF] px-3.5 py-2 font-medium text-white hover:bg-[#0066D6] disabled:cursor-not-allowed disabled:bg-[#D1D1D6] disabled:text-[#8E8E93]"
-                            >
-                              {savingScores ? "Saving..." : "Save Scores"}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={cancelEditingScores}
-                              disabled={savingScores}
-                              className="rounded-[12px] bg-[#E5E5EA] px-3.5 py-2 font-medium text-[#3A3A3C] hover:bg-[#E5E5EA] disabled:opacity-50"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => onEditStudent(student.id)}
-                              className="mr-2 rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#0051D5] hover:bg-[#007AFF] hover:text-white"
-                            >
-                              Edit Info
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => startEditingScores(student)}
-                              disabled={
-                                getStudentAssessments(student).length === 0
-                              }
-                              className="mr-2 rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#8A5A00] hover:bg-[#FFCC00] hover:text-[#1C1C1E] disabled:cursor-not-allowed disabled:bg-[#E5E5EA] disabled:text-[#8E8E93]"
-                            >
-                              Edit Scores
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteStudent(student.id)}
-                              className="rounded-[12px] bg-white px-3.5 py-2 font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-
-                    {isExpanded && (
+                    {selectedStudentAssessments.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={totalColumns}
-                          className="bg-[#E5E5EA]/70 px-4 py-5 sm:px-6"
-                        >
-                          <StudentExpandedProfile
-                            student={student}
-                            status={status}
-                            assessmentRecords={studentRecords}
-                            gradeSummaries={gradeSummaries.filter(
-                              (summary) =>
-                                summary.student_id === student.id,
-                            )}
-                            savedInsights={savedInsights}
-                            loadingInsights={isLoadingInsights}
-                            insightError={insightError}
-                            openSavedInsight={openSavedInsight}
-                            reloadInsights={() =>
-                              reloadStudentInsights(student.id, true)
-                            }
-                          />
+                        <td colSpan="6" className="px-6 py-12 text-center text-sm text-[#636366]">
+                          No assessments are available for {currentSubjectLabel} in {currentTermLabel}.
                         </td>
                       </tr>
                     )}
-                  </Fragment>
-                );
-              })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-              {studentAnalytics.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={totalColumns}
-                    className="px-6 py-12 text-center text-[#636366]"
-                  >
-                    No students found for {currentSubjectLabel} and{" "}
-                    {currentSectionLabel}.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            {/* Complete record inside the selected-student workspace */}
+            <div className="mt-5">
+              <StudentExpandedProfile
+                student={selectedStudent}
+                status={selectedStatus}
+                assessmentRecords={selectedStudentRecords}
+                gradeSummaries={selectedGradeSummaries}
+                savedInsights={selectedInsights}
+                loadingInsights={selectedInsightsLoading}
+                insightError={selectedInsightError}
+                openSavedInsight={openSavedInsight}
+                reloadInsights={() =>
+                  reloadStudentInsights(selectedStudent.id, true)
+                }
+              />
+            </div>
+          </div>
+        )}
       </section>
-    </>
+    </div>
   );
 }
+
+function RecordSummaryMetric({
+  label,
+  value,
+  detail,
+  tone = "blue",
+  compact = false,
+}) {
+  const tones = {
+    blue: "text-[#007AFF] bg-[#0091FF]/10 border-[#0091FF]/15",
+    red: "text-[#D70015] bg-[#FF3B30]/10 border-[#FF3B30]/15",
+    green: "text-[#248A3D] bg-[#34C759]/10 border-[#34C759]/15",
+    yellow: "text-[#8A5A00] bg-[#FFCC00]/15 border-[#FFCC00]/20",
+    gray: "text-[#636366] bg-[#8E8E93]/10 border-[#8E8E93]/15",
+  };
+
+  return (
+    <div
+      className={`min-h-[118px] rounded-[18px] border p-4 backdrop-blur-[10px] ${tones[tone] ?? tones.blue}`}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#636366]">
+        {label}
+      </p>
+      <p
+        className={`mt-2 font-bold tracking-tight ${
+          compact ? "text-lg leading-6" : "text-3xl"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-[11px] leading-4 text-[#636366]">{detail}</p>
+    </div>
+  );
+}
+
+function RecordTableHeading({ children }) {
+  return (
+    <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.1em] text-[#636366] first:text-left">
+      {children}
+    </th>
+  );
+}
+
 
 function StudentExpandedProfile({
   student,
@@ -3393,82 +3847,123 @@ function SectionManagementView({
   openDashboardForSection,
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] p-3 bg-white/70 backdrop-blur-[20px]">
-      <div className="flex flex-col gap-4 rounded-[24px]  px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-[28px] bg-white/70 p-3 backdrop-blur-[20px]">
+      <div className="flex flex-col gap-4 rounded-[24px] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="mt-1 text-xl font-bold text-[#36454F]">
             Section Management
           </h2>
 
           <p className="mt-1 text-sm text-[#36454F]">
-            Add sections before registering students, then manage existing
-            section records below.
+            Add a new section on the left and review all existing sections on
+            the right.
           </p>
         </div>
       </div>
 
-      <div className="p-6">
-        <form
-          onSubmit={handleAddSection}
-          className="flex flex-col gap-3 rounded-[22px] border border-[#D1D1D6] bg-white/30 p-2 sm:flex-row"
-        >
-          <input
-            type="text"
-            value={newSection}
-            onChange={(event) => setNewSection(event.target.value)}
-            placeholder="Enter section name"
-            className="flex-1 rounded-[12px] border border-[#D1D1D6] bg-white/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
-          />
+      <div className="grid grid-cols-1 gap-5 p-6 md:grid-cols-2 md:items-start">
+        {/* LEFT COLUMN — ADD SECTION FORM */}
+        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
+              New Section
+            </p>
 
-          <button
-            type="submit"
-            disabled={addingSection || !newSection.trim()}
-            className="rounded-[12px] bg-[#0088FF] px-6 py-3 font-medium text-white transition hover:bg-[#248A3D] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
-          >
-            {addingSection ? "Adding..." : "+ Add Section"}
-          </button>
-        </form>
+            <h3 className="mt-1 text-lg font-bold text-[#36454F]">
+              Add a Section
+            </h3>
 
-        <div className="mt-6 overflow-hidden p-2 rounded-[22px] border border-[#E5E5EA]">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 rounded-[14px] border-y border-[#E5E5EA] bg-white/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
-            <span>Section</span>
-            <span>Students</span>
-            <span>Action</span>
+            <p className="mt-1 text-sm leading-5 text-[#636366]">
+              Enter the section name below. Once added, it will immediately
+              appear in the section list.
+            </p>
           </div>
 
-          <div className="divide-y divide-[#E5E5EA]">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                className="grid grid-cols-[1fr_auto_auto] rounded-[14px] my-2 bg-white/30 items-center gap-3 px-4 py-3 transition hover:bg-white/50"
-              >
-                <button
-                  type="button"
-                  onClick={() => openDashboardForSection(section.name)}
-                  className="text-left font-semibold text-[#36454F] hover:text-[#0088FF]"
+          <form onSubmit={handleAddSection} className="space-y-4">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-[#36454F]">
+                Section Name
+              </span>
+
+              <input
+                type="text"
+                value={newSection}
+                onChange={(event) => setNewSection(event.target.value)}
+                placeholder="e.g. Section 1"
+                className="w-full rounded-[14px] border border-[#D1D1D6] bg-white/60 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#0088FF] focus:outline-none focus:ring-4 focus:ring-[#0088FF]/20"
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={addingSection || !newSection.trim()}
+              className="w-full rounded-[14px] bg-[#0088FF] px-6 py-3 font-semibold text-white transition hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
+            >
+              {addingSection ? "Adding..." : "+ Add Section"}
+            </button>
+          </form>
+        </div>
+
+        {/* RIGHT COLUMN — EXISTING SECTIONS */}
+        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
+                Existing Sections
+              </p>
+
+              <h3 className="mt-1 text-lg font-bold text-[#36454F]">
+                Added Sections
+              </h3>
+            </div>
+
+            <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm font-semibold text-white">
+              {sections.length}
+            </span>
+          </div>
+
+          <div className="overflow-hidden rounded-[18px] border border-[#E5E5EA] bg-white/20">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-3 bg-white/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#636366]">
+              <span>Section</span>
+              <span>Students</span>
+              <span>Action</span>
+            </div>
+
+            <div className="max-h-[520px] overflow-y-auto divide-y divide-[#E5E5EA]">
+              {sections.map((section) => (
+                <div
+                  key={section.id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 transition hover:bg-white/45"
                 >
-                  {section.name}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openDashboardForSection(section.name)}
+                    className="min-w-0 truncate text-left font-semibold text-[#36454F] hover:text-[#0088FF]"
+                    title={section.name}
+                  >
+                    {section.name}
+                  </button>
 
-                <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm text-white">
-                  {section.student_count}
-                </span>
+                  <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm text-white">
+                    {section.student_count}
+                  </span>
 
-                <button
-                  type="button"
-                  onClick={() => handleRemoveSection(section)}
-                  className="rounded-[7px] bg-white/50 p-3 text-sm text-[#D70015] hover:bg-[#FF0000] hover:text-white"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSection(section)}
+                    className="rounded-[9px] bg-white/55 px-3 py-2 text-sm font-medium text-[#D70015] hover:bg-[#FF3B30] hover:text-white"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
 
-            {sections.length === 0 && (
-              <div className="px-6 py-12 text-center text-[#636366]">
-                No sections have been added.
-              </div>
-            )}
+              {sections.length === 0 && (
+                <div className="px-6 py-12 text-center text-sm text-[#636366]">
+                  No sections have been added yet.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -3487,77 +3982,111 @@ function SubjectManagementView({
   openDashboardForSubject,
 }) {
   return (
-    //Section view
-    <section className="overflow-hidden rounded-[28px] backdrop-blur-[20px] bg-white/70">
-      <div className="flex flex-col gap-4  px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-[28px] bg-white/70 p-3 backdrop-blur-[20px]">
+      <div className="flex flex-col gap-4 rounded-[24px] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="mt-1 text-xl font-bold text-[#36454F]">
             Subject Management
           </h2>
 
           <p className="mt-1 text-sm text-[#636366]">
-            Create a subject, choose its enrolled students, and manage existing
-            subjects.
+            Add a new subject on the left and review all existing subjects on
+            the right.
           </p>
         </div>
       </div>
 
-      <div className="p-6">
-        <form
-          onSubmit={openSubjectStudentPrompt}
-          className="flex flex-col gap-3 rounded-[22px] border border-[#D1D1D6] bg-white/30 p-2 sm:flex-row"
-        >
-          <input
-            type="text"
-            value={newSubject}
-            onChange={(event) => setNewSubject(event.target.value)}
-            placeholder="Enter subject name"
-            className="flex-1 rounded-[12px] border border-[#D1D1D6] bg-white/50 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#34C759] focus:outline-none focus:ring-4 focus:ring-[#34C759]/20"
-          />
+      <div className="grid grid-cols-1 gap-5 p-6 md:grid-cols-2 md:items-start">
+        {/* LEFT COLUMN — ADD SUBJECT FORM */}
+        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
+              New Subject
+            </p>
 
-          <button
-            type="submit"
-            disabled={addingSubject || !newSubject.trim()}
-            className="rounded-[12px] bg-[#0088FF] px-6 py-3 font-medium text-white transition hover:bg-[#0091FF] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
-          >
-            Choose Students
-          </button>
-        </form>
+            <h3 className="mt-1 text-lg font-bold text-[#36454F]">
+              Add a Subject
+            </h3>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {subjects.map((subject, index) => {
-            const tone =
-              index % 3 === 0
-                ? "border-white/20 bg-white/30"
-                : index % 3 === 1
-                  ? " bg-white/30"
-                  : " bg-white/30";
+            <p className="mt-1 text-sm leading-5 text-[#636366]">
+              Enter the subject name first, then choose which students should
+              be enrolled in it.
+            </p>
+          </div>
 
-            return (
+          <form onSubmit={openSubjectStudentPrompt} className="space-y-4">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-[#36454F]">
+                Subject Name
+              </span>
+
+              <input
+                type="text"
+                value={newSubject}
+                onChange={(event) => setNewSubject(event.target.value)}
+                placeholder="e.g. Mathematics"
+                className="w-full rounded-[14px] border border-[#D1D1D6] bg-white/60 px-5 py-3 text-[#1C1C1E] placeholder-[#8E8E93] focus:border-[#0088FF] focus:outline-none focus:ring-4 focus:ring-[#0088FF]/20"
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={addingSubject || !newSubject.trim()}
+              className="w-full rounded-[14px] bg-[#0088FF] px-6 py-3 font-semibold text-white transition hover:bg-[#007AFF] disabled:cursor-not-allowed disabled:bg-white/30 disabled:text-[#8E8E93]"
+            >
+              {addingSubject ? "Adding..." : "Choose Students"}
+            </button>
+          </form>
+
+          <div className="mt-4 rounded-[16px] bg-white/35 p-4 text-sm leading-5 text-[#636366]">
+            Student enrollment is selected after clicking <b>Choose Students</b>.
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN — EXISTING SUBJECTS */}
+        <div className="rounded-[24px] border border-[#D1D1D6] bg-white/30 p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0088FF]">
+                Existing Subjects
+              </p>
+
+              <h3 className="mt-1 text-lg font-bold text-[#36454F]">
+                Added Subjects
+              </h3>
+            </div>
+
+            <span className="rounded-full bg-[#0088FF] px-3 py-1.5 text-sm font-semibold text-white">
+              {subjects.length}
+            </span>
+          </div>
+
+          <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
+            {subjects.map((subject) => (
               <div
                 key={subject.id}
-                className={`flex flex-col gap-4 rounded-[22px] px-5 py-5 sm:flex-row sm:items-center sm:justify-between ${tone}`}
+                className="flex flex-col gap-3 rounded-[18px] border border-[#E5E5EA] bg-white/35 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <button
                   type="button"
                   onClick={() => openDashboardForSubject(subject.id)}
-                  className="text-left"
+                  className="min-w-0 flex-1 text-left"
                 >
-                  <span className="block font-semibold text-[#1C1C1E] hover:underline">
+                  <span className="block truncate font-semibold text-[#1C1C1E] hover:text-[#0088FF]">
                     {subject.name}
                   </span>
 
                   <span className="mt-1 block text-sm text-[#636366]">
-                    {subject.student_count} students ·{" "}
-                    {subject.assessment_count} assessments
+                    {subject.student_count} students · {subject.assessment_count}{" "}
+                    assessments
                   </span>
                 </button>
 
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     onClick={() => handleRenameSubject(subject)}
-                    className="rounded-[12px] border border-[#007AFF] bg-[#0091FF] px-3.5 py-2 font-medium text-white hover:bg-[#007AFF] hover:text-white"
+                    className="rounded-[10px] bg-[#0088FF] px-3.5 py-2 text-sm font-medium text-white hover:bg-[#007AFF]"
                   >
                     Edit
                   </button>
@@ -3565,20 +4094,20 @@ function SubjectManagementView({
                   <button
                     type="button"
                     onClick={() => handleRemoveSubject(subject)}
-                    className="rounded-[12px] bg-[#FF3B30] px-3.5 py-2 font-medium text-white hover:bg-[#D70015]"
+                    className="rounded-[10px] bg-[#FF3B30] px-3.5 py-2 text-sm font-medium text-white hover:bg-[#D70015]"
                   >
                     Delete
                   </button>
                 </div>
               </div>
-            );
-          })}
+            ))}
 
-          {subjects.length === 0 && (
-            <div className="rounded-[22px] border border-dashed border-[#D1D1D6] bg-[#F2F2F7] px-6 py-12 text-center text-[#636366] lg:col-span-2">
-              No subjects have been added.
-            </div>
-          )}
+            {subjects.length === 0 && (
+              <div className="rounded-[18px] border border-dashed border-[#D1D1D6] bg-white/20 px-6 py-12 text-center text-sm text-[#636366]">
+                No subjects have been added yet.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>
