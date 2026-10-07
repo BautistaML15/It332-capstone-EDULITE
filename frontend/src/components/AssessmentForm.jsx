@@ -389,6 +389,8 @@ export default function AssessmentForm({
 
       const score = parseWholeNumber(value);
 
+      const score = Number(value);
+
       if (
         !Number.isInteger(score) ||
         score < 0 ||
