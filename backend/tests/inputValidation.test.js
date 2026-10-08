@@ -200,3 +200,15 @@ test("actual score endpoint validates the entire batch before saving or clearing
   assert.ok(writes[0].delete);
   assert.equal(writes[1].update.$set.score, 0);
 });
+
+
+test("Budget of Work accepts multiline curriculum text and rejects invalid payloads", async (t) => {
+  const api = await apiFor(t);
+  const budget = "Week 1: Fractions\nCompetency: Add unlike fractions.\nTime: 2 lessons.";
+  assert.equal((await api.send("/assessments", { ...assessment, budget_of_work: budget })).status, 204);
+  for (const value of [42, {}, [], "x".repeat(5001), "Topic\u0000hidden"]) {
+    const response = await api.send("/assessments", { ...assessment, budget_of_work: value });
+    assert.equal(response.status, 400);
+    assert.ok(response.body.fields.budget_of_work);
+  }
+});

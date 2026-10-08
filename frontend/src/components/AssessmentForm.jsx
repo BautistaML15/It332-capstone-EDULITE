@@ -54,6 +54,7 @@ function todayAsInputValue() {
 function emptyAssessmentForm() {
   return {
     name: "",
+    budget_of_work: "",
     term: "1",
     category: "written_work",
     sequence: "1",
@@ -207,6 +208,7 @@ export default function AssessmentForm({
 
           setFormData({
             name: assessment.name ?? "",
+            budget_of_work: assessment.budget_of_work ?? "",
 
             // Legacy assessments intentionally stay blank until the
             // teacher explicitly classifies them into the new ECR system.
@@ -379,6 +381,9 @@ export default function AssessmentForm({
       return;
     }
 
+    const budgetError = validateInput(formData.budget_of_work, { kind: "budgetOfWork", label: "Budget of Work" });
+    if (budgetError) { setError(budgetError); return; }
+
     const dateError = validateInput(formData.date, { kind: "date", label: "Assessment date" });
     if (dateError) { setError(dateError); return; }
 
@@ -388,8 +393,6 @@ export default function AssessmentForm({
       }
 
       const score = parseWholeNumber(value);
-
-      const score = Number(value);
 
       if (
         !Number.isInteger(score) ||
@@ -410,6 +413,7 @@ export default function AssessmentForm({
 
     const payload = {
       name: formData.name.trim(),
+      budget_of_work: (formData.budget_of_work ?? "").trim(),
       term,
       category: formData.category,
       sequence,
@@ -527,6 +531,22 @@ export default function AssessmentForm({
                     className="w-full rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-[#25313C] placeholder-[#A0ABB4] outline-none focus:border-[#36A9E1] focus:ring-4 focus:ring-[#36A9E1]/10"
                     required
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <FormLabel htmlFor="assessment-budget-of-work" label="Budget of Work" required />
+                  <textarea
+                    id="assessment-budget-of-work"
+                    value={formData.budget_of_work ?? ""}
+                    onChange={(event) => setFormData((current) => ({ ...current, budget_of_work: event.target.value }))}
+                    rows={5}
+                    maxLength={5000}
+                    required
+                    aria-describedby="budget-of-work-help"
+                    placeholder="Topics and learning competencies covered, learning objectives, lesson scope, and suggested time allocation."
+                    className="w-full rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-[#25313C] outline-none focus:border-[#36A9E1] focus:ring-4 focus:ring-[#36A9E1]/10"
+                  />
+                  <p id="budget-of-work-help" className="mt-2 text-xs text-[#71808D]">Describe what this assessment covers. AI uses this to create practice activities for students who need support. Maximum 5,000 characters.</p>
                 </div>
 
                 <div>

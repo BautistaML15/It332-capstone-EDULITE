@@ -255,6 +255,13 @@ const assessmentSchema =
         },
       },
 
+      budgetOfWork: {
+        type: String,
+        trim: true,
+        default: "",
+        maxlength: [5000, "Budget of Work must be at most 5000 characters."],
+      },
+
       subjectId: {
         type:
           mongoose.Schema.Types.ObjectId,

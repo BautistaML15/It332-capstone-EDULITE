@@ -3412,6 +3412,34 @@ function AiRecommendationModal({ recommendation, error, closeModal }) {
                             {item.actions.map((action, actionIndex) => <li key={`${action}-${actionIndex}`}>{action}</li>)}
                           </ul>
                         )}
+                        {item.practiceActivities?.length > 0 && (
+                          <div className="mt-5 space-y-4">
+                            {item.practiceActivities.map((activity) => (
+                              <div key={activity.difficulty} className="rounded-[16px] border border-[#E3E9EE] bg-[#F8FAFB] p-4">
+                                <p className="text-xs font-bold uppercase text-[#168CC8]">{activity.difficulty} practice · {activity.duration}</p>
+                                <h5 className="mt-2 font-bold text-[#25313C]">{activity.title}</h5>
+                                <p className="mt-2 whitespace-pre-wrap text-sm text-[#52616D]">{activity.objective}</p>
+                                <p className="mt-2 text-sm text-[#71808D]">Materials: {activity.materials?.join(", ")}</p>
+                                <p className="mt-3 text-sm font-semibold">Instructions</p>
+                                <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-[#52616D]">
+                                  {activity.instructions?.map((step, i) => <li className="whitespace-pre-wrap" key={i}>{step}</li>)}
+                                </ol>
+                                <p className="mt-3 text-sm font-semibold">Practice tasks</p>
+                                <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-[#52616D]">
+                                  {activity.tasks?.map((task, i) => <li className="whitespace-pre-wrap" key={i}>{task}</li>)}
+                                </ol>
+                                <details className="mt-3 text-sm text-[#52616D]">
+                                  <summary className="cursor-pointer font-semibold">Teacher answer key / scoring criteria</summary>
+                                  <ul className="mt-2 list-disc space-y-2 pl-5">
+                                    {activity.answerKey?.map((answer, i) => <li className="whitespace-pre-wrap" key={i}>{answer}</li>)}
+                                  </ul>
+                                </details>
+                                <div className="mt-3"><PlanDetail label="Mastery check" value={activity.masteryCheck} /></div>
+                              </div>
+                            ))}
+                            <PlanDetail label="Progression between levels" value={item.progressionRule} />
+                          </div>
+                        )}
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                           <PlanDetail label="Schedule" value={item.schedule} />
                           <PlanDetail label="Success indicator" value={item.successIndicator} />
