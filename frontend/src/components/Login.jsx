@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import ValidatedInput from "./ValidatedInput";
+import { validateInput } from "../../../shared/inputValidation.mjs";
 
 const API_URL = "http://localhost:3000";
 
@@ -55,13 +57,15 @@ export default function Login() {
 
     setError("");
 
-    if (!trimmedName) {
-      showError("Enter your username.");
+    const nameError = validateInput(name, { kind: "username", label: "Username" });
+    if (nameError) {
+      showError(nameError);
       return;
     }
 
-    if (!password) {
-      showError("Enter your password.");
+    const passwordError = validateInput(password, { kind: "password", label: "Password", minLength: isLoginMode ? 1 : 6 });
+    if (passwordError) {
+      showError(passwordError);
       return;
     }
 
@@ -437,9 +441,10 @@ export default function Login() {
                     Username
                   </span>
 
-                  <input
+                  <ValidatedInput
                     id="username"
-                    type="text"
+                    kind="username"
+                    label="Username"
                     value={name}
                     onChange={(
                       event,
@@ -465,8 +470,11 @@ export default function Login() {
                   </span>
 
                   <div className="relative">
-                    <input
+                    <ValidatedInput
                       id="password"
+                      kind="password"
+                      label="Password"
+                      minLength={isLoginMode ? 1 : 6}
                       type={
                         showPassword
                           ? "text"
@@ -507,7 +515,7 @@ export default function Login() {
                       disabled={
                         submitting
                       }
-                      className="absolute inset-y-0 right-0 flex items-center px-4 text-xs font-semibold text-[#007AFF] disabled:cursor-not-allowed disabled:text-[#A1A1A6]"
+                      className="absolute right-0 top-0 flex h-[54px] items-center px-4 text-xs font-semibold text-[#007AFF] disabled:cursor-not-allowed disabled:text-[#A1A1A6]"
                       aria-label={
                         showPassword
                           ? "Hide password"

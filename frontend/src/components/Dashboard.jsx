@@ -2,7 +2,12 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import StudentForm from "./StudentForm";
+import StudentImport from "./StudentImport";
+import ValidatedInput from "./ValidatedInput";
+import { parseWholeNumber, validateInput } from "../../../shared/inputValidation.mjs";
 import AssessmentForm from "./AssessmentForm";
+import RecordPerformanceSummary from "./RecordPerformanceSummary";
+import { buildPerformanceRoster, getPerformanceStatus, hasPerformanceGrade, PERFORMANCE_LEVELS } from "../utils/performance";
 
 const API_URL = "http://localhost:3000";
 const PASSING_PERCENTAGE = 75;
@@ -337,7 +342,9 @@ export default function Dashboard() {
 
     const sectionName = newSection.trim();
 
-    if (!sectionName) {
+    const sectionError = validateInput(sectionName, { kind: "section", label: "Section name" });
+    if (sectionError) {
+      setError(sectionError);
       return;
     }
 
@@ -388,7 +395,9 @@ export default function Dashboard() {
   const openSubjectStudentPrompt = (event) => {
     event.preventDefault();
 
-    if (!newSubject.trim()) {
+    const subjectError = validateInput(newSubject, { kind: "subject", label: "Subject name" });
+    if (subjectError) {
+      setError(subjectError);
       return;
     }
 
@@ -420,7 +429,9 @@ export default function Dashboard() {
   const handleAddSubject = async () => {
     const subjectName = newSubject.trim();
 
-    if (!subjectName) {
+    const subjectError = validateInput(subjectName, { kind: "subject", label: "Subject name" });
+    if (subjectError) {
+      setError(subjectError);
       return;
     }
 
@@ -912,7 +923,7 @@ export default function Dashboard() {
         enteredValue === undefined;
 
       if (!isBlank) {
-        const numericScore = Number(enteredValue);
+        const numericScore = parseWholeNumber(enteredValue);
 
         if (
           !Number.isInteger(numericScore) ||
@@ -1104,54 +1115,6 @@ export default function Dashboard() {
     assessedStudents.length === 0
       ? 0
       : (count / assessedStudents.length) * 100;
-
-  const getPerformanceStatus = (grade) => {
-    if (grade === null || grade === undefined) {
-      return {
-        label: "Incomplete",
-        className:
-          "border-[#8E8E93] bg-[#8E8E93] text-white",
-      };
-    }
-
-    if (grade >= 90) {
-      return {
-        label: "Advancing",
-        className:
-          "border-[#34C759] bg-[#34C759] text-white",
-      };
-    }
-
-    if (grade >= 80) {
-      return {
-        label: "Benchmarking",
-        className:
-          "border-[#007AFF] bg-[#007AFF] text-white",
-      };
-    }
-
-    if (grade >= 75) {
-      return {
-        label: "Connecting",
-        className:
-          "border-[#FFCC00] bg-[#FFCC00] text-[#1C1C1E]",
-      };
-    }
-
-    if (grade >= 65) {
-      return {
-        label: "Developing",
-        className:
-          "border-[#FF9500] bg-[#FF9500] text-white",
-      };
-    }
-
-    return {
-      label: "Emerging",
-      className:
-        "border-[#FF3B30] bg-[#FF3B30] text-white",
-    };
-  };
 
   return (
     <div
@@ -1438,6 +1401,7 @@ export default function Dashboard() {
                   sections={sections}
                   subjects={subjects}
                   onAddStudent={handleRegisterStudent}
+                  onImported={() => fetchDashboardData({ silent: true })}
                   onEditStudent={handleEditStudent}
                   onDeleteStudent={handleDeleteStudent}
                   onOpenRecords={(student) => {
@@ -1984,6 +1948,7 @@ function StudentsView({
   sections,
   subjects,
   onAddStudent,
+  onImported,
   onEditStudent,
   onDeleteStudent,
   onOpenRecords,
@@ -2011,6 +1976,7 @@ function StudentsView({
 
   return (
     <div className="space-y-6">
+      <StudentImport subjects={subjects} onImported={onImported} />
       <section className="rounded-[24px] border border-[#E3E9EE] bg-white p-6 sm:p-7">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -2274,12 +2240,10 @@ function AiInsightsView({
   );
 }
 
-function RecordsView({
-  students,
+export function RecordsView({
   sections,
   subjects,
   assessments,
-  displayedAssessments,
   studentAnalytics,
   selectedSection,
   selectedSubject,
@@ -2301,7 +2265,6 @@ function RecordsView({
   saveStudentScores,
   getStudentAssessments,
   onEditStudent,
-  handleDeleteStudent,
   assessmentRecords,
   gradeSummaries,
   expandedStudentId,
@@ -2314,38 +2277,32 @@ function RecordsView({
 }) {
   const [studentSearch, setStudentSearch] = useState("");
   const [detailTab, setDetailTab] = useState("current");
+  const [performanceLevel, setPerformanceLevel] = useState("ALL");
+  const [studentSort, setStudentSort] = useState("name");
+  const filtersLocked = Boolean(editingStudentId) || savingScores;
 
-  const filteredStudents = useMemo(() => {
-    const query = studentSearch.trim().toLowerCase();
-
-    if (!query) {
-      return studentAnalytics;
-    }
-
-    return studentAnalytics.filter((student) =>
-      `${student.name} ${student.grade} ${student.section} ${student.subject_names?.join(" ") ?? ""}`
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [studentAnalytics, studentSearch]);
+  const roster = useMemo(() => buildPerformanceRoster(studentAnalytics, {
+    search: studentSearch, level: performanceLevel, sort: studentSort,
+  }), [studentAnalytics, studentSearch, performanceLevel, studentSort]);
+  const filteredStudents = roster.students;
 
   useEffect(() => {
-    if (studentAnalytics.length === 0) {
+    if (filteredStudents.length === 0 || filtersLocked) {
       return;
     }
 
-    const selectedStudentStillExists = studentAnalytics.some(
+    const selectedStudentStillExists = filteredStudents.some(
       (student) => student.id === expandedStudentId,
     );
 
     if (!selectedStudentStillExists) {
-      toggleStudentProfile(studentAnalytics[0]);
+      toggleStudentProfile(filteredStudents[0]);
     }
-  }, [studentAnalytics, expandedStudentId]);
+  }, [filteredStudents, expandedStudentId, filtersLocked, toggleStudentProfile]);
 
   const selectedStudent =
-    studentAnalytics.find((student) => student.id === expandedStudentId) ??
-    studentAnalytics[0] ??
+    filteredStudents.find((student) => student.id === expandedStudentId) ??
+    filteredStudents[0] ??
     null;
 
   const selectedStatus = selectedStudent
@@ -2424,7 +2381,13 @@ function RecordsView({
   };
 
   return (
-    <div className="grid min-h-[calc(100vh-210px)] grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="space-y-5">
+      <RecordPerformanceSummary
+        counts={roster.counts} total={roster.total} shown={filteredStudents.length}
+        level={performanceLevel} onLevelChange={setPerformanceLevel} disabled={filtersLocked}
+        context={`${currentSectionLabel} · ${currentSubjectLabel} · ${currentTermLabel}${studentSearch.trim() ? " · Search results" : ""}`}
+      />
+      <div className="grid min-h-[calc(100vh-350px)] grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
       <aside className="xl:sticky xl:top-6 xl:self-start">
         <section className="overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
           <div className="border-b border-[#EEF2F5] p-5">
@@ -2432,10 +2395,13 @@ function RecordsView({
               Learners
             </p>
             <h2 className="mt-2 text-xl font-bold text-[#25313C]">Student List</h2>
+            <p className="mt-1 text-xs text-[#71808D]">{filteredStudents.length} student{filteredStudents.length === 1 ? "" : "s"}{performanceLevel !== "ALL" ? ` · ${performanceLevel}` : ""}</p>
 
             <div className="mt-5 space-y-2.5">
               <select
                 value={selectedSection}
+                aria-label="Filter records by section"
+                disabled={filtersLocked}
                 onChange={(event) => setSelectedSection(event.target.value)}
                 className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
               >
@@ -2446,6 +2412,8 @@ function RecordsView({
               </select>
               <select
                 value={selectedSubject}
+                aria-label="Filter records by subject"
+                disabled={filtersLocked}
                 onChange={(event) => setSelectedSubject(event.target.value)}
                 className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
               >
@@ -2456,6 +2424,8 @@ function RecordsView({
               </select>
               <select
                 value={selectedTerm}
+                aria-label="Filter records by term"
+                disabled={filtersLocked}
                 onChange={(event) => setSelectedTerm(event.target.value)}
                 className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
               >
@@ -2463,23 +2433,49 @@ function RecordsView({
                 <option value="2">Term 2</option>
                 <option value="3">Term 3</option>
               </select>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-[#52616D]">Performance level</span>
+                <select aria-label="Filter records by performance" value={performanceLevel} disabled={filtersLocked}
+                  onChange={(event) => setPerformanceLevel(event.target.value)}
+                  className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]">
+                  <option value="ALL">All levels ({roster.total})</option>
+                  {PERFORMANCE_LEVELS.map(({ label }) => <option key={label} value={label}>{label} ({roster.counts[label]})</option>)}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-[#52616D]">Sort students</span>
+                <select aria-label="Sort records students" value={studentSort} disabled={filtersLocked}
+                  onChange={(event) => setStudentSort(event.target.value)}
+                  className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]">
+                  <option value="name">Name: A–Z</option>
+                  <option value="highest">Performance: highest first</option>
+                  <option value="lowest">Performance: lowest first</option>
+                </select>
+              </label>
               <input
                 type="search"
+                aria-label="Search records students"
+                disabled={filtersLocked}
                 value={studentSearch}
                 onChange={(event) => setStudentSearch(event.target.value)}
                 placeholder="Search students"
                 className="w-full rounded-[12px] border border-[#D8E1E7] bg-white px-3 py-2.5 text-sm text-[#25313C] outline-none focus:border-[#36A9E1]"
               />
+              {filtersLocked && <p className="text-xs text-[#71808D]">Save or cancel score edits to change filters.</p>}
             </div>
           </div>
 
-          <div className="minimal-scrollbar max-h-[calc(100vh-520px)] min-h-[300px] space-y-1 overflow-y-auto p-2.5">
+          <div className="minimal-scrollbar max-h-[55vh] min-h-[240px] space-y-1 overflow-y-auto p-2.5">
             {filteredStudents.map((student) => {
               const isSelected = selectedStudent?.id === student.id;
+              const status = getPerformanceStatus(student.averagePercentage);
               return (
                 <button
                   key={student.id}
                   type="button"
+                  aria-label={`View assessment record for ${student.name}`}
+                  aria-current={isSelected ? "true" : undefined}
+                  disabled={savingScores}
                   onClick={() => handleSelectStudent(student)}
                   className={`w-full rounded-[16px] px-3.5 py-3.5 text-left ${
                     isSelected
@@ -2493,9 +2489,10 @@ function RecordsView({
                       <p className={`mt-1 text-[11px] ${isSelected ? "text-white/80" : "text-[#8A98A5]"}`}>
                         Grade {student.grade} · {student.section}
                       </p>
+                      <p className={`mt-1 text-[11px] font-medium ${isSelected ? "text-white/90" : "text-[#52616D]"}`}>{status.label}</p>
                     </div>
                     <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-[#36A9E1]"}`}>
-                      {student.averagePercentage === null ? "—" : student.averagePercentage.toFixed(0)}
+                      {hasPerformanceGrade(student.averagePercentage) ? student.averagePercentage.toFixed(1) : "—"}
                     </span>
                   </div>
                 </button>
@@ -2514,8 +2511,8 @@ function RecordsView({
       <section className="min-w-0 overflow-hidden rounded-[24px] border border-[#E3E9EE] bg-white">
         {!selectedStudent ? (
           <EmptyState
-            title="Select a student"
-            description="Choose a learner from the list to open their assessment record."
+            title="No matching students"
+            description="Change the performance level, search, section, subject, or term to find a learner."
           />
         ) : (
           <div>
@@ -2640,6 +2637,7 @@ function RecordsView({
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }
@@ -2716,16 +2714,19 @@ function CurrentTermScores({
                   <td className="px-5 py-4 text-center">
                     {editing ? (
                       <div className="flex items-center justify-center gap-2">
-                        <input
-                          type="number"
-                          min="0"
-                          max={assessment.total_items}
-                          step="1"
-                          value={editedScores[assessment.id] ?? ""}
-                          onChange={(event) => handleEditedScoreChange(assessment.id, event.target.value)}
-                          disabled={savingScores}
-                          className="w-20 rounded-[10px] border border-[#D8E1E7] bg-white px-2 py-2 text-center font-semibold text-[#25313C] outline-none focus:border-[#36A9E1]"
-                        />
+                        <div className="w-20">
+                          <ValidatedInput
+                            kind="integer"
+                            label={`Score for ${assessment.name}`}
+                            aria-label={`Score for ${assessment.name}`}
+                            min={0}
+                            max={assessment.total_items}
+                            value={editedScores[assessment.id] ?? ""}
+                            onChange={(event) => handleEditedScoreChange(assessment.id, event.target.value)}
+                            disabled={savingScores}
+                            className="w-20 rounded-[10px] border border-[#D8E1E7] bg-white px-2 py-2 text-center font-semibold text-[#25313C] outline-none focus:border-[#36A9E1]"
+                          />
+                        </div>
                         <span className="text-xs text-[#8A98A5]">/ {assessment.total_items}</span>
                       </div>
                     ) : hasScore ? (
@@ -2935,8 +2936,10 @@ function SectionManagementView({
         <form onSubmit={handleAddSection} className="mt-7 space-y-4">
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-[#52616D]">Section name</span>
-            <input
-              type="text"
+            <ValidatedInput
+              kind="section"
+              label="Section name"
+              required
               value={newSection}
               onChange={(event) => setNewSection(event.target.value)}
               placeholder="e.g. Section 1"
@@ -3012,8 +3015,10 @@ function SubjectManagementView({
         <form onSubmit={openSubjectStudentPrompt} className="mt-7 space-y-4">
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-[#52616D]">Subject name</span>
-            <input
-              type="text"
+            <ValidatedInput
+              kind="subject"
+              label="Subject name"
+              required
               value={newSubject}
               onChange={(event) => setNewSubject(event.target.value)}
               placeholder="e.g. Mathematics"

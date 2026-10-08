@@ -3,13 +3,15 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import axios from "axios";
+import ValidatedInput from "./ValidatedInput";
+import { parseWholeNumber, validateInput } from "../../../shared/inputValidation.mjs";
 
 const API_URL = "http://localhost:3000";
 
 const APPLE_FONT =
   '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif';
 
-const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV", "V"]);
+const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]);
 
 const EMPTY_FORM = {
   firstName: "",
@@ -199,7 +201,15 @@ export default function StudentForm({
       return;
     }
 
-    const grade = Number(formData.grade);
+    for (const [field, label, required] of [["firstName", "First Name", true], ["middleName", "Middle Name", false], ["surname", "Surname", true]]) {
+      const fieldError = validateInput(formData[field], { kind: "personName", label, required, maxLength: 100 });
+      if (fieldError) { setError(fieldError); return; }
+    }
+    if (formData.suffix && !SUFFIXES.has(formData.suffix)) {
+      setError("Select a valid name suffix.");
+      return;
+    }
+    const grade = parseWholeNumber(formData.grade);
 
     if (!Number.isInteger(grade) || grade <= 0) {
       setError("Grade must be a positive whole number.");
@@ -222,8 +232,9 @@ export default function StudentForm({
       .filter(Boolean)
       .join(" ");
 
-    if (!combinedName) {
-      setError("Student name is required.");
+    const nameError = validateInput(combinedName, { kind: "personName", label: "Student name" });
+    if (nameError) {
+      setError(nameError);
 
       return;
     }
@@ -341,13 +352,13 @@ export default function StudentForm({
                   autoComplete="family-name"
                 />
 
-                <TextField
-                  id="student-suffix"
-                  label="Suffix"
-                  value={formData.suffix}
-                  onChange={(value) => updateField("suffix", value)}
-                  placeholder="e.g. Jr., III"
-                />
+                <div>
+                  <FormLabel htmlFor="student-suffix" label="Suffix" />
+                  <select id="student-suffix" value={formData.suffix} onChange={(event) => updateField("suffix", event.target.value)} className="w-full rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-[#25313C] outline-none focus:border-[#36A9E1]">
+                    <option value="">None</option>
+                    {[...SUFFIXES].map((suffix) => <option key={suffix} value={suffix}>{suffix}</option>)}
+                  </select>
+                </div>
               </div>
             </section>
 
@@ -366,11 +377,11 @@ export default function StudentForm({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <FormLabel htmlFor="student-grade" label="Grade" required />
-                  <input
+                  <ValidatedInput
                     id="student-grade"
-                    type="number"
-                    min="1"
-                    step="1"
+                    kind="integer"
+                    label="Grade"
+                    min={1}
                     value={formData.grade}
                     onChange={(event) => updateField("grade", event.target.value)}
                     className="w-full rounded-[13px] border border-[#D8E1E7] bg-white px-4 py-3 text-[#25313C] outline-none focus:border-[#36A9E1] focus:ring-4 focus:ring-[#36A9E1]/10"
@@ -493,9 +504,11 @@ function TextField({
   return (
     <div>
       <FormLabel htmlFor={id} label={label} required={required} />
-      <input
+      <ValidatedInput
         id={id}
-        type="text"
+        kind="personName"
+        label={label}
+        maxLength={100}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}

@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import { isCalendarDate, parseWholeNumber } from "../shared/inputValidation.mjs";
 
 import Assessment, {
   ASSESSMENT_CATEGORIES,
@@ -51,21 +52,7 @@ function isValidObjectId(value) {
 }
 
 function isValidDate(value) {
-  if (
-    typeof value !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(value)
-  ) {
-    return false;
-  }
-
-  const date = new Date(
-    `${value}T00:00:00.000Z`,
-  );
-
-  return (
-    !Number.isNaN(date.getTime()) &&
-    date.toISOString().slice(0, 10) === value
-  );
+  return isCalendarDate(value);
 }
 
 function formatDate(value) {
@@ -99,7 +86,7 @@ function getSlotLabel(
   }
 
   const numericSequence =
-    Number(sequence);
+    parseWholeNumber(sequence);
 
   if (
     category === "written_work"
@@ -146,7 +133,7 @@ function validateSequence(
   }
 
   const numericSequence =
-    Number(sequence);
+    parseWholeNumber(sequence);
 
   if (
     !Number.isInteger(
@@ -219,7 +206,7 @@ async function validateAssessment(
     normalizeText(body.name);
 
   const term =
-    Number(body.term);
+    parseWholeNumber(body.term);
 
   const category =
     normalizeText(
@@ -230,7 +217,7 @@ async function validateAssessment(
     body.date;
 
   const totalItems =
-    Number(
+    parseWholeNumber(
       body.total_items,
     );
 
@@ -583,7 +570,7 @@ async function validateScores(
     }
 
     const score =
-      Number(entry.score);
+      parseWholeNumber(entry.score);
 
     if (
       !Number.isInteger(score) ||
@@ -2193,7 +2180,7 @@ router.put(
       }
 
       const score =
-        Number(
+        parseWholeNumber(
           req.body.score,
         );
 

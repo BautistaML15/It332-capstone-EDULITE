@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import ValidatedInput from "./ValidatedInput";
+import { parseWholeNumber, validateInput } from "../../../shared/inputValidation.mjs";
 
 const API_URL = "http://localhost:3000";
 
@@ -298,7 +300,7 @@ export default function AssessmentForm({
     }));
   };
 
-  const totalItems = Number(formData.total_items);
+  const totalItems = parseWholeNumber(formData.total_items);
 
   const enteredCount = useMemo(
     () =>
@@ -336,8 +338,9 @@ export default function AssessmentForm({
     event.preventDefault();
     setError("");
 
-    if (!formData.name.trim()) {
-      setError("Enter an assessment name.");
+    const nameError = validateInput(formData.name, { kind: "assessment", label: "Assessment name" });
+    if (nameError) {
+      setError(nameError);
       return;
     }
 
@@ -346,7 +349,7 @@ export default function AssessmentForm({
       return;
     }
 
-    const term = Number(formData.term);
+    const term = parseWholeNumber(formData.term);
 
     if (![1, 2, 3].includes(term)) {
       setError("Select Term 1, Term 2, or Term 3.");
@@ -358,7 +361,7 @@ export default function AssessmentForm({
       return;
     }
 
-    const sequence = Number(formData.sequence);
+    const sequence = parseWholeNumber(formData.sequence);
 
     if (
       !Number.isInteger(sequence) ||
@@ -376,10 +379,15 @@ export default function AssessmentForm({
       return;
     }
 
+    const dateError = validateInput(formData.date, { kind: "date", label: "Assessment date" });
+    if (dateError) { setError(dateError); return; }
+
     for (const [studentId, value] of Object.entries(scores)) {
       if (value === "") {
         continue;
       }
+
+      const score = parseWholeNumber(value);
 
       const score = Number(value);
 
@@ -507,9 +515,10 @@ export default function AssessmentForm({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <FormLabel htmlFor="assessment-name" label="Assessment Name" required />
-                  <input
+                  <ValidatedInput
                     id="assessment-name"
-                    type="text"
+                    kind="assessment"
+                    label="Assessment name"
                     value={formData.name}
                     onChange={(event) =>
                       setFormData((current) => ({ ...current, name: event.target.value }))
@@ -596,9 +605,11 @@ export default function AssessmentForm({
 
                 <div>
                   <FormLabel htmlFor="assessment-date" label="Date" required />
-                  <input
+                  <ValidatedInput
                     id="assessment-date"
                     type="date"
+                    kind="date"
+                    label="Assessment date"
                     value={formData.date}
                     onChange={(event) =>
                       setFormData((current) => ({ ...current, date: event.target.value }))
@@ -610,11 +621,11 @@ export default function AssessmentForm({
 
                 <div>
                   <FormLabel htmlFor="assessment-total-items" label="Highest Possible Score (HPS)" required />
-                  <input
+                  <ValidatedInput
                     id="assessment-total-items"
-                    type="number"
-                    min="1"
-                    step="1"
+                    kind="integer"
+                    label="Highest Possible Score"
+                    min={1}
                     value={formData.total_items}
                     onChange={(event) =>
                       setFormData((current) => ({ ...current, total_items: event.target.value }))
@@ -678,17 +689,19 @@ export default function AssessmentForm({
                           <td className="px-5 py-4 text-center text-sm text-[#71808D]">{student.section}</td>
                           <td className="px-5 py-4">
                             <div className="flex items-center justify-center gap-2">
-                              <input
-                                aria-label={`Score for ${student.name}`}
-                                type="number"
-                                min="0"
-                                max={totalItems > 0 ? totalItems : undefined}
-                                step="1"
-                                value={scores[student.id] ?? ""}
-                                onChange={(event) => handleScoreChange(student.id, event.target.value)}
-                                className="w-24 rounded-[11px] border border-[#D8E1E7] bg-white px-3 py-2 text-center font-semibold text-[#25313C] outline-none focus:border-[#36A9E1] focus:ring-4 focus:ring-[#36A9E1]/10"
-                                placeholder="—"
-                              />
+                              <div className="w-24">
+                                <ValidatedInput
+                                  aria-label={`Score for ${student.name}`}
+                                  kind="integer"
+                                  label={`Score for ${student.name}`}
+                                  min={0}
+                                  max={totalItems > 0 ? totalItems : Number.MAX_SAFE_INTEGER}
+                                  value={scores[student.id] ?? ""}
+                                  onChange={(event) => handleScoreChange(student.id, event.target.value)}
+                                  className="w-24 rounded-[11px] border border-[#D8E1E7] bg-white px-3 py-2 text-center font-semibold text-[#25313C] outline-none focus:border-[#36A9E1] focus:ring-4 focus:ring-[#36A9E1]/10"
+                                  placeholder="—"
+                                />
+                              </div>
                               <span className="text-xs text-[#8A98A5]">/ {totalItems > 0 ? totalItems : "?"}</span>
                             </div>
                           </td>
