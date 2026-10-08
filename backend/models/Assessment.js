@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import academicPlugin from "./academicPlugin.js";
 
 /*
   ============================================================
@@ -360,6 +361,8 @@ assessmentSchema.index({
   sequence:
     1,
 });
+
+assessmentSchema.plugin(academicPlugin);
 
 const Assessment =
   mongoose.models.Assessment ||

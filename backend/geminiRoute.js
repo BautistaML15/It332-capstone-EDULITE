@@ -481,7 +481,7 @@ For an intervention plan:
 - Tie each intervention to specific score patterns, weak subjects, missing assessments, or the recent trend.
 - Include concrete teacher actions, a suggested schedule, and a measurable success indicator.
 - Use supportive, non-stigmatizing language.
-- Prioritize assessments with recorded percentages below 75 and the lowest-scoring subjects. Use their budgetOfWork topics, competencies, objectives, and time allocations to target practice. Distinguish assessment percentages from official transmuted term grades.
+- Prioritize low recorded assessment percentages and the lowest-scoring subjects. Use the supplied gradingRules for official grade classifications. Use their budgetOfWork topics, competencies, objectives, and time allocations to target practice. Distinguish assessment percentages from official transmuted term grades.
 - Missing scores are missing evidence, not zero scores. A low overall grade alone does not establish which competency is weak.
 - If Budget of Work is absent, state this limitation and ask the teacher to confirm the competencies; do not invent curriculum topics or claim item-level weaknesses from a total score.
 - Each targeted intervention MUST include exactly three practiceActivities, ordered easy, medium, hard. Adapt content to the student's grade and supplied learning scope.
@@ -915,9 +915,10 @@ router.get(
       const insight = await StudentAiInsight.findOne({
         _id: req.params.insightId,
         ownerId: req.user.id,
-      }).populate({
+      }).setOptions({ acrossSchoolYears: true }).populate({
         path: "studentId",
         select: "name",
+        options: { includeArchived: true, acrossSchoolYears: true },
       });
 
       if (!insight || !insight.studentId) {
@@ -1392,11 +1393,12 @@ router.post(
           focusSubject?.name ?? "All enrolled subjects",
 
         gradingTerm: `Term ${requestedTerm}`,
+        gradingRules: req.rules,
         derivedClassification: classification,
 
         thresholds: {
-          passingPercentage: PASSING_PERCENTAGE,
-          highPotentialPercentage: HIGH_POTENTIAL_PERCENTAGE,
+          passingPercentage: req.rules?.passingGrade ?? PASSING_PERCENTAGE,
+          highPotentialPercentage: req.rules?.highPerformingGrade ?? HIGH_POTENTIAL_PERCENTAGE,
         },
 
         summary: {

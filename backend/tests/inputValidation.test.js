@@ -190,7 +190,7 @@ test("actual score endpoint validates the entire batch before saving or clearing
   await once(server, "listening");
   t.after(() => new Promise((resolve) => { server.close(resolve); server.closeAllConnections(); }));
   const url = `http://127.0.0.1:${server.address().port}/students/${validId}/assessment-scores`;
-  const token = jwt.sign({ sub: validId }, testSecret);
+  const token = jwt.sign({ sub: validId }, testSecret, { issuer: "edulite-api", audience: "edulite-frontend" });
   const secondId = "507f1f77bcf86cd799439012";
   const send = (scores) => fetch(url, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ scores }) });
   assert.equal((await send([{ assessment_id: validId, score: null }, { assessment_id: secondId, score: 11 }])).status, 400);
